@@ -1,4 +1,4 @@
-import { Calendar, Trophy, Bell, Sparkles, Globe, Target } from "lucide-react";
+import { Calendar, Trophy, Bell, Target } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const Features = () => {
@@ -16,27 +16,15 @@ const Features = () => {
       gradient: "from-accent/10 to-accent/5"
     },
     {
-      icon: Globe,
-      title: "Personnalisation avancée",
-      description: "Choisissez vos périodes historiques et pays favoris pour une expérience sur mesure.",
-      gradient: "from-primary/10 to-primary/5"
-    },
-    {
       icon: Bell,
       title: "Rappels intelligents",
       description: "Ne manquez jamais votre dose d'histoire avec des notifications personnalisables.",
-      gradient: "from-accent/10 to-accent/5"
+      gradient: "from-primary/10 to-primary/5"
     },
     {
       icon: Target,
       title: "Suivi de progression",
       description: "Visualisez votre série, vos réalisations et votre parcours d'apprentissage.",
-      gradient: "from-primary/10 to-primary/5"
-    },
-    {
-      icon: Sparkles,
-      title: "Interface élégante",
-      description: "Profitez d'une expérience visuelle raffinée inspirée de l'histoire et du patrimoine.",
       gradient: "from-accent/10 to-accent/5"
     },
   ];
@@ -47,7 +35,7 @@ const Features = () => {
         {/* Section Header */}
         <div className="text-center space-y-4 mb-16 animate-fade-in">
           <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-            Fonctionnalités
+            Caractéristiques
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Tout ce dont vous avez besoin pour enrichir votre culture historique au quotidien
@@ -55,7 +43,7 @@ const Features = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <Card 
               key={index}

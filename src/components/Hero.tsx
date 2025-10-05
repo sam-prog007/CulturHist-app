@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Award, BookOpen, Calendar, Sparkles } from "lucide-react";
+import { Award, BookOpen, Calendar, Sparkles, Target } from "lucide-react";
 import heroImage from "@/assets/hero-history.jpg";
 
 const Hero = () => {
@@ -45,11 +45,21 @@ const Hero = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-            <Button size="xl" variant="hero" className="w-full sm:w-auto">
+            <Button 
+              size="xl" 
+              variant="hero" 
+              className="w-full sm:w-auto"
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               <Calendar className="w-5 h-5" />
               Commencer gratuitement
             </Button>
-            <Button size="xl" variant="outline" className="w-full sm:w-auto">
+            <Button 
+              size="xl" 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+            >
               <BookOpen className="w-5 h-5" />
               En savoir plus
             </Button>
@@ -60,8 +70,8 @@ const Hero = () => {
             {[
               { icon: BookOpen, value: "365+", label: "Faits par an" },
               { icon: Award, value: "50+", label: "Récompenses" },
-              { icon: Calendar, value: "7j/7", label: "Disponible" },
-              { icon: Sparkles, value: "100%", label: "Gratuit" },
+              { icon: Target, value: "Tous", label: "Niveaux" },
+              { icon: Sparkles, value: "Gratuit", label: "Pour commencer" },
             ].map((stat, index) => (
               <div 
                 key={index} 

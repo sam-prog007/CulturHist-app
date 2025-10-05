@@ -36,6 +36,7 @@ const CTA = () => {
                 size="xl" 
                 variant="accent"
                 className="w-full sm:w-auto group"
+                onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 Commencer maintenant
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 smooth-transition" />
@@ -44,6 +45,7 @@ const CTA = () => {
                 size="xl" 
                 variant="outline" 
                 className="w-full sm:w-auto bg-primary-foreground hover:bg-primary-foreground/90 text-primary border-0"
+                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
               >
                 En savoir plus
               </Button>
