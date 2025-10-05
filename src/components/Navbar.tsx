@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { BookOpen, Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -39,12 +43,20 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost">
-              Se connecter
-            </Button>
-            <Button variant="hero">
-              Commencer
-            </Button>
+            {user ? (
+              <Button variant="hero" onClick={() => navigate('/app')}>
+                Mon espace
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" onClick={() => navigate('/auth')}>
+                  Se connecter
+                </Button>
+                <Button variant="hero" onClick={() => navigate('/auth')}>
+                  Commencer
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -83,12 +95,20 @@ const Navbar = () => {
                 À propos
               </a>
               <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border">
-                <Button variant="ghost" className="w-full">
-                  Se connecter
-                </Button>
-                <Button variant="hero" className="w-full">
-                  Commencer
-                </Button>
+                {user ? (
+                  <Button variant="hero" className="w-full" onClick={() => { navigate('/app'); setIsOpen(false); }}>
+                    Mon espace
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="ghost" className="w-full" onClick={() => { navigate('/auth'); setIsOpen(false); }}>
+                      Se connecter
+                    </Button>
+                    <Button variant="hero" className="w-full" onClick={() => { navigate('/auth'); setIsOpen(false); }}>
+                      Commencer
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
