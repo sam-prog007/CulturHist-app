@@ -14,7 +14,227 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      achievements: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          points_reward: number | null
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          points_reward?: number | null
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          points_reward?: number | null
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
+      historical_facts: {
+        Row: {
+          created_at: string | null
+          date_text: string | null
+          description: string
+          difficulty: string | null
+          id: string
+          image_url: string | null
+          period_id: string | null
+          points_reward: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          date_text?: string | null
+          description: string
+          difficulty?: string | null
+          id?: string
+          image_url?: string | null
+          period_id?: string | null
+          points_reward?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          date_text?: string | null
+          description?: string
+          difficulty?: string | null
+          id?: string
+          image_url?: string | null
+          period_id?: string | null
+          points_reward?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historical_facts_period_id_fkey"
+            columns: ["period_id"]
+            isOneToOne: false
+            referencedRelation: "historical_periods"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historical_periods: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_year: number | null
+          id: string
+          image_url: string | null
+          name: string
+          order_index: number
+          start_year: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_year?: number | null
+          id?: string
+          image_url?: string | null
+          name: string
+          order_index: number
+          start_year?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_year?: number | null
+          id?: string
+          image_url?: string | null
+          name?: string
+          order_index?: number
+          start_year?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          id: string
+          level: number | null
+          points: number | null
+          updated_at: string | null
+          username: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id: string
+          level?: number | null
+          points?: number | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          id?: string
+          level?: number | null
+          points?: number | null
+          updated_at?: string | null
+          username?: string | null
+        }
+        Relationships: []
+      }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          attempts: number | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          fact_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          fact_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          fact_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "historical_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
