@@ -1,10 +1,7 @@
 import { BookOpen, Mail, Twitter, Facebook, Instagram } from "lucide-react";
-
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-
-  return (
-    <footer className="bg-primary text-primary-foreground py-12 px-4">
+  return <footer className="bg-primary text-primary-foreground py-12 px-4">
       <div className="container mx-auto max-w-7xl">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           {/* Brand */}
@@ -28,14 +25,10 @@ const Footer = () => {
                 </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground smooth-transition">
-                  Tarifs
-                </a>
+                <a href="#" className="hover:text-primary-foreground smooth-transition">Abonnement </a>
               </li>
               <li>
-                <a href="#" className="hover:text-primary-foreground smooth-transition">
-                  FAQ
-                </a>
+                
               </li>
             </ul>
           </div>
@@ -49,11 +42,7 @@ const Footer = () => {
                   À propos
                 </a>
               </li>
-              <li>
-                <a href="#" className="hover:text-primary-foreground smooth-transition">
-                  Blog
-                </a>
-              </li>
+              
               <li>
                 <a href="#" className="hover:text-primary-foreground smooth-transition">
                   Contact
@@ -93,39 +82,21 @@ const Footer = () => {
 
           {/* Social Links */}
           <div className="flex items-center gap-4">
-            <a 
-              href="#" 
-              className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition"
-              aria-label="Twitter"
-            >
+            <a href="#" className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition" aria-label="Twitter">
               <Twitter className="w-4 h-4" />
             </a>
-            <a 
-              href="#" 
-              className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition"
-              aria-label="Facebook"
-            >
+            <a href="#" className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition" aria-label="Facebook">
               <Facebook className="w-4 h-4" />
             </a>
-            <a 
-              href="#" 
-              className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition"
-              aria-label="Instagram"
-            >
+            <a href="#" className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition" aria-label="Instagram">
               <Instagram className="w-4 h-4" />
             </a>
-            <a 
-              href="#" 
-              className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition"
-              aria-label="Email"
-            >
+            <a href="#" className="w-9 h-9 rounded-full bg-primary-foreground/10 flex items-center justify-center hover:bg-primary-foreground/20 smooth-transition" aria-label="Email">
               <Mail className="w-4 h-4" />
             </a>
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
-
 export default Footer;
