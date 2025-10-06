@@ -129,8 +129,13 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           id: string
+          learning_goal: string | null
           level: number | null
+          onboarding_completed: boolean | null
           points: number | null
+          preferred_eras: string[] | null
+          preferred_regions: string[] | null
+          profile_type: string | null
           updated_at: string | null
           username: string | null
         }
@@ -138,8 +143,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id: string
+          learning_goal?: string | null
           level?: number | null
+          onboarding_completed?: boolean | null
           points?: number | null
+          preferred_eras?: string[] | null
+          preferred_regions?: string[] | null
+          profile_type?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -147,8 +157,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string | null
           id?: string
+          learning_goal?: string | null
           level?: number | null
+          onboarding_completed?: boolean | null
           points?: number | null
+          preferred_eras?: string[] | null
+          preferred_regions?: string[] | null
+          profile_type?: string | null
           updated_at?: string | null
           username?: string | null
         }
