@@ -8,12 +8,19 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Trophy, Calendar, TrendingUp, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-history.jpg";
+
 const AppPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [dailyFact, setDailyFact] = useState<any>(null);
   const [loadingFact, setLoadingFact] = useState(true);
+  const [stats, setStats] = useState({
+    factsLearned: 0,
+    points: 0,
+    streak: 0,
+    level: 1
+  });
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
@@ -21,34 +28,82 @@ const AppPage = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
-    const fetchDailyFact = async () => {
+    const fetchData = async () => {
       if (!user) return;
       
       try {
-        const { data, error } = await supabase
+        // Fetch daily fact
+        const { data: factData, error: factError } = await supabase
           .from('historical_facts')
           .select('*')
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle();
 
-        if (error) throw error;
-        setDailyFact(data);
+        if (factError) throw factError;
+        setDailyFact(factData);
+
+        // Fetch user stats
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('points, current_streak, exp')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Fetch facts learned count
+        const { count, error: countError } = await supabase
+          .from('user_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('completed', true);
+
+        if (countError) throw countError;
+
+        // Calculate level from exp
+        const level = Math.floor(Math.sqrt((profileData?.exp || 0) / 100)) + 1;
+
+        setStats({
+          factsLearned: count || 0,
+          points: profileData?.points || 0,
+          streak: profileData?.current_streak || 0,
+          level
+        });
       } catch (error) {
-        console.error('Error fetching daily fact:', error);
+        console.error('Error fetching data:', error);
       } finally {
         setLoadingFact(false);
       }
     };
 
-    fetchDailyFact();
+    fetchData();
   }, [user]);
 
   const handleValidateFact = async () => {
     if (!user || !dailyFact) return;
 
     try {
-      const { error } = await supabase
+      // Check if already validated
+      const { data: existingProgress } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('fact_id', dailyFact.id)
+        .eq('completed', true)
+        .maybeSingle();
+
+      if (existingProgress) {
+        toast({
+          title: "Déjà validé",
+          description: "Vous avez déjà validé ce fait !",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Insert progress
+      const { error: progressError } = await supabase
         .from('user_progress')
         .insert({
           user_id: user.id,
@@ -57,11 +112,65 @@ const AppPage = () => {
           completed_at: new Date().toISOString()
         });
 
-      if (error) throw error;
+      if (progressError) throw progressError;
+
+      // Get current profile data
+      const { data: profile, error: profileFetchError } = await supabase
+        .from('profiles')
+        .select('points, current_streak, last_activity_date, exp')
+        .eq('id', user.id)
+        .single();
+
+      if (profileFetchError) throw profileFetchError;
+
+      const today = new Date().toISOString().split('T')[0];
+      const lastActivity = profile?.last_activity_date;
+      
+      // Calculate new streak
+      let newStreak = profile?.current_streak || 0;
+      if (!lastActivity) {
+        newStreak = 1;
+      } else {
+        const daysDiff = Math.floor(
+          (new Date(today).getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        if (daysDiff === 1) {
+          newStreak += 1;
+        } else if (daysDiff > 1) {
+          newStreak = 1;
+        }
+      }
+
+      // Calculate new points and exp
+      const newPoints = (profile?.points || 0) + dailyFact.points_reward;
+      const factsLearned = stats.factsLearned + 1;
+      const newExp = (newPoints * 2) + (newStreak * 10) + (factsLearned * 5);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({
+          points: newPoints,
+          current_streak: newStreak,
+          last_activity_date: today,
+          exp: newExp
+        })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Update local stats
+      const newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
+      setStats({
+        factsLearned,
+        points: newPoints,
+        streak: newStreak,
+        level: newLevel
+      });
 
       toast({
         title: "Fait validé !",
-        description: `Vous avez gagné ${dailyFact.points_reward} points`,
+        description: `Vous avez gagné ${dailyFact.points_reward} points${newStreak > 1 ? ` • Série de ${newStreak} jours !` : ''}`,
       });
     } catch (error: any) {
       toast({
@@ -113,7 +222,7 @@ const AppPage = () => {
                   <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">{stats.factsLearned}</p>
                   <p className="text-sm text-muted-foreground">Faits appris</p>
                 </div>
               </div>
@@ -125,7 +234,7 @@ const AppPage = () => {
                   <Trophy className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">{stats.points}</p>
                   <p className="text-sm text-muted-foreground">Points</p>
                 </div>
               </div>
@@ -137,7 +246,7 @@ const AppPage = () => {
                   <Calendar className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">0</p>
+                  <p className="text-2xl font-bold">{stats.streak}</p>
                   <p className="text-sm text-muted-foreground">Série</p>
                 </div>
               </div>
@@ -149,7 +258,7 @@ const AppPage = () => {
                   <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">1</p>
+                  <p className="text-2xl font-bold">{stats.level}</p>
                   <p className="text-sm text-muted-foreground">Niveau</p>
                 </div>
               </div>
@@ -172,6 +281,16 @@ const AppPage = () => {
                 </div>
               ) : dailyFact ? (
                 <>
+                  {dailyFact.image_url && (
+                    <div className="w-full max-w-3xl mx-auto mb-6 rounded-lg overflow-hidden card-shadow">
+                      <img 
+                        src={dailyFact.image_url} 
+                        alt={dailyFact.title}
+                        className="w-full h-64 object-cover"
+                      />
+                    </div>
+                  )}
+                  
                   <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                     {dailyFact.title}
                   </h2>

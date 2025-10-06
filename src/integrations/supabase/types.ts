@@ -128,7 +128,10 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          current_streak: number | null
+          exp: number | null
           id: string
+          last_activity_date: string | null
           learning_goal: string | null
           level: number | null
           onboarding_completed: boolean | null
@@ -142,7 +145,10 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          current_streak?: number | null
+          exp?: number | null
           id: string
+          last_activity_date?: string | null
           learning_goal?: string | null
           level?: number | null
           onboarding_completed?: boolean | null
@@ -156,7 +162,10 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          current_streak?: number | null
+          exp?: number | null
           id?: string
+          last_activity_date?: string | null
           learning_goal?: string | null
           level?: number | null
           onboarding_completed?: boolean | null

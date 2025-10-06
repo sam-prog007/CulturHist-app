@@ -1,14 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/culturhist-logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  
+  const isAppPage = location.pathname === '/app';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -21,26 +24,28 @@ const Navbar = () => {
           </a>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <a 
-              href="#features" 
-              className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
-            >
-              Caractéristiques
-            </a>
-            <a 
-              href="#how-it-works" 
-              className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
-            >
-              Comment ça marche
-            </a>
-            <a 
-              href="#about" 
-              className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
-            >
-              À propos
-            </a>
-          </div>
+          {!isAppPage && (
+            <div className="hidden md:flex items-center gap-8">
+              <a 
+                href="#features" 
+                className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
+              >
+                Caractéristiques
+              </a>
+              <a 
+                href="#how-it-works" 
+                className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
+              >
+                Comment ça marche
+              </a>
+              <a 
+                href="#about" 
+                className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
+              >
+                À propos
+              </a>
+            </div>
+          )}
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
@@ -74,28 +79,32 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border animate-fade-in">
             <div className="flex flex-col space-y-4">
-              <a 
-                href="#features" 
-                className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
-                onClick={() => setIsOpen(false)}
-              >
-                Caractéristiques
-              </a>
-              <a 
-                href="#how-it-works" 
-                className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
-                onClick={() => setIsOpen(false)}
-              >
-                Comment ça marche
-              </a>
-              <a 
-                href="#about" 
-                className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
-                onClick={() => setIsOpen(false)}
-              >
-                À propos
-              </a>
-              <div className="flex flex-col gap-2 px-4 pt-4 border-t border-border">
+              {!isAppPage && (
+                <>
+                  <a 
+                    href="#features" 
+                    className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Caractéristiques
+                  </a>
+                  <a 
+                    href="#how-it-works" 
+                    className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Comment ça marche
+                  </a>
+                  <a 
+                    href="#about" 
+                    className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    À propos
+                  </a>
+                </>
+              )}
+              <div className={`flex flex-col gap-2 px-4 pt-4 ${!isAppPage ? 'border-t border-border' : ''}`}>
                 {user ? (
                   <Button variant="hero" className="w-full" onClick={() => { navigate('/app'); setIsOpen(false); }}>
                     Mon espace
