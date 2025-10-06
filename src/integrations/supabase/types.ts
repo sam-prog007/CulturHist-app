@@ -47,6 +47,30 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_facts_progress: {
+        Row: {
+          created_at: string | null
+          date: string
+          facts_validated: number | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          facts_validated?: number | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          facts_validated?: number | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       historical_facts: {
         Row: {
           created_at: string | null
@@ -175,6 +199,36 @@ export type Database = {
           profile_type?: string | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      quiz_sessions: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          exp_earned: number
+          id: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          exp_earned: number
+          id?: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          exp_earned?: number
+          id?: string
+          score?: number
+          total_questions?: number
+          user_id?: string
         }
         Relationships: []
       }

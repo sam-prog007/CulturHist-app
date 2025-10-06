@@ -81,104 +81,7 @@ const AppPage = () => {
   }, [user]);
 
   const handleValidateFact = async () => {
-    if (!user || !dailyFact) return;
-
-    try {
-      // Check if already validated
-      const { data: existingProgress } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('fact_id', dailyFact.id)
-        .eq('completed', true)
-        .maybeSingle();
-
-      if (existingProgress) {
-        toast({
-          title: "Déjà validé",
-          description: "Vous avez déjà validé ce fait !",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Insert progress
-      const { error: progressError } = await supabase
-        .from('user_progress')
-        .insert({
-          user_id: user.id,
-          fact_id: dailyFact.id,
-          completed: true,
-          completed_at: new Date().toISOString()
-        });
-
-      if (progressError) throw progressError;
-
-      // Get current profile data
-      const { data: profile, error: profileFetchError } = await supabase
-        .from('profiles')
-        .select('points, current_streak, last_activity_date, exp')
-        .eq('id', user.id)
-        .single();
-
-      if (profileFetchError) throw profileFetchError;
-
-      const today = new Date().toISOString().split('T')[0];
-      const lastActivity = profile?.last_activity_date;
-      
-      // Calculate new streak
-      let newStreak = profile?.current_streak || 0;
-      if (!lastActivity) {
-        newStreak = 1;
-      } else {
-        const daysDiff = Math.floor(
-          (new Date(today).getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        if (daysDiff === 1) {
-          newStreak += 1;
-        } else if (daysDiff > 1) {
-          newStreak = 1;
-        }
-      }
-
-      // Calculate new points and exp
-      const newPoints = (profile?.points || 0) + dailyFact.points_reward;
-      const factsLearned = stats.factsLearned + 1;
-      const newExp = (newPoints * 2) + (newStreak * 10) + (factsLearned * 5);
-
-      // Update profile
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          points: newPoints,
-          current_streak: newStreak,
-          last_activity_date: today,
-          exp: newExp
-        })
-        .eq('id', user.id);
-
-      if (updateError) throw updateError;
-
-      // Update local stats
-      const newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
-      setStats({
-        factsLearned,
-        points: newPoints,
-        streak: newStreak,
-        level: newLevel
-      });
-
-      toast({
-        title: "Fait validé !",
-        description: `Vous avez gagné ${dailyFact.points_reward} points${newStreak > 1 ? ` • Série de ${newStreak} jours !` : ''}`,
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
+    navigate('/facts');
   };
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-background">
@@ -307,12 +210,8 @@ const AppPage = () => {
 
                   <div className="flex gap-3 justify-center mt-4">
                     <Button size="lg" variant="default" onClick={handleValidateFact}>
-                      <CheckCircle className="w-5 h-5 mr-2" />
-                      Valider (+{dailyFact.points_reward} pts)
-                    </Button>
-                    <Button size="lg" variant="outline">
                       <BookOpen className="w-5 h-5 mr-2" />
-                      Explorer plus de faits
+                      Explorer les faits
                     </Button>
                   </div>
                 </>
