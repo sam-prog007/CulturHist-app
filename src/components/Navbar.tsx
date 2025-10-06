@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import logo from "@/assets/culturhist-logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,8 +16,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
-            <BookOpen className="w-6 h-6 text-primary group-hover:scale-110 smooth-transition" />
-            <span className="text-xl font-bold text-foreground">Culturhist</span>
+            <img src={logo} alt="CulturHist Logo" className="w-8 h-8 group-hover:scale-110 smooth-transition" />
+            <span className="text-xl font-bold text-foreground">CulturHist</span>
           </a>
 
           {/* Desktop Navigation */}
@@ -25,7 +26,7 @@ const Navbar = () => {
               href="#features" 
               className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
             >
-              Fonctionnalités
+              Caractéristiques
             </a>
             <a 
               href="#how-it-works" 
@@ -78,7 +79,7 @@ const Navbar = () => {
                 className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2"
                 onClick={() => setIsOpen(false)}
               >
-                Fonctionnalités
+                Caractéristiques
               </a>
               <a 
                 href="#how-it-works" 
