@@ -8,6 +8,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Book, Mail, Lock, User } from 'lucide-react';
+import { z } from 'zod';
+
+// Validation schemas
+const emailSchema = z.string()
+  .email('Email invalide')
+  .max(255, 'Email trop long');
+
+const passwordSchema = z.string()
+  .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
+  .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
+  .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre');
+
+const usernameSchema = z.string()
+  .min(3, 'Le nom d\'utilisateur doit contenir au moins 3 caractères')
+  .max(30, 'Le nom d\'utilisateur ne peut pas dépasser 30 caractères')
+  .regex(/^[a-zA-Z0-9_-]+$/, 'Seuls les lettres, chiffres, tirets et underscores sont autorisés')
+  .optional();
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -26,8 +43,16 @@ export default function Auth() {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error('Veuillez remplir tous les champs');
+    // Validate email
+    const emailValidation = emailSchema.safeParse(email);
+    if (!emailValidation.success) {
+      toast.error(emailValidation.error.errors[0].message);
+      return;
+    }
+
+    // Validate password (basic check for sign-in)
+    if (!password) {
+      toast.error('Veuillez entrer votre mot de passe');
       return;
     }
 
@@ -46,14 +71,27 @@ export default function Auth() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email || !password) {
-      toast.error('Veuillez remplir tous les champs');
+    // Validate email
+    const emailValidation = emailSchema.safeParse(email);
+    if (!emailValidation.success) {
+      toast.error(emailValidation.error.errors[0].message);
       return;
     }
 
-    if (password.length < 6) {
-      toast.error('Le mot de passe doit contenir au moins 6 caractères');
+    // Validate password
+    const passwordValidation = passwordSchema.safeParse(password);
+    if (!passwordValidation.success) {
+      toast.error(passwordValidation.error.errors[0].message);
       return;
+    }
+
+    // Validate username if provided
+    if (username) {
+      const usernameValidation = usernameSchema.safeParse(username);
+      if (!usernameValidation.success) {
+        toast.error(usernameValidation.error.errors[0].message);
+        return;
+      }
     }
 
     setLoading(true);
@@ -183,7 +221,7 @@ export default function Auth() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Minimum 6 caractères
+                    Minimum 8 caractères, 1 majuscule et 1 chiffre
                   </p>
                 </div>
 
