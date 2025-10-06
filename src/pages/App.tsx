@@ -6,43 +6,34 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Trophy, Calendar, TrendingUp } from "lucide-react";
 import heroImage from "@/assets/hero-history.jpg";
-
 const AppPage = () => {
-  const { user, loading } = useAuth();
+  const {
+    user,
+    loading
+  } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
-
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Chargement...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (!user) {
     return null;
   }
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <Navbar />
       
       <section className="relative min-h-[40vh] flex items-center justify-center subtle-gradient overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <img
-            src={heroImage}
-            alt="Fond historique"
-            className="w-full h-full object-cover opacity-10"
-          />
+          <img src={heroImage} alt="Fond historique" className="w-full h-full object-cover opacity-10" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background"></div>
         </div>
 
@@ -93,7 +84,7 @@ const AppPage = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-muted-foreground">Jours de suite</p>
+                  <p className="text-sm text-muted-foreground">Série</p>
                 </div>
               </div>
             </Card>
@@ -161,8 +152,6 @@ const AppPage = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default AppPage;
