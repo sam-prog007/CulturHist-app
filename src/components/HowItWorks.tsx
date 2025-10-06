@@ -1,4 +1,4 @@
-import { UserPlus, Settings, Calendar, Trophy } from "lucide-react";
+import { UserPlus, Settings, Calendar, Trophy, CheckCircle } from "lucide-react";
 
 const HowItWorks = () => {
   const steps = [
@@ -21,10 +21,16 @@ const HowItWorks = () => {
       color: "text-primary"
     },
     {
+      icon: CheckCircle,
+      title: "Répondez aux quiz",
+      description: "Validez vos connaissances avec des questions interactives",
+      color: "text-accent"
+    },
+    {
       icon: Trophy,
       title: "Gagnez des récompenses",
       description: "Maintenez votre série et débloquez des badges",
-      color: "text-accent"
+      color: "text-primary"
     },
   ];
 
@@ -37,7 +43,7 @@ const HowItWorks = () => {
             Comment ça marche ?
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Commencez votre voyage dans l'histoire en quatre étapes simples
+            Commencez votre voyage dans l'histoire en cinq étapes simples
           </p>
         </div>
 
@@ -46,7 +52,7 @@ const HowItWorks = () => {
           {/* Connection Line - Hidden on mobile */}
           <div className="hidden md:block absolute top-1/2 left-0 right-0 h-0.5 bg-gradient-to-r from-primary via-accent to-primary transform -translate-y-1/2 opacity-20"></div>
 
-          <div className="grid md:grid-cols-4 gap-8 relative">
+          <div className="grid md:grid-cols-5 gap-6 relative">
             {steps.map((step, index) => (
               <div 
                 key={index}

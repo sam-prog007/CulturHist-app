@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Award, BookOpen, Calendar, Sparkles, Target } from "lucide-react";
 import heroImage from "@/assets/hero-history.jpg";
+import logo from "@/assets/culturhist-logo.png";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
@@ -29,16 +30,17 @@ const Hero = () => {
             </span>
           </div>
 
-          {/* Main Heading */}
-          <h1 className="text-5xl md:text-7xl font-bold text-foreground leading-tight">
-            <span className="hero-gradient bg-clip-text text-transparent">
-              CulturHist
-            </span>
-            <br />
-            <span className="text-4xl md:text-5xl text-muted-foreground font-normal">
+          {/* Main Heading with Logo */}
+          <div className="flex flex-col items-center space-y-6">
+            <img 
+              src={logo} 
+              alt="CulturHist Logo" 
+              className="w-32 h-32 md:w-40 md:h-40 animate-scale-in"
+            />
+            <h1 className="text-4xl md:text-5xl text-muted-foreground font-normal">
               Votre dose quotidienne d'histoire
-            </span>
-          </h1>
+            </h1>
+          </div>
 
           {/* Description */}
           <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
