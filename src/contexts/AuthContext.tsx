@@ -9,6 +9,9 @@ interface AuthContextType {
   signUp: (email: string, password: string, username?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
   loading: boolean;
+  isPremium: boolean;
+  premiumUntil: string | null;
+  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -17,6 +20,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+  const [premiumUntil, setPremiumUntil] = useState<string | null>(null);
+
+  const checkSubscription = async () => {
+    if (!session) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-subscription');
+      
+      if (error) {
+        console.error('Error checking subscription:', error);
+        return;
+      }
+      
+      setIsPremium(data?.subscribed || false);
+      setPremiumUntil(data?.subscription_end || null);
+    } catch (error) {
+      console.error('Error checking subscription:', error);
+    }
+  };
 
   useEffect(() => {
     // Set up auth state listener FIRST
@@ -25,6 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Check subscription when user logs in
+        if (session?.user) {
+          setTimeout(() => {
+            checkSubscription();
+          }, 0);
+        } else {
+          setIsPremium(false);
+          setPremiumUntil(null);
+        }
       }
     );
 
@@ -33,6 +66,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      
+      if (session?.user) {
+        setTimeout(() => {
+          checkSubscription();
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -67,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading }}>
+    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading, isPremium, premiumUntil, checkSubscription }}>
       {children}
     </AuthContext.Provider>
   );

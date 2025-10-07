@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Trophy, Calendar, TrendingUp, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-history.jpg";
+import PremiumButton from "@/components/PremiumButton";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -229,7 +230,7 @@ const AppPage = () => {
           </Card>
 
           {/* Progress Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card className="p-6 card-shadow">
               <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-accent" />
@@ -249,6 +250,8 @@ const AppPage = () => {
                 Commencez votre parcours d'apprentissage pour suivre votre progression.
               </div>
             </Card>
+
+            <PremiumButton variant="card" />
           </div>
         </div>
       </main>

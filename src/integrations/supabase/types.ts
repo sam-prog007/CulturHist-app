@@ -155,6 +155,7 @@ export type Database = {
           current_streak: number | null
           exp: number | null
           id: string
+          is_premium: boolean | null
           last_activity_date: string | null
           learning_goal: string | null
           level: number | null
@@ -162,7 +163,9 @@ export type Database = {
           points: number | null
           preferred_eras: string[] | null
           preferred_regions: string[] | null
+          premium_until: string | null
           profile_type: string | null
+          stripe_customer_id: string | null
           updated_at: string | null
           username: string | null
         }
@@ -172,6 +175,7 @@ export type Database = {
           current_streak?: number | null
           exp?: number | null
           id: string
+          is_premium?: boolean | null
           last_activity_date?: string | null
           learning_goal?: string | null
           level?: number | null
@@ -179,7 +183,9 @@ export type Database = {
           points?: number | null
           preferred_eras?: string[] | null
           preferred_regions?: string[] | null
+          premium_until?: string | null
           profile_type?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -189,6 +195,7 @@ export type Database = {
           current_streak?: number | null
           exp?: number | null
           id?: string
+          is_premium?: boolean | null
           last_activity_date?: string | null
           learning_goal?: string | null
           level?: number | null
@@ -196,7 +203,9 @@ export type Database = {
           points?: number | null
           preferred_eras?: string[] | null
           preferred_regions?: string[] | null
+          premium_until?: string | null
           profile_type?: string | null
+          stripe_customer_id?: string | null
           updated_at?: string | null
           username?: string | null
         }

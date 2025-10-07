@@ -7,8 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Book, Mail, Lock, User } from 'lucide-react';
+import { Book, Mail, Lock, User, Crown } from 'lucide-react';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from '@/components/ui/checkbox';
 
 // Validation schemas
 const emailSchema = z.string()
@@ -31,6 +33,7 @@ export default function Auth() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
+  const [wantsPremium, setWantsPremium] = useState(false);
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
 
@@ -106,6 +109,23 @@ export default function Auth() {
       }
     } else {
       toast.success('Compte créé avec succès !');
+      
+      // If user wants premium, redirect to checkout
+      if (wantsPremium) {
+        try {
+          const { data, error: checkoutError } = await supabase.functions.invoke('create-checkout');
+          if (checkoutError) throw checkoutError;
+          
+          if (data?.url) {
+            window.open(data.url, '_blank');
+            toast.success('Redirection vers le paiement...');
+          }
+        } catch (error) {
+          console.error('Error creating checkout:', error);
+          toast.error('Erreur lors de la création du paiement');
+        }
+      }
+      
       navigate('/');
     }
   };
@@ -223,6 +243,21 @@ export default function Auth() {
                   <p className="text-xs text-muted-foreground">
                     Minimum 8 caractères, 1 majuscule et 1 chiffre
                   </p>
+                </div>
+
+                <div className="flex items-center space-x-2 p-4 rounded-lg bg-accent/5 border border-accent/20">
+                  <Checkbox 
+                    id="premium" 
+                    checked={wantsPremium}
+                    onCheckedChange={(checked) => setWantsPremium(checked as boolean)}
+                  />
+                  <label
+                    htmlFor="premium"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Crown className="w-4 h-4 text-accent" />
+                    <span>Je veux devenir Premium (CulturHist +) - 9,99€/mois</span>
+                  </label>
                 </div>
 
                 <Button type="submit" className="w-full" disabled={loading}>
