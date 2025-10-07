@@ -15,10 +15,12 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
   const [loading, setLoading] = useState(false);
   const { isPremium, premiumUntil, checkSubscription } = useAuth();
 
-  const handleSubscribe = async () => {
+  const handleSubscribe = async (priceId: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('create-checkout');
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { priceId }
+      });
       
       if (error) throw error;
       
@@ -115,25 +117,49 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
                   Statistiques avancées
                 </li>
               </ul>
-              <div className="pt-2">
-                <p className="text-2xl font-bold mb-1">9,99€<span className="text-sm font-normal text-muted-foreground">/mois</span></p>
-                <Button 
-                  onClick={handleSubscribe}
-                  disabled={loading}
-                  className="w-full"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Chargement...
-                    </>
-                  ) : (
-                    <>
-                      <Crown className="mr-2 h-4 w-4" />
-                      Devenir Premium
-                    </>
-                  )}
-                </Button>
+              <div className="pt-2 space-y-3">
+                <div>
+                  <p className="text-2xl font-bold mb-1">1,99€<span className="text-sm font-normal text-muted-foreground">/mois</span></p>
+                  <Button 
+                    onClick={() => handleSubscribe('price_1SFcjxHQ9an11cd4yW3YhwYg')}
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Chargement...
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="mr-2 h-4 w-4" />
+                        Mensuel
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold mb-1">12€<span className="text-sm font-normal text-muted-foreground">/an</span></p>
+                  <p className="text-xs text-accent mb-2">Économisez 50% !</p>
+                  <Button 
+                    onClick={() => handleSubscribe('price_1SFckZHQ9an11cd4ke799suF')}
+                    disabled={loading}
+                    variant="outline"
+                    className="w-full border-accent text-accent hover:bg-accent/10"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Chargement...
+                      </>
+                    ) : (
+                      <>
+                        <Crown className="mr-2 h-4 w-4" />
+                        Annuel
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </>
           )}
@@ -166,22 +192,42 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
   }
 
   return (
-    <Button 
-      onClick={handleSubscribe}
-      disabled={loading}
-      className="gap-2"
-    >
-      {loading ? (
-        <>
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Chargement...
-        </>
-      ) : (
-        <>
-          <Crown className="h-4 w-4" />
-          CulturHist +
-        </>
-      )}
-    </Button>
+    <div className="flex gap-2">
+      <Button 
+        onClick={() => handleSubscribe('price_1SFcjxHQ9an11cd4yW3YhwYg')}
+        disabled={loading}
+        className="gap-2"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Chargement...
+          </>
+        ) : (
+          <>
+            <Crown className="h-4 w-4" />
+            Mensuel 1,99€
+          </>
+        )}
+      </Button>
+      <Button 
+        onClick={() => handleSubscribe('price_1SFckZHQ9an11cd4ke799suF')}
+        disabled={loading}
+        variant="outline"
+        className="gap-2 border-accent text-accent hover:bg-accent/10"
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Chargement...
+          </>
+        ) : (
+          <>
+            <Crown className="h-4 w-4" />
+            Annuel 12€
+          </>
+        )}
+      </Button>
+    </div>
   );
 }

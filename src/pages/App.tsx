@@ -16,12 +16,6 @@ const AppPage = () => {
   const { toast } = useToast();
   const [dailyFact, setDailyFact] = useState<any>(null);
   const [loadingFact, setLoadingFact] = useState(true);
-  const [stats, setStats] = useState({
-    factsLearned: 0,
-    points: 0,
-    streak: 0,
-    level: 1
-  });
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
@@ -43,34 +37,6 @@ const AppPage = () => {
 
         if (factError) throw factError;
         setDailyFact(factData);
-
-        // Fetch user stats
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('points, current_streak, exp')
-          .eq('id', user.id)
-          .single();
-
-        if (profileError) throw profileError;
-
-        // Fetch facts learned count
-        const { count, error: countError } = await supabase
-          .from('user_progress')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('completed', true);
-
-        if (countError) throw countError;
-
-        // Calculate level from exp
-        const level = Math.floor(Math.sqrt((profileData?.exp || 0) / 100)) + 1;
-
-        setStats({
-          factsLearned: count || 0,
-          points: profileData?.points || 0,
-          streak: profileData?.current_streak || 0,
-          level
-        });
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -118,57 +84,6 @@ const AppPage = () => {
 
       <main className="container mx-auto px-4 py-12">
         <div className="max-w-6xl mx-auto space-y-8">
-          {/* Quick Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <BookOpen className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.factsLearned}</p>
-                  <p className="text-sm text-muted-foreground">Faits appris</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-accent/10">
-                  <Trophy className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.points}</p>
-                  <p className="text-sm text-muted-foreground">Points</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <Calendar className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.streak}</p>
-                  <p className="text-sm text-muted-foreground">Série</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <TrendingUp className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.level}</p>
-                  <p className="text-sm text-muted-foreground">Niveau</p>
-                </div>
-              </div>
-            </Card>
-          </div>
-
           {/* Daily Fact Card */}
           <Card className="p-8 card-shadow">
             <div className="text-center space-y-6">

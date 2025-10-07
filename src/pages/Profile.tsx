@@ -1,0 +1,177 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import Navbar from "@/components/Navbar";
+import { Card } from "@/components/ui/card";
+import { BookOpen, Trophy, Calendar, TrendingUp } from "lucide-react";
+import PremiumButton from "@/components/PremiumButton";
+
+const ProfilePage = () => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    factsLearned: 0,
+    points: 0,
+    streak: 0,
+    level: 1
+  });
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+      
+      try {
+        // Fetch user stats
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('points, current_streak, exp')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) throw profileError;
+
+        // Fetch facts learned count
+        const { count, error: countError } = await supabase
+          .from('user_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('completed', true);
+
+        if (countError) throw countError;
+
+        // Calculate level from exp
+        const level = Math.floor(Math.sqrt((profileData?.exp || 0) / 100)) + 1;
+
+        setStats({
+          factsLearned: count || 0,
+          points: profileData?.points || 0,
+          streak: profileData?.current_streak || 0,
+          level
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      <main className="container mx-auto px-4 py-24">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="text-center space-y-2">
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground">
+              Mon Profil
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              Suivez votre progression et vos statistiques
+            </p>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="p-6 card-shadow hover-scale smooth-transition">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <BookOpen className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.factsLearned}</p>
+                  <p className="text-sm text-muted-foreground">Faits appris</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 card-shadow hover-scale smooth-transition">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-accent/10">
+                  <Trophy className="w-6 h-6 text-accent" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.points}</p>
+                  <p className="text-sm text-muted-foreground">Points</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 card-shadow hover-scale smooth-transition">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-secondary/50">
+                  <Calendar className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.streak}</p>
+                  <p className="text-sm text-muted-foreground">Série</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 card-shadow hover-scale smooth-transition">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-lg bg-primary/10">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats.level}</p>
+                  <p className="text-sm text-muted-foreground">Niveau</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Progress Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card className="p-6 card-shadow">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-accent" />
+                Vos succès récents
+              </h3>
+              <div className="text-center py-8 text-muted-foreground">
+                Aucun succès pour le moment. Commencez à apprendre pour débloquer des récompenses !
+              </div>
+            </Card>
+
+            <Card className="p-6 card-shadow">
+              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-primary" />
+                Votre progression
+              </h3>
+              <div className="text-center py-8 text-muted-foreground">
+                Commencez votre parcours d'apprentissage pour suivre votre progression.
+              </div>
+            </Card>
+
+            <PremiumButton variant="card" />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default ProfilePage;

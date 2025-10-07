@@ -1,17 +1,40 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Flame } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/culturhist-logo.png";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   
-  const isAppSection = ['/app', '/quiz', '/facts'].includes(location.pathname);
+  const isAppSection = ['/app', '/quiz', '/facts', '/profile'].includes(location.pathname);
+
+  useEffect(() => {
+    const fetchStreak = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('current_streak')
+          .eq('id', user.id)
+          .single();
+
+        if (error) throw error;
+        setStreak(data?.current_streak || 0);
+      } catch (error) {
+        console.error('Error fetching streak:', error);
+      }
+    };
+
+    fetchStreak();
+  }, [user]);
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -50,15 +73,27 @@ const Navbar = () => {
               <>
                 <button 
                   onClick={() => navigate('/app')}
-                  className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
+                  className={`text-foreground/80 hover:text-foreground smooth-transition font-medium pb-1 ${
+                    location.pathname === '/app' ? 'border-b-2 border-primary text-foreground' : ''
+                  }`}
                 >
                   Accueil
                 </button>
                 <button 
                   onClick={() => navigate('/quiz')}
-                  className="text-foreground/80 hover:text-foreground smooth-transition font-medium"
+                  className={`text-foreground/80 hover:text-foreground smooth-transition font-medium pb-1 ${
+                    location.pathname === '/quiz' ? 'border-b-2 border-primary text-foreground' : ''
+                  }`}
                 >
                   Quiz
+                </button>
+                <button 
+                  onClick={() => navigate('/profile')}
+                  className={`text-foreground/80 hover:text-foreground smooth-transition font-medium pb-1 ${
+                    location.pathname === '/profile' ? 'border-b-2 border-primary text-foreground' : ''
+                  }`}
+                >
+                  Profil
                 </button>
               </>
             )}
@@ -67,9 +102,15 @@ const Navbar = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Button variant="hero" onClick={() => navigate('/app')}>
-                Mon espace
-              </Button>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
+                  <Flame className="w-4 h-4 text-accent" />
+                  <span className="text-sm font-semibold text-accent">{streak}</span>
+                </div>
+                <Button variant="hero" onClick={() => navigate('/app')}>
+                  Mon espace
+                </Button>
+              </div>
             ) : (
               <>
                 <Button variant="ghost" onClick={() => navigate('/auth')}>
@@ -124,15 +165,27 @@ const Navbar = () => {
                 <>
                   <button 
                     onClick={() => { navigate('/app'); setIsOpen(false); }}
-                    className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2 text-left"
+                    className={`text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2 text-left ${
+                      location.pathname === '/app' ? 'text-primary font-semibold' : ''
+                    }`}
                   >
                     Accueil
                   </button>
                   <button 
                     onClick={() => { navigate('/quiz'); setIsOpen(false); }}
-                    className="text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2 text-left"
+                    className={`text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2 text-left ${
+                      location.pathname === '/quiz' ? 'text-primary font-semibold' : ''
+                    }`}
                   >
                     Quiz
+                  </button>
+                  <button 
+                    onClick={() => { navigate('/profile'); setIsOpen(false); }}
+                    className={`text-foreground/80 hover:text-foreground smooth-transition font-medium px-4 py-2 text-left ${
+                      location.pathname === '/profile' ? 'text-primary font-semibold' : ''
+                    }`}
+                  >
+                    Profil
                   </button>
                 </>
               )}
