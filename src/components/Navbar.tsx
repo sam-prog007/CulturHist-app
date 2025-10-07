@@ -1,17 +1,26 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, Flame } from "lucide-react";
+import { Menu, X, Flame, LogOut, Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/culturhist-logo.png";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [streak, setStreak] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   const isAppSection = ['/app', '/quiz', '/facts', '/profile'].includes(location.pathname);
 
@@ -35,6 +44,12 @@ const Navbar = () => {
 
     fetchStreak();
   }, [user]);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success('Déconnexion réussie');
+    navigate('/');
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -101,15 +116,31 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            {user ? (
+          {user ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-accent/10 border border-accent/20">
                   <Flame className="w-4 h-4 text-accent" />
                   <span className="text-sm font-semibold text-accent">{streak}</span>
                 </div>
-                <Button variant="hero" onClick={() => navigate('/app')}>
-                  Mon espace
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="hero">
+                      Mon espace
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Modifier mes informations
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Se déconnecter
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ) : (
               <>
@@ -191,9 +222,16 @@ const Navbar = () => {
               )}
               <div className={`flex flex-col gap-2 px-4 pt-4 ${!isAppSection ? 'border-t border-border' : ''}`}>
                 {user ? (
-                  <Button variant="hero" className="w-full" onClick={() => { navigate('/app'); setIsOpen(false); }}>
-                    Mon espace
-                  </Button>
+                  <>
+                    <Button variant="outline" className="w-full" onClick={() => { navigate('/profile'); setIsOpen(false); }}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      Modifier mes informations
+                    </Button>
+                    <Button variant="hero" className="w-full" onClick={handleSignOut}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Se déconnecter
+                    </Button>
+                  </>
                 ) : (
                   <>
                     <Button variant="ghost" className="w-full" onClick={() => { navigate('/auth'); setIsOpen(false); }}>
