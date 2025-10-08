@@ -126,7 +126,7 @@ export default function Auth() {
         }
       }
       
-      navigate('/');
+      navigate('/onboarding');
     }
   };
 
@@ -256,7 +256,7 @@ export default function Auth() {
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
                   >
                     <Crown className="w-4 h-4 text-accent" />
-                    <span>Je veux devenir Premium (CulturHist +) - 9,99€/mois</span>
+                    <span>Je veux devenir Premium (CulturHist +) - 1,99€/mois</span>
                   </label>
                 </div>
 

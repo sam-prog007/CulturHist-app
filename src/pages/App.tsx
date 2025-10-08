@@ -9,6 +9,7 @@ import { BookOpen, Trophy, Calendar, TrendingUp, CheckCircle } from "lucide-reac
 import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-history.jpg";
 import PremiumButton from "@/components/PremiumButton";
+import PreferencesDashboard from "@/components/PreferencesDashboard";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -143,6 +144,9 @@ const AppPage = () => {
               )}
             </div>
           </Card>
+
+          {/* Preferences Dashboard */}
+          <PreferencesDashboard />
 
           {/* Progress Section */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
