@@ -4,107 +4,96 @@ import { Card } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { format, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
+import { TrendingUp } from "lucide-react";
+
+interface ProgressChartProps {
+  userId: string;
+}
 
 interface DailyPoint {
   date: string;
   points_earned: number;
 }
 
-interface ProgressChartProps {
-  userId: string;
-}
-
 const ProgressChart = ({ userId }: ProgressChartProps) => {
-  const [chartData, setChartData] = useState<DailyPoint[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [chartData, setChartData] = useState<{ date: string; points: number }[]>([]);
 
   useEffect(() => {
     const fetchDailyPoints = async () => {
-      try {
-        // Get last 30 days
-        const thirtyDaysAgo = subDays(new Date(), 30);
-        
-        const { data, error } = await supabase
-          .from('daily_points')
-          .select('date, points_earned')
-          .eq('user_id', userId)
-          .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
-          .order('date', { ascending: true });
+      // Fetch last 30 days of data
+      const thirtyDaysAgo = subDays(new Date(), 30);
+      
+      const { data, error } = await supabase
+        .from('daily_points')
+        .select('date, points_earned')
+        .eq('user_id', userId)
+        .gte('date', format(thirtyDaysAgo, 'yyyy-MM-dd'))
+        .order('date', { ascending: true });
 
-        if (error) throw error;
-
-        // Create a complete 30-day array with 0 points for missing days
-        const completeData: DailyPoint[] = [];
-        for (let i = 29; i >= 0; i--) {
-          const date = subDays(new Date(), i);
-          const dateStr = date.toISOString().split('T')[0];
-          const existingData = data?.find(d => d.date === dateStr);
-          
-          completeData.push({
-            date: format(date, 'dd/MM', { locale: fr }),
-            points_earned: existingData?.points_earned || 0
-          });
-        }
-
-        setChartData(completeData);
-      } catch (error) {
+      if (error) {
         console.error('Error fetching daily points:', error);
-      } finally {
-        setLoading(false);
+        return;
       }
+
+      // Transform data for chart
+      const formattedData = (data || []).map((point: DailyPoint) => ({
+        date: format(new Date(point.date), 'dd/MM', { locale: fr }),
+        points: point.points_earned,
+      }));
+
+      setChartData(formattedData);
     };
 
     fetchDailyPoints();
   }, [userId]);
 
-  if (loading) {
+  if (chartData.length === 0) {
     return (
-      <Card className="p-6">
-        <div className="h-64 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <Card className="p-6 card-shadow">
+        <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-primary" />
+          Votre progression
+        </h3>
+        <div className="text-center py-8 text-muted-foreground">
+          Complétez des quiz pour voir votre progression quotidienne.
         </div>
       </Card>
     );
   }
 
-  const totalPoints = chartData.reduce((sum, day) => sum + day.points_earned, 0);
-
   return (
-    <Card className="p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold mb-1">Progression sur 30 jours</h3>
-        <p className="text-sm text-muted-foreground">
-          Total: {totalPoints} points gagnés
-        </p>
-      </div>
-      
-      <ResponsiveContainer width="100%" height={300}>
+    <Card className="p-6 card-shadow">
+      <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
+        <TrendingUp className="w-5 h-5 text-primary" />
+        Votre progression (30 derniers jours)
+      </h3>
+      <ResponsiveContainer width="100%" height={200}>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="date" 
-            className="text-xs"
-            tick={{ fill: 'currentColor' }}
+            stroke="hsl(var(--muted-foreground))"
+            style={{ fontSize: '12px' }}
           />
           <YAxis 
-            className="text-xs"
-            tick={{ fill: 'currentColor' }}
+            stroke="hsl(var(--muted-foreground))"
+            style={{ fontSize: '12px' }}
           />
-          <Tooltip 
-            contentStyle={{ 
+          <Tooltip
+            contentStyle={{
               backgroundColor: 'hsl(var(--card))',
               border: '1px solid hsl(var(--border))',
-              borderRadius: '6px'
+              borderRadius: '8px',
             }}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
           />
-          <Line 
-            type="monotone" 
-            dataKey="points_earned" 
-            stroke="hsl(var(--accent))" 
+          <Line
+            type="monotone"
+            dataKey="points"
+            stroke="hsl(var(--primary))"
             strokeWidth={2}
-            dot={{ fill: 'hsl(var(--accent))' }}
-            name="Points"
+            dot={{ fill: 'hsl(var(--primary))', r: 4 }}
+            activeDot={{ r: 6 }}
           />
         </LineChart>
       </ResponsiveContainer>
