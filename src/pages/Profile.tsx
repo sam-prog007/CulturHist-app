@@ -12,13 +12,13 @@ import ProgressChart from "@/components/ProgressChart";
 const ProfilePage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const [gradesDialogOpen, setGradesDialogOpen] = useState(false);
   const [stats, setStats] = useState({
     factsLearned: 0,
     points: 0,
     streak: 0,
     level: 1
   });
-  const [gradesDialogOpen, setGradesDialogOpen] = useState(false);
   const [currentGrade, setCurrentGrade] = useState<{ name: string; historical_figure: string } | null>(null);
 
   useEffect(() => {
