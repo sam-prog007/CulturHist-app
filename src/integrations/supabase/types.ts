@@ -71,6 +71,66 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_points: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          points_earned: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          points_earned?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          points_earned?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      grades: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          historical_figure: string
+          id: string
+          image_url: string | null
+          level: number
+          max_points: number
+          min_points: number
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          historical_figure: string
+          id?: string
+          image_url?: string | null
+          level: number
+          max_points: number
+          min_points: number
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          historical_figure?: string
+          id?: string
+          image_url?: string | null
+          level?: number
+          max_points?: number
+          min_points?: number
+          name?: string
+        }
+        Relationships: []
+      }
       historical_facts: {
         Row: {
           created_at: string | null

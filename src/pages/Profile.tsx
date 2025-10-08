@@ -4,8 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Trophy, Calendar, TrendingUp } from "lucide-react";
+import { BookOpen, Trophy, Calendar, TrendingUp, Crown } from "lucide-react";
 import PremiumButton from "@/components/PremiumButton";
+import GradesDialog from "@/components/GradesDialog";
+import ProgressChart from "@/components/ProgressChart";
 
 const ProfilePage = () => {
   const { user, loading } = useAuth();
@@ -16,6 +18,8 @@ const ProfilePage = () => {
     streak: 0,
     level: 1
   });
+  const [gradesDialogOpen, setGradesDialogOpen] = useState(false);
+  const [currentGrade, setCurrentGrade] = useState<{ name: string; historical_figure: string } | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -45,6 +49,18 @@ const ProfilePage = () => {
           .eq('completed', true);
 
         if (countError) throw countError;
+
+        // Fetch current grade
+        const { data: gradeData } = await supabase
+          .from('grades')
+          .select('name, historical_figure, min_points, max_points')
+          .lte('min_points', profileData?.points || 0)
+          .gt('max_points', profileData?.points || 0)
+          .single();
+
+        if (gradeData) {
+          setCurrentGrade(gradeData);
+        }
 
         // Calculate level from exp
         const level = Math.floor(Math.sqrt((profileData?.exp || 0) / 100)) + 1;
@@ -131,14 +147,19 @@ const ProfilePage = () => {
               </div>
             </Card>
 
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
+            <Card 
+              className="p-6 card-shadow hover-scale smooth-transition cursor-pointer"
+              onClick={() => setGradesDialogOpen(true)}
+            >
               <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+                <div className="p-3 rounded-lg bg-accent/20">
+                  <Crown className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.level}</p>
-                  <p className="text-sm text-muted-foreground">Niveau</p>
+                  <p className="text-lg font-bold">{currentGrade?.name || 'Débutant'}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {currentGrade?.historical_figure || 'Cliquez pour voir les grades'}
+                  </p>
                 </div>
               </div>
             </Card>
@@ -156,20 +177,18 @@ const ProfilePage = () => {
               </div>
             </Card>
 
-            <Card className="p-6 card-shadow">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                Votre progression
-              </h3>
-              <div className="text-center py-8 text-muted-foreground">
-                Commencez votre parcours d'apprentissage pour suivre votre progression.
-              </div>
-            </Card>
+            {user && <ProgressChart userId={user.id} />}
 
             <PremiumButton variant="card" />
           </div>
         </div>
       </main>
+
+      <GradesDialog 
+        open={gradesDialogOpen}
+        onOpenChange={setGradesDialogOpen}
+        currentPoints={stats.points}
+      />
     </div>
   );
 };

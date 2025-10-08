@@ -201,6 +201,7 @@ const Quiz = () => {
     if (currentQuestionIndex + 1 >= questions.length || answeredQuestions.size === questions.length) {
       // Quiz complete
       const expEarned = score * 10;
+      const pointsEarned = score * 10;
       
       try {
         // Save quiz session
@@ -211,19 +212,50 @@ const Quiz = () => {
           exp_earned: expEarned
         });
 
-        // Update user exp
+        // Update user exp and points (this will trigger streak update)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('exp, points, current_streak')
+          .select('exp, points')
           .eq('id', user!.id)
           .single();
 
         if (profile) {
           const newExp = profile.exp + expEarned;
+          const newPoints = profile.points + pointsEarned;
           await supabase
             .from('profiles')
-            .update({ exp: newExp })
+            .update({ 
+              exp: newExp,
+              points: newPoints
+            })
             .eq('id', user!.id);
+
+          // Update or insert daily points
+          const today = new Date().toISOString().split('T')[0];
+          const { data: existingDailyPoints } = await supabase
+            .from('daily_points')
+            .select('points_earned')
+            .eq('user_id', user!.id)
+            .eq('date', today)
+            .single();
+
+          if (existingDailyPoints) {
+            await supabase
+              .from('daily_points')
+              .update({ 
+                points_earned: existingDailyPoints.points_earned + pointsEarned 
+              })
+              .eq('user_id', user!.id)
+              .eq('date', today);
+          } else {
+            await supabase
+              .from('daily_points')
+              .insert({
+                user_id: user!.id,
+                date: today,
+                points_earned: pointsEarned
+              });
+          }
         }
       } catch (error) {
         console.error('Error saving quiz:', error);
