@@ -56,19 +56,87 @@ const PreferencesDashboard = () => {
           preferred_eras: profileData?.preferred_eras || []
         });
 
-        // For now, we'll simulate progress data
-        // In a real app, you would calculate this based on facts learned per region/era
+        // Calculate real progress based on facts learned
         const tempRegionProgress: ProgressData = {};
         const tempEraProgress: ProgressData = {};
 
-        // Initialize progress for each preference (random values for now)
-        profileData?.preferred_regions?.forEach((region: string) => {
-          tempRegionProgress[region] = Math.floor(Math.random() * 100);
-        });
+        // Calculate progress for each preferred region
+        for (const region of (profileData?.preferred_regions || [])) {
+          // Count total facts in this region
+          const { count: totalCount } = await supabase
+            .from('historical_facts')
+            .select('*', { count: 'exact', head: true })
+            .eq('region', region);
 
-        profileData?.preferred_eras?.forEach((era: string) => {
-          tempEraProgress[era] = Math.floor(Math.random() * 100);
-        });
+          // Count completed facts in this region
+          const { data: completedFacts } = await supabase
+            .from('user_progress')
+            .select('fact_id')
+            .eq('user_id', user.id)
+            .eq('completed', true);
+
+          const completedFactIds = completedFacts?.map(f => f.fact_id) || [];
+
+          if (completedFactIds.length > 0) {
+            const { count: completedCount } = await supabase
+              .from('historical_facts')
+              .select('*', { count: 'exact', head: true })
+              .eq('region', region)
+              .in('id', completedFactIds);
+
+            const progress = totalCount && totalCount > 0 
+              ? Math.round((completedCount || 0) / totalCount * 100)
+              : 0;
+            tempRegionProgress[region] = progress;
+          } else {
+            tempRegionProgress[region] = 0;
+          }
+        }
+
+        // Calculate progress for each preferred era
+        for (const era of (profileData?.preferred_eras || [])) {
+          // Get all periods that match this era
+          const { data: periods } = await supabase
+            .from('historical_periods')
+            .select('id, name')
+            .ilike('name', `%${era}%`);
+
+          const periodIds = periods?.map(p => p.id) || [];
+
+          if (periodIds.length > 0) {
+            // Count total facts in these periods
+            const { count: totalCount } = await supabase
+              .from('historical_facts')
+              .select('*', { count: 'exact', head: true })
+              .in('period_id', periodIds);
+
+            // Count completed facts in these periods
+            const { data: completedFacts } = await supabase
+              .from('user_progress')
+              .select('fact_id')
+              .eq('user_id', user.id)
+              .eq('completed', true);
+
+            const completedFactIds = completedFacts?.map(f => f.fact_id) || [];
+
+            if (completedFactIds.length > 0) {
+              const { count: completedCount } = await supabase
+                .from('historical_facts')
+                .select('*', { count: 'exact', head: true })
+                .in('period_id', periodIds)
+                .in('id', completedFactIds);
+
+              const progress = totalCount && totalCount > 0 
+                ? Math.round((completedCount || 0) / totalCount * 100)
+                : 0;
+              tempEraProgress[era] = progress;
+            } else {
+              tempEraProgress[era] = 0;
+            }
+          } else {
+            tempEraProgress[era] = 0;
+          }
+        }
 
         setRegionProgress(tempRegionProgress);
         setEraProgress(tempEraProgress);

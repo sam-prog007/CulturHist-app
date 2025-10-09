@@ -76,7 +76,17 @@ const FactsList = () => {
           return;
         }
 
-        // Fetch 5 random facts that haven't been validated yet
+        // Fetch user preferences
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('preferred_regions, preferred_eras')
+          .eq('id', user.id)
+          .single();
+
+        const preferredRegions = profileData?.preferred_regions || [];
+        const preferredEras = profileData?.preferred_eras || [];
+
+        // Fetch validated facts
         const { data: validatedFactIds } = await supabase
           .from('user_progress')
           .select('fact_id')
@@ -85,23 +95,46 @@ const FactsList = () => {
 
         const validatedIds = validatedFactIds?.map(v => v.fact_id) || [];
 
+        // Fetch all available facts
         let query = supabase
           .from('historical_facts')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('*, historical_periods(name)');
 
         if (validatedIds.length > 0) {
           query = query.not('id', 'in', `(${validatedIds.join(',')})`);
         }
 
-        const { data: factsData, error: factsError } = await query.limit(5);
+        const { data: allFacts, error: factsError } = await query;
 
         if (factsError) throw factsError;
 
-        setFacts(factsData || []);
+        // Sort facts by preference match
+        const sortedFacts = (allFacts || []).sort((a, b) => {
+          const aMatchesRegion = a.region && preferredRegions.includes(a.region);
+          const bMatchesRegion = b.region && preferredRegions.includes(b.region);
+          
+          const aPeriodName = a.historical_periods?.name || '';
+          const bPeriodName = b.historical_periods?.name || '';
+          
+          const aMatchesEra = preferredEras.some((era: string) => 
+            aPeriodName.toLowerCase().includes(era.toLowerCase())
+          );
+          const bMatchesEra = preferredEras.some((era: string) => 
+            bPeriodName.toLowerCase().includes(era.toLowerCase())
+          );
+
+          // Prioritize facts that match preferences
+          const aScore = (aMatchesRegion ? 2 : 0) + (aMatchesEra ? 1 : 0);
+          const bScore = (bMatchesRegion ? 2 : 0) + (bMatchesEra ? 1 : 0);
+          
+          return bScore - aScore;
+        });
+
+        // Take top 5 facts
+        setFacts(sortedFacts.slice(0, 5));
 
         // Fetch user stats
-        const { data: profileData } = await supabase
+        const { data: statsData } = await supabase
           .from('profiles')
           .select('points, current_streak, exp')
           .eq('id', user.id)
@@ -113,12 +146,12 @@ const FactsList = () => {
           .eq('user_id', user.id)
           .eq('completed', true);
 
-        const level = Math.floor(Math.sqrt((profileData?.exp || 0) / 100)) + 1;
+        const level = Math.floor(Math.sqrt((statsData?.exp || 0) / 100)) + 1;
 
         setStats({
           factsLearned: count || 0,
-          points: profileData?.points || 0,
-          streak: profileData?.current_streak || 0,
+          points: statsData?.points || 0,
+          streak: statsData?.current_streak || 0,
           level
         });
       } catch (error) {
