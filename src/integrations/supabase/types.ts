@@ -141,6 +141,7 @@ export type Database = {
           image_url: string | null
           period_id: string | null
           points_reward: number | null
+          region: string | null
           title: string
         }
         Insert: {
@@ -152,6 +153,7 @@ export type Database = {
           image_url?: string | null
           period_id?: string | null
           points_reward?: number | null
+          region?: string | null
           title: string
         }
         Update: {
@@ -163,6 +165,7 @@ export type Database = {
           image_url?: string | null
           period_id?: string | null
           points_reward?: number | null
+          region?: string | null
           title?: string
         }
         Relationships: [
