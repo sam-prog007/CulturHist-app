@@ -199,33 +199,31 @@ const Quiz = () => {
     }
 
     if (currentQuestionIndex + 1 >= questions.length || answeredQuestions.size === questions.length) {
-      // Quiz complete
-      const expEarned = score * 10;
-      const pointsEarned = score * 10;
+      // Quiz complete - Calculate points based on performance
+      const isPerfect = score === questions.length;
+      const pointsEarned = isPerfect ? 30 : Math.round((score / questions.length) * 30);
       
       try {
-        // Save quiz session
+        // Save quiz session (no more exp_earned)
         await supabase.from('quiz_sessions').insert({
           user_id: user!.id,
           score,
           total_questions: questions.length,
-          exp_earned: expEarned
+          exp_earned: 0 // No more EXP from quizzes
         });
 
-        // Update user exp and points (this will trigger streak update)
+        // Update user points only (this will trigger streak update)
         const { data: profile } = await supabase
           .from('profiles')
-          .select('exp, points')
+          .select('points')
           .eq('id', user!.id)
           .single();
 
         if (profile) {
-          const newExp = profile.exp + expEarned;
           const newPoints = profile.points + pointsEarned;
           await supabase
             .from('profiles')
             .update({ 
-              exp: newExp,
               points: newPoints
             })
             .eq('id', user!.id);
@@ -237,7 +235,7 @@ const Quiz = () => {
             .select('points_earned')
             .eq('user_id', user!.id)
             .eq('date', today)
-            .single();
+            .maybeSingle();
 
           if (existingDailyPoints) {
             await supabase
@@ -285,7 +283,8 @@ const Quiz = () => {
   }
 
   if (isQuizComplete) {
-    const expEarned = score * 10;
+    const isPerfect = score === questions.length;
+    const pointsEarned = isPerfect ? 30 : Math.round((score / questions.length) * 30);
     const percentage = Math.round((score / questions.length) * 100);
 
     return (
@@ -303,7 +302,7 @@ const Quiz = () => {
                 Score : {percentage}%
               </p>
               <p className="text-lg text-accent">
-                +{expEarned} EXP gagnés
+                +{pointsEarned} points gagnés {isPerfect && "🏆"}
               </p>
             </div>
             <div className="flex gap-4 justify-center pt-4">

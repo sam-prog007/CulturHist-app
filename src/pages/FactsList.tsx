@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getFactImage } from "@/assets/factsImages";
 
 const FactsList = () => {
   const { user, loading } = useAuth();
@@ -288,37 +289,40 @@ const FactsList = () => {
             </Card>
           ) : (
             <div className="space-y-6">
-              {facts.map((fact) => (
-                <Card key={fact.id} className="p-6 space-y-4">
-                  {fact.image_url && (
-                    <div className="w-full rounded-lg overflow-hidden">
-                      <img 
-                        src={fact.image_url} 
-                        alt={fact.title}
-                        className="w-full h-48 object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold">{fact.title}</h3>
-                    <p className="text-muted-foreground">{fact.description}</p>
-                    {fact.date_text && (
-                      <p className="text-sm font-medium text-accent">
-                        📅 {fact.date_text}
-                      </p>
+              {facts.map((fact) => {
+                const imageUrl = getFactImage(fact.image_url);
+                return (
+                  <Card key={fact.id} className="p-6 space-y-4">
+                    {imageUrl && (
+                      <div className="w-full rounded-lg overflow-hidden">
+                        <img 
+                          src={imageUrl} 
+                          alt={fact.title}
+                          className="w-full h-48 object-cover"
+                        />
+                      </div>
                     )}
-                  </div>
+                    
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bold">{fact.title}</h3>
+                      <p className="text-muted-foreground">{fact.description}</p>
+                      {fact.date_text && (
+                        <p className="text-sm font-medium text-accent">
+                          📅 {fact.date_text}
+                        </p>
+                      )}
+                    </div>
 
-                  <Button
-                    onClick={() => handleValidateFact(fact)}
-                    className="w-full"
-                  >
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Valider (+{fact.points_reward} pts)
-                  </Button>
-                </Card>
-              ))}
+                    <Button
+                      onClick={() => handleValidateFact(fact)}
+                      className="w-full"
+                    >
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Valider (+{fact.points_reward} pts)
+                    </Button>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </div>

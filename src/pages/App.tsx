@@ -10,6 +10,9 @@ import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-history.jpg";
 import PremiumButton from "@/components/PremiumButton";
 import PreferencesDashboard from "@/components/PreferencesDashboard";
+import AchievementsList from "@/components/AchievementsList";
+import ProgressChart from "@/components/ProgressChart";
+import { getFactImage } from "@/assets/factsImages";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -104,7 +107,7 @@ const AppPage = () => {
                   {dailyFact.image_url && (
                     <div className="w-full max-w-3xl mx-auto mb-6 rounded-lg overflow-hidden card-shadow">
                       <img 
-                        src={dailyFact.image_url} 
+                        src={getFactImage(dailyFact.image_url) || heroImage} 
                         alt={dailyFact.title}
                         className="w-full h-64 object-cover"
                       />
@@ -149,29 +152,19 @@ const AppPage = () => {
           <PreferencesDashboard />
 
           {/* Progress Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="p-6 card-shadow">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-accent" />
-                Vos succès récents
-              </h3>
-              <div className="text-center py-8 text-muted-foreground">
-                Aucun succès pour le moment. Commencez à apprendre pour débloquer des récompenses !
-              </div>
-            </Card>
-
-            <Card className="p-6 card-shadow">
-              <h3 className="text-xl font-semibold mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-primary" />
-                Votre progression
-              </h3>
-              <div className="text-center py-8 text-muted-foreground">
-                Commencez votre parcours d'apprentissage pour suivre votre progression.
-              </div>
-            </Card>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {user && <ProgressChart userId={user.id} />}
             <PremiumButton variant="card" />
           </div>
+
+          {/* Achievements Section */}
+          <Card className="p-6 card-shadow">
+            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-accent" />
+              Vos succès
+            </h3>
+            {user && <AchievementsList userId={user.id} />}
+          </Card>
         </div>
       </main>
     </div>;
