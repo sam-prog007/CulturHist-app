@@ -121,7 +121,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
                 <div>
                   <p className="text-2xl font-bold mb-1">1,99€<span className="text-sm font-normal text-muted-foreground">/mois</span></p>
                   <Button 
-                    onClick={() => handleSubscribe('price_1SFcjxHQ9an11cd4yW3YhwYg')}
+                    onClick={() => handleSubscribe('price_1SGGVyHPnO1VlDbG9d5dPOQc')}
                     disabled={loading}
                     className="w-full"
                   >
@@ -139,10 +139,10 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
                   </Button>
                 </div>
                 <div>
-                  <p className="text-2xl font-bold mb-1">12€<span className="text-sm font-normal text-muted-foreground">/an</span></p>
-                  <p className="text-xs text-accent mb-2">Économisez 50% !</p>
+                  <p className="text-2xl font-bold mb-1">12,99€<span className="text-sm font-normal text-muted-foreground">/an</span></p>
+                  <p className="text-xs text-accent mb-2">Économisez 35% !</p>
                   <Button 
-                    onClick={() => handleSubscribe('price_1SFckZHQ9an11cd4ke799suF')}
+                    onClick={() => handleSubscribe('price_1SGGX2HPnO1VlDbG01hfQrdG')}
                     disabled={loading}
                     variant="outline"
                     className="w-full border-accent text-accent hover:bg-accent/10"
@@ -194,7 +194,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
   return (
     <div className="flex gap-2">
       <Button 
-        onClick={() => handleSubscribe('price_1SFcjxHQ9an11cd4yW3YhwYg')}
+        onClick={() => handleSubscribe('price_1SGGVyHPnO1VlDbG9d5dPOQc')}
         disabled={loading}
         className="gap-2"
       >
@@ -211,7 +211,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
         )}
       </Button>
       <Button 
-        onClick={() => handleSubscribe('price_1SFckZHQ9an11cd4ke799suF')}
+        onClick={() => handleSubscribe('price_1SGGX2HPnO1VlDbG01hfQrdG')}
         disabled={loading}
         variant="outline"
         className="gap-2 border-accent text-accent hover:bg-accent/10"
@@ -224,7 +224,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
         ) : (
           <>
             <Crown className="h-4 w-4" />
-            Annuel 12€
+            Annuel 12,99€
           </>
         )}
       </Button>
