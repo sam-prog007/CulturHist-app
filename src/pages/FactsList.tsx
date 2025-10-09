@@ -95,13 +95,24 @@ const FactsList = () => {
 
         const validatedIds = validatedFactIds?.map(v => v.fact_id) || [];
 
-        // Fetch all available facts
+        // Get all facts the user has seen (including previously assigned daily facts)
+        const { data: previouslyAssigned } = await supabase
+          .from('daily_fact_assignments')
+          .select('fact_id')
+          .eq('user_id', user.id);
+
+        const allSeenIds = [
+          ...validatedIds,
+          ...(previouslyAssigned?.map(f => f.fact_id) || [])
+        ];
+
+        // Fetch all available facts that haven't been seen
         let query = supabase
           .from('historical_facts')
           .select('*, historical_periods(name)');
 
-        if (validatedIds.length > 0) {
-          query = query.not('id', 'in', `(${validatedIds.join(',')})`);
+        if (allSeenIds.length > 0) {
+          query = query.not('id', 'in', `(${allSeenIds.join(',')})`);
         }
 
         const { data: allFacts, error: factsError } = await query;

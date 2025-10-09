@@ -13,6 +13,7 @@ import PreferencesDashboard from "@/components/PreferencesDashboard";
 import AchievementsList from "@/components/AchievementsList";
 import ProgressChart from "@/components/ProgressChart";
 import { getFactImage } from "@/assets/factsImages";
+import { getDailyFactForUser } from "@/lib/dailyFact";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -31,16 +32,9 @@ const AppPage = () => {
       if (!user) return;
       
       try {
-        // Fetch daily fact
-        const { data: factData, error: factError } = await supabase
-          .from('historical_facts')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (factError) throw factError;
-        setDailyFact(factData);
+        // Fetch daily fact for this user
+        const fact = await getDailyFactForUser(user.id);
+        setDailyFact(fact);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {

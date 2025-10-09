@@ -47,6 +47,38 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_fact_assignments: {
+        Row: {
+          created_at: string | null
+          date: string
+          fact_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string
+          fact_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          fact_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_fact_assignments_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "historical_facts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_facts_progress: {
         Row: {
           created_at: string | null
