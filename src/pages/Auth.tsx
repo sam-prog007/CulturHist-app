@@ -49,7 +49,7 @@ export default function Auth() {
     // Validate email
     const emailValidation = emailSchema.safeParse(email);
     if (!emailValidation.success) {
-      toast.error(emailValidation.error.errors[0].message);
+      toast.error(emailValidation.error.issues[0].message);
       return;
     }
 
@@ -77,14 +77,14 @@ export default function Auth() {
     // Validate email
     const emailValidation = emailSchema.safeParse(email);
     if (!emailValidation.success) {
-      toast.error(emailValidation.error.errors[0].message);
+      toast.error(emailValidation.error.issues[0].message);
       return;
     }
 
     // Validate password
     const passwordValidation = passwordSchema.safeParse(password);
     if (!passwordValidation.success) {
-      toast.error(passwordValidation.error.errors[0].message);
+      toast.error(passwordValidation.error.issues[0].message);
       return;
     }
 
@@ -92,7 +92,7 @@ export default function Auth() {
     if (username) {
       const usernameValidation = usernameSchema.safeParse(username);
       if (!usernameValidation.success) {
-        toast.error(usernameValidation.error.errors[0].message);
+        toast.error(usernameValidation.error.issues[0].message);
         return;
       }
     }
