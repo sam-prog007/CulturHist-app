@@ -116,10 +116,10 @@ const Onboarding = () => {
       });
       return;
     }
-    if (step === 2 && !learningGoal.trim()) {
+    if (step === 2 && !learningGoal) {
       toast({
-        title: "Réponse requise",
-        description: "Veuillez indiquer vos motivations",
+        title: "Sélection requise",
+        description: "Veuillez sélectionner vos motivations",
         variant: "destructive",
       });
       return;
@@ -209,20 +209,73 @@ const Onboarding = () => {
                     Pourquoi souhaitez-vous apprendre l'histoire ?
                   </h2>
                   <p className="text-sm text-muted-foreground">
-                    Partagez vos motivations et objectifs
+                    Sélectionnez vos motivations principales
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="learning-goal">Vos motivations</Label>
-                  <Textarea
-                    id="learning-goal"
-                    value={learningGoal}
-                    onChange={(e) => setLearningGoal(e.target.value)}
-                    placeholder="Ex: Je veux enrichir ma culture générale, préparer un examen, comprendre le monde contemporain..."
-                    rows={5}
-                    className="resize-none"
-                  />
-                </div>
+                <RadioGroup value={learningGoal} onValueChange={setLearningGoal}>
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="culture"
+                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
+                    >
+                      <RadioGroupItem value="culture" id="culture" />
+                      <div className="flex-1">
+                        <div className="font-medium">Culture générale</div>
+                        <div className="text-sm text-muted-foreground">
+                          Enrichir mes connaissances et ma culture personnelle
+                        </div>
+                      </div>
+                    </Label>
+                    <Label
+                      htmlFor="exam"
+                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
+                    >
+                      <RadioGroupItem value="exam" id="exam" />
+                      <div className="flex-1">
+                        <div className="font-medium">Préparation d'examen</div>
+                        <div className="text-sm text-muted-foreground">
+                          Me préparer pour des examens ou concours
+                        </div>
+                      </div>
+                    </Label>
+                    <Label
+                      htmlFor="understanding"
+                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
+                    >
+                      <RadioGroupItem value="understanding" id="understanding" />
+                      <div className="flex-1">
+                        <div className="font-medium">Comprendre le monde actuel</div>
+                        <div className="text-sm text-muted-foreground">
+                          Mieux comprendre les enjeux contemporains
+                        </div>
+                      </div>
+                    </Label>
+                    <Label
+                      htmlFor="passion"
+                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
+                    >
+                      <RadioGroupItem value="passion" id="passion" />
+                      <div className="flex-1">
+                        <div className="font-medium">Passion personnelle</div>
+                        <div className="text-sm text-muted-foreground">
+                          L'histoire me passionne profondément
+                        </div>
+                      </div>
+                    </Label>
+                    <Label
+                      htmlFor="professional"
+                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
+                    >
+                      <RadioGroupItem value="professional" id="professional" />
+                      <div className="flex-1">
+                        <div className="font-medium">Raisons professionnelles</div>
+                        <div className="text-sm text-muted-foreground">
+                          Pour mon travail ou mes études
+                        </div>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
             )}
 

@@ -41,6 +41,28 @@ const Quiz = () => {
       if (!user) return;
 
       try {
+        // Check if user already did a quiz today (unless premium)
+        const today = new Date().toISOString().split('T')[0];
+        const { data: todayQuizzes } = await supabase
+          .from('quiz_sessions')
+          .select('id')
+          .eq('user_id', user.id)
+          .gte('completed_at', `${today}T00:00:00`)
+          .limit(1);
+
+        // Check if user is premium
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_premium')
+          .eq('id', user.id)
+          .single();
+
+        // Redirect to limit page if not premium and already did quiz today
+        if (todayQuizzes && todayQuizzes.length > 0 && !profile?.is_premium) {
+          navigate('/quiz-limit');
+          return;
+        }
+
         // Fetch facts learned in the last 4 days (today + 3 previous days)
         const fourDaysAgo = new Date();
         fourDaysAgo.setDate(fourDaysAgo.getDate() - 3);

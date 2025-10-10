@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import AppPage from "./pages/App";
 import Quiz from "./pages/Quiz";
+import QuizLimit from "./pages/QuizLimit";
 import FactsList from "./pages/FactsList";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
@@ -28,6 +29,7 @@ const App = () => (
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/app" element={<AppPage />} />
             <Route path="/quiz" element={<Quiz />} />
+            <Route path="/quiz-limit" element={<QuizLimit />} />
             <Route path="/facts" element={<FactsList />} />
             <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
