@@ -57,5 +57,12 @@ export const factsImages: Record<string, string> = {
 // Helper function to get image by key
 export const getFactImage = (key: string | null): string | undefined => {
   if (!key) return undefined;
-  return factsImages[key];
+  
+  // Extract the filename without path and extension if it's a full path
+  // e.g., "/src/assets/facts/pyramids-egypt.jpg" -> "pyramids-egypt"
+  const cleanKey = key.includes('/') 
+    ? key.split('/').pop()?.replace('.jpg', '').replace('.png', '') || key
+    : key;
+  
+  return factsImages[cleanKey];
 };
