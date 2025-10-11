@@ -105,8 +105,8 @@ const Quiz = () => {
           if (!fact || usedFacts.has(fact.id)) continue;
           usedFacts.add(fact.id);
 
-          // Generate different types of questions
-          const questionType = Math.floor(Math.random() * 2);
+          // Generate different types of questions (3 types)
+          const questionType = Math.floor(Math.random() * 3);
 
           if (questionType === 0 && fact.date_text) {
             // Question: Given fact, find date
@@ -125,7 +125,7 @@ const Quiz = () => {
                 factId: fact.id
               });
             }
-          } else {
+          } else if (questionType === 1) {
             // Question: Given date, find fact
             const otherFacts = recentProgress
               .map((p: any) => p.historical_facts)
@@ -143,6 +143,23 @@ const Quiz = () => {
                 question: questionText,
                 options,
                 correctAnswer: options.indexOf(fact.title),
+                factId: fact.id
+              });
+            }
+          } else if (fact.region) {
+            // Question: Given fact, find region
+            const otherRegions = [...new Set(recentProgress
+              .map((p: any) => p.historical_facts?.region)
+              .filter((r: string) => r && r !== fact.region))]
+              .slice(0, 3);
+
+            if (otherRegions.length >= 2) {
+              const options = [fact.region, ...otherRegions].sort(() => Math.random() - 0.5);
+              generatedQuestions.push({
+                id: `${fact.id}-region`,
+                question: `Dans quelle région du monde se situe l'événement : "${fact.title}" ?`,
+                options,
+                correctAnswer: options.indexOf(fact.region),
                 factId: fact.id
               });
             }
