@@ -8,9 +8,10 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getFactImage } from "@/assets/factsImages";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 const FactsList = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isPremium } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [facts, setFacts] = useState<any[]>([]);
@@ -65,14 +66,9 @@ const FactsList = () => {
 
         setDailyProgress(progressData);
 
-        // If already validated 5 facts today, redirect
-        if (progressData.facts_validated >= 5) {
-          toast({
-            title: "Limite atteinte",
-            description: "Vous avez déjà validé 5 faits aujourd'hui. Revenez demain !",
-            variant: "destructive"
-          });
-          navigate('/app');
+        // If already validated 5 facts today and not premium, redirect to limit page
+        if (progressData.facts_validated >= 5 && !isPremium) {
+          navigate('/facts-limit');
           return;
         }
 
@@ -269,16 +265,16 @@ const FactsList = () => {
 
       toast({
         title: "Fait validé !",
-        description: `+${fact.points_reward} points • ${5 - newFactsValidated} faits restants aujourd'hui`,
+        description: `+${fact.points_reward} points${isPremium ? '' : ` • ${5 - newFactsValidated} faits restants aujourd'hui`}`,
       });
 
-      // If reached daily limit
-      if (newFactsValidated >= 5) {
+      // If reached daily limit and not premium
+      if (newFactsValidated >= 5 && !isPremium) {
         toast({
           title: "Limite atteinte !",
           description: "Vous avez validé vos 5 faits du jour. À demain !",
         });
-        setTimeout(() => navigate('/app'), 2000);
+        setTimeout(() => navigate('/facts-limit'), 2000);
       }
     } catch (error: any) {
       toast({
@@ -307,7 +303,7 @@ const FactsList = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="container mx-auto px-4 py-24">
+      <main className="container mx-auto px-4 py-20 md:py-24">
         <div className="max-w-4xl mx-auto space-y-6">
           <Button
             variant="ghost"
@@ -319,37 +315,41 @@ const FactsList = () => {
           </Button>
 
           <div className="text-center space-y-2">
-            <h1 className="text-3xl font-bold">Explorer les faits</h1>
-            <p className="text-muted-foreground">
-              {dailyProgress && `${dailyProgress.facts_validated}/5 faits validés aujourd'hui`}
+            <h1 className="text-2xl md:text-3xl font-bold">Explorer les faits</h1>
+            <p className="text-sm md:text-base text-muted-foreground">
+              {isPremium ? (
+                "Accès illimité aux faits historiques ✨"
+              ) : (
+                dailyProgress && `${dailyProgress.facts_validated}/5 faits validés aujourd'hui`
+              )}
             </p>
           </div>
 
           {facts.length === 0 ? (
-            <Card className="p-8 text-center">
-              <p className="text-lg text-muted-foreground">
+            <Card className="p-6 md:p-8 text-center">
+              <p className="text-base md:text-lg text-muted-foreground">
                 Aucun fait disponible pour le moment
               </p>
             </Card>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {facts.map((fact) => {
                 const imageUrl = getFactImage(fact.image_url);
                 return (
-                  <Card key={fact.id} className="p-6 space-y-4">
+                  <Card key={fact.id} className="p-4 md:p-6 space-y-4">
                     {imageUrl && (
                       <div className="w-full rounded-lg overflow-hidden">
-                        <img 
+                        <OptimizedImage
                           src={imageUrl} 
                           alt={fact.title}
-                          className="w-full h-48 object-cover"
+                          className="w-full h-48 md:h-64 object-cover"
                         />
                       </div>
                     )}
                     
                     <div className="space-y-2">
-                      <h3 className="text-xl font-bold">{fact.title}</h3>
-                      <p className="text-muted-foreground">{fact.description}</p>
+                      <h3 className="text-lg md:text-xl font-bold">{fact.title}</h3>
+                      <p className="text-sm md:text-base text-muted-foreground">{fact.description}</p>
                       {fact.date_text && (
                         <p className="text-sm font-medium text-accent">
                           📅 {fact.date_text}
