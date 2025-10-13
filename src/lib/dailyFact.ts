@@ -41,12 +41,13 @@ export async function getDailyFactForUser(userId: string) {
     // Get user preferences for better fact selection
     const { data: profile } = await supabase
       .from('profiles')
-      .select('preferred_regions, preferred_eras')
+      .select('preferred_regions, preferred_eras, preferred_tags')
       .eq('id', userId)
       .single();
 
     const preferredRegions = profile?.preferred_regions || [];
     const preferredEras = profile?.preferred_eras || [];
+    const preferredTags = profile?.preferred_tags || [];
 
     // Fetch all available facts
     let query = supabase
@@ -63,8 +64,37 @@ export async function getDailyFactForUser(userId: string) {
       return null;
     }
 
+    // Filter facts based on user preferences (if they have any)
+    const hasPreferences = preferredRegions.length > 0 || preferredEras.length > 0 || preferredTags.length > 0;
+    
+    const filteredFacts = hasPreferences 
+      ? availableFacts.filter((fact) => {
+          const matchesRegion = preferredRegions.length === 0 || 
+            (fact.region && preferredRegions.includes(fact.region));
+          
+          const periodName = fact.historical_periods?.name || '';
+          const matchesEra = preferredEras.length === 0 || 
+            preferredEras.some((era: string) => 
+              periodName.toLowerCase().includes(era.toLowerCase())
+            );
+          
+          const factTags = fact.tags || [];
+          const matchesTags = preferredTags.length === 0 || 
+            preferredTags.some((tag: string) => 
+              factTags.some((factTag: string) => 
+                factTag.toLowerCase().includes(tag.toLowerCase())
+              )
+            );
+
+          return matchesRegion || matchesEra || matchesTags;
+        })
+      : availableFacts;
+
+    // If no facts match preferences, fallback to all available facts
+    const factsToSort = filteredFacts.length > 0 ? filteredFacts : availableFacts;
+
     // Sort facts by preference match
-    const sortedFacts = availableFacts.sort((a, b) => {
+    const sortedFacts = factsToSort.sort((a, b) => {
       const aMatchesRegion = a.region && preferredRegions.includes(a.region);
       const bMatchesRegion = b.region && preferredRegions.includes(b.region);
       
@@ -78,8 +108,17 @@ export async function getDailyFactForUser(userId: string) {
         bPeriodName.toLowerCase().includes(era.toLowerCase())
       );
 
-      const aScore = (aMatchesRegion ? 2 : 0) + (aMatchesEra ? 1 : 0);
-      const bScore = (bMatchesRegion ? 2 : 0) + (bMatchesEra ? 1 : 0);
+      const aFactTags = a.tags || [];
+      const bFactTags = b.tags || [];
+      const aMatchesTags = preferredTags.some((tag: string) => 
+        aFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
+      );
+      const bMatchesTags = preferredTags.some((tag: string) => 
+        bFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
+      );
+
+      const aScore = (aMatchesRegion ? 4 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
+      const bScore = (bMatchesRegion ? 4 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
       
       return bScore - aScore;
     });

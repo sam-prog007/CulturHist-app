@@ -174,6 +174,7 @@ export type Database = {
           period_id: string | null
           points_reward: number | null
           region: string | null
+          tags: string[] | null
           title: string
         }
         Insert: {
@@ -186,6 +187,7 @@ export type Database = {
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
+          tags?: string[] | null
           title: string
         }
         Update: {
@@ -198,6 +200,7 @@ export type Database = {
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
+          tags?: string[] | null
           title?: string
         }
         Relationships: [
@@ -258,6 +261,7 @@ export type Database = {
           points: number | null
           preferred_eras: string[] | null
           preferred_regions: string[] | null
+          preferred_tags: string[] | null
           premium_until: string | null
           profile_type: string | null
           stripe_customer_id: string | null
@@ -278,6 +282,7 @@ export type Database = {
           points?: number | null
           preferred_eras?: string[] | null
           preferred_regions?: string[] | null
+          preferred_tags?: string[] | null
           premium_until?: string | null
           profile_type?: string | null
           stripe_customer_id?: string | null
@@ -298,6 +303,7 @@ export type Database = {
           points?: number | null
           preferred_eras?: string[] | null
           preferred_regions?: string[] | null
+          preferred_tags?: string[] | null
           premium_until?: string | null
           profile_type?: string | null
           stripe_customer_id?: string | null
