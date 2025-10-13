@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
  * Gets or creates the daily fact for a user
  * - Returns the same fact for the entire day
  * - Never returns a fact the user has already learned
+ * - Only returns facts matching user preferences
  */
 export async function getDailyFactForUser(userId: string) {
   try {
@@ -64,37 +65,38 @@ export async function getDailyFactForUser(userId: string) {
       return null;
     }
 
-    // Filter facts based on user preferences (if they have any)
-    const hasPreferences = preferredRegions.length > 0 || preferredEras.length > 0 || preferredTags.length > 0;
-    
-    const filteredFacts = hasPreferences 
-      ? availableFacts.filter((fact) => {
-          const matchesRegion = preferredRegions.length === 0 || 
-            (fact.region && preferredRegions.includes(fact.region));
-          
-          const periodName = fact.historical_periods?.name || '';
-          const matchesEra = preferredEras.length === 0 || 
-            preferredEras.some((era: string) => 
-              periodName.toLowerCase().includes(era.toLowerCase())
-            );
-          
-          const factTags = fact.tags || [];
-          const matchesTags = preferredTags.length === 0 || 
-            preferredTags.some((tag: string) => 
-              factTags.some((factTag: string) => 
-                factTag.toLowerCase().includes(tag.toLowerCase())
-              )
-            );
+    // Filter facts by user preferences first (strict filtering)
+    const filteredFacts = availableFacts.filter((fact) => {
+      // If no preferences set, show all facts
+      if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0) {
+        return true;
+      }
 
-          return matchesRegion || matchesEra || matchesTags;
-        })
-      : availableFacts;
+      const matchesRegion = preferredRegions.length === 0 || 
+        (fact.region && preferredRegions.includes(fact.region));
 
-    // If no facts match preferences, fallback to all available facts
-    const factsToSort = filteredFacts.length > 0 ? filteredFacts : availableFacts;
+      const periodName = fact.historical_periods?.name || '';
+      const matchesEra = preferredEras.length === 0 ||
+        preferredEras.some((era: string) => 
+          periodName.toLowerCase().includes(era.toLowerCase())
+        );
 
-    // Sort facts by preference match
-    const sortedFacts = factsToSort.sort((a, b) => {
+      const factTags = fact.tags || [];
+      const matchesTags = preferredTags.length === 0 ||
+        preferredTags.some((tag: string) => 
+          factTags.includes(tag.toLowerCase())
+        );
+
+      // Fact must match all preference categories (if that category has preferences)
+      return matchesRegion && matchesEra && matchesTags;
+    });
+
+    if (filteredFacts.length === 0) {
+      return null;
+    }
+
+    // Sort filtered facts by preference match strength
+    const sortedFacts = filteredFacts.sort((a, b) => {
       const aMatchesRegion = a.region && preferredRegions.includes(a.region);
       const bMatchesRegion = b.region && preferredRegions.includes(b.region);
       
@@ -110,15 +112,11 @@ export async function getDailyFactForUser(userId: string) {
 
       const aFactTags = a.tags || [];
       const bFactTags = b.tags || [];
-      const aMatchesTags = preferredTags.some((tag: string) => 
-        aFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
-      );
-      const bMatchesTags = preferredTags.some((tag: string) => 
-        bFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
-      );
+      const aMatchesTags = preferredTags.some((tag: string) => aFactTags.includes(tag.toLowerCase()));
+      const bMatchesTags = preferredTags.some((tag: string) => bFactTags.includes(tag.toLowerCase()));
 
-      const aScore = (aMatchesRegion ? 4 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
-      const bScore = (bMatchesRegion ? 4 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
+      const aScore = (aMatchesRegion ? 3 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
+      const bScore = (bMatchesRegion ? 3 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
       
       return bScore - aScore;
     });

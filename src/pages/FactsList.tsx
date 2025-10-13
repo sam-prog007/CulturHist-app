@@ -72,7 +72,7 @@ const FactsList = () => {
           return;
         }
 
-        // Fetch user preferences
+        // Fetch user preferences including new tags
         const { data: profileData } = await supabase
           .from('profiles')
           .select('preferred_regions, preferred_eras, preferred_tags')
@@ -116,70 +116,64 @@ const FactsList = () => {
 
         if (factsError) throw factsError;
 
-        // Filter and sort facts by preference match
-        const hasPreferences = preferredRegions.length > 0 || preferredEras.length > 0 || preferredTags.length > 0;
-        
-        const filteredAndSortedFacts = (allFacts || [])
-          .filter((fact) => {
-            // If user has no preferences, show all facts
-            if (!hasPreferences) return true;
+        // Filter facts STRICTLY by user preferences (only show matching facts)
+        const filteredFacts = (allFacts || []).filter((fact) => {
+          // If no preferences set, show all facts
+          if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0) {
+            return true;
+          }
 
-            // Check region match
-            const matchesRegion = preferredRegions.length === 0 || 
-              (fact.region && preferredRegions.includes(fact.region));
-            
-            // Check era match
-            const periodName = fact.historical_periods?.name || '';
-            const matchesEra = preferredEras.length === 0 || 
-              preferredEras.some((era: string) => 
-                periodName.toLowerCase().includes(era.toLowerCase())
-              );
-            
-            // Check tags match
-            const factTags = fact.tags || [];
-            const matchesTags = preferredTags.length === 0 || 
-              preferredTags.some((tag: string) => 
-                factTags.some((factTag: string) => 
-                  factTag.toLowerCase().includes(tag.toLowerCase())
-                )
-              );
+          // Check if fact matches region preference
+          const matchesRegion = preferredRegions.length === 0 || 
+            (fact.region && preferredRegions.includes(fact.region));
 
-            // Fact must match at least one preference category if user has preferences
-            return matchesRegion || matchesEra || matchesTags;
-          })
-          .sort((a, b) => {
-            // Calculate match score for sorting
-            const aMatchesRegion = a.region && preferredRegions.includes(a.region);
-            const bMatchesRegion = b.region && preferredRegions.includes(b.region);
-            
-            const aPeriodName = a.historical_periods?.name || '';
-            const bPeriodName = b.historical_periods?.name || '';
-            
-            const aMatchesEra = preferredEras.some((era: string) => 
-              aPeriodName.toLowerCase().includes(era.toLowerCase())
-            );
-            const bMatchesEra = preferredEras.some((era: string) => 
-              bPeriodName.toLowerCase().includes(era.toLowerCase())
+          // Check if fact matches era preference
+          const periodName = fact.historical_periods?.name || '';
+          const matchesEra = preferredEras.length === 0 ||
+            preferredEras.some((era: string) => 
+              periodName.toLowerCase().includes(era.toLowerCase())
             );
 
-            const aFactTags = a.tags || [];
-            const bFactTags = b.tags || [];
-            const aMatchesTags = preferredTags.some((tag: string) => 
-              aFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
-            );
-            const bMatchesTags = preferredTags.some((tag: string) => 
-              bFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
+          // Check if fact matches tag preferences
+          const factTags = fact.tags || [];
+          const matchesTags = preferredTags.length === 0 ||
+            preferredTags.some((tag: string) => 
+              factTags.includes(tag.toLowerCase())
             );
 
-            // Prioritize facts that match more preferences (region > era > tags)
-            const aScore = (aMatchesRegion ? 4 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
-            const bScore = (bMatchesRegion ? 4 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
-            
-            return bScore - aScore;
-          });
+          // Fact must match all preference categories (if that category has preferences)
+          return matchesRegion && matchesEra && matchesTags;
+        });
+
+        // Sort filtered facts by preference match strength
+        const sortedFacts = filteredFacts.sort((a, b) => {
+          const aMatchesRegion = a.region && preferredRegions.includes(a.region);
+          const bMatchesRegion = b.region && preferredRegions.includes(b.region);
+          
+          const aPeriodName = a.historical_periods?.name || '';
+          const bPeriodName = b.historical_periods?.name || '';
+          
+          const aMatchesEra = preferredEras.some((era: string) => 
+            aPeriodName.toLowerCase().includes(era.toLowerCase())
+          );
+          const bMatchesEra = preferredEras.some((era: string) => 
+            bPeriodName.toLowerCase().includes(era.toLowerCase())
+          );
+
+          const aFactTags = a.tags || [];
+          const bFactTags = b.tags || [];
+          const aMatchesTags = preferredTags.some((tag: string) => aFactTags.includes(tag.toLowerCase()));
+          const bMatchesTags = preferredTags.some((tag: string) => bFactTags.includes(tag.toLowerCase()));
+
+          // Calculate match score (higher is better)
+          const aScore = (aMatchesRegion ? 3 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
+          const bScore = (bMatchesRegion ? 3 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
+          
+          return bScore - aScore;
+        });
 
         // Take top 5 facts
-        setFacts(filteredAndSortedFacts.slice(0, 5));
+        setFacts(sortedFacts.slice(0, 5));
 
         // Fetch user stats
         const { data: statsData } = await supabase
@@ -210,7 +204,7 @@ const FactsList = () => {
     };
 
     fetchFacts();
-  }, [user, navigate, toast]);
+  }, [user, navigate, toast, isPremium]);
 
   const handleValidateFact = async (fact: any) => {
     if (!user || !dailyProgress) return;
@@ -369,7 +363,7 @@ const FactsList = () => {
           {facts.length === 0 ? (
             <Card className="p-6 md:p-8 text-center">
               <p className="text-base md:text-lg text-muted-foreground">
-                Aucun fait disponible pour le moment
+                Aucun fait disponible correspondant à vos préférences. Essayez d'ajuster vos préférences dans les paramètres.
               </p>
             </Card>
           ) : (
