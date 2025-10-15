@@ -13,6 +13,7 @@ import QuizLimit from "./pages/QuizLimit";
 import FactsList from "./pages/FactsList";
 import FactsLimit from "./pages/FactsLimit";
 import Profile from "./pages/Profile";
+import LearnedFacts from "./pages/LearnedFacts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/facts" element={<FactsList />} />
             <Route path="/facts-limit" element={<FactsLimit />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/learned-facts" element={<LearnedFacts />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

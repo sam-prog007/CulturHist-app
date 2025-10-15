@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import { Card } from "@/components/ui/card";
-import { BookOpen, Trophy, Calendar, TrendingUp, Crown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Trophy, Calendar, TrendingUp, Crown, Library } from "lucide-react";
 import PremiumButton from "@/components/PremiumButton";
 import GradesDialog from "@/components/GradesDialog";
 import ProgressChart from "@/components/ProgressChart";
@@ -112,7 +113,10 @@ const ProfilePage = () => {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
+            <Card 
+              className="p-6 card-shadow hover-scale smooth-transition cursor-pointer"
+              onClick={() => navigate('/learned-facts')}
+            >
               <div className="flex items-center gap-4">
                 <div className="p-3 rounded-lg bg-primary/10">
                   <BookOpen className="w-6 h-6 text-primary" />
