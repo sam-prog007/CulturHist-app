@@ -241,7 +241,7 @@ const PreferencesDashboard = () => {
 
         {/* Modify Preferences Button */}
         <div className="flex justify-center pt-4 border-t">
-          <Button variant="outline" onClick={() => navigate('/onboarding')}>
+          <Button variant="outline" onClick={() => navigate('/onboarding?edit=true')}>
             <Settings className="w-4 h-4 mr-2" />
             Modifier mes préférences
           </Button>

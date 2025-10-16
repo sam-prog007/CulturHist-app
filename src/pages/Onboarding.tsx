@@ -1,18 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowRight, ArrowLeft, Sparkles, Globe, Clock } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import heroImage from "@/assets/hero-history.jpg";
 
 const Onboarding = () => {
-  const [step, setStep] = useState(1);
+  const [searchParams] = useSearchParams();
+  const isEditMode = searchParams.get('edit') === 'true';
+  
+  const [step, setStep] = useState(isEditMode ? 3 : 1);
   const [profileType, setProfileType] = useState("");
   const [learningGoal, setLearningGoal] = useState("");
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
@@ -76,18 +79,44 @@ const Onboarding = () => {
     );
   };
 
+  useEffect(() => {
+    const fetchUserPreferences = async () => {
+      if (!user || !isEditMode) return;
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('preferred_regions, preferred_eras')
+        .eq('id', user.id)
+        .single();
+
+      if (data) {
+        setSelectedRegions(data.preferred_regions || []);
+        setSelectedEras(data.preferred_eras || []);
+      }
+    };
+
+    fetchUserPreferences();
+  }, [user, isEditMode]);
+
   const handleComplete = async () => {
     if (!user) return;
 
+    const updateData = isEditMode
+      ? {
+          preferred_regions: selectedRegions,
+          preferred_eras: selectedEras,
+        }
+      : {
+          profile_type: profileType,
+          learning_goal: learningGoal,
+          preferred_regions: selectedRegions,
+          preferred_eras: selectedEras,
+          onboarding_completed: true,
+        };
+
     const { error } = await supabase
       .from("profiles")
-      .update({
-        profile_type: profileType,
-        learning_goal: learningGoal,
-        preferred_regions: selectedRegions,
-        preferred_eras: selectedEras,
-        onboarding_completed: true,
-      })
+      .update(updateData)
       .eq("id", user.id);
 
     if (error) {
@@ -100,15 +129,17 @@ const Onboarding = () => {
     }
 
     toast({
-      title: "Bienvenue !",
-      description: "Votre profil a été configuré avec succès",
+      title: isEditMode ? "Préférences mises à jour" : "Bienvenue !",
+      description: isEditMode 
+        ? "Vos préférences ont été modifiées avec succès"
+        : "Votre profil a été configuré avec succès",
     });
 
     navigate("/app");
   };
 
   const nextStep = () => {
-    if (step === 1 && !profileType) {
+    if (step === 1 && !profileType && !isEditMode) {
       toast({
         title: "Sélection requise",
         description: "Veuillez sélectionner votre profil",
@@ -116,7 +147,7 @@ const Onboarding = () => {
       });
       return;
     }
-    if (step === 2 && !learningGoal) {
+    if (step === 2 && !learningGoal && !isEditMode) {
       toast({
         title: "Sélection requise",
         description: "Veuillez sélectionner vos motivations",
@@ -161,17 +192,17 @@ const Onboarding = () => {
               </span>
             </div>
             <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              Personnalisez votre expérience
+              {isEditMode ? "Modifiez vos préférences" : "Personnalisez votre expérience"}
             </h1>
             <p className="text-muted-foreground">
-              Étape {step} sur 4
+              {isEditMode ? "Modifiez vos régions et périodes d'intérêt" : `Étape ${step} sur 4`}
             </p>
           </div>
 
           {/* Form Card */}
           <Card className="p-6 md:p-8 card-shadow">
-            {/* Step 1: Profile Type */}
-            {step === 1 && (
+            {/* Step 1: Profile Type - Hidden in edit mode */}
+            {!isEditMode && step === 1 && (
               <div className="space-y-6 animate-fade-in">
                 <div>
                   <h2 className="text-xl font-semibold mb-2">Qui êtes-vous ?</h2>
@@ -201,8 +232,8 @@ const Onboarding = () => {
               </div>
             )}
 
-            {/* Step 2: Learning Goal */}
-            {step === 2 && (
+            {/* Step 2: Learning Goal - Hidden in edit mode */}
+            {!isEditMode && step === 2 && (
               <div className="space-y-6 animate-fade-in">
                 <div>
                   <h2 className="text-xl font-semibold mb-2">
@@ -336,14 +367,22 @@ const Onboarding = () => {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t">
-              <Button
-                variant="outline"
-                onClick={prevStep}
-                disabled={step === 1}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Précédent
-              </Button>
+              {!isEditMode && (
+                <Button
+                  variant="outline"
+                  onClick={prevStep}
+                  disabled={step === 1}
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Précédent
+                </Button>
+              )}
+              {isEditMode && step === 3 && (
+                <Button variant="outline" onClick={() => navigate('/app')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Annuler
+                </Button>
+              )}
               {step < 4 ? (
                 <Button onClick={nextStep}>
                   Suivant
