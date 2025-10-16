@@ -24,7 +24,7 @@ export async function getDailyFactForUser(userId: string) {
           period_id,
           difficulty,
           region,
-          points,
+          points_reward,
           tags,
           historical_periods (name)
         )

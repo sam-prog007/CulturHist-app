@@ -116,54 +116,52 @@ const FactsList = () => {
 
         if (factsError) throw factsError;
 
-        // Filter facts STRICTLY by user preferences (only show matching facts)
+        // Filter facts by user preferences (flexible: match at least one category)
         const filteredFacts = (allFacts || []).filter((fact) => {
           // If no preferences set, show all facts
           if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0) {
             return true;
           }
 
-          // Check if fact matches region preference
+          // Case-insensitive region match
           const matchesRegion = preferredRegions.length === 0 || 
-            (fact.region && preferredRegions.includes(fact.region));
+            (fact.region && preferredRegions.some((region: string) => 
+              region.toLowerCase() === String(fact.region).toLowerCase()
+            ));
 
-          // Check if fact matches era preference
-          const periodName = fact.historical_periods?.name || '';
+          // Era match (case-insensitive, handles empty period names)
+          const periodName = (fact.historical_periods?.name || '').toLowerCase();
           const matchesEra = preferredEras.length === 0 ||
             preferredEras.some((era: string) => 
-              periodName.toLowerCase().includes(era.toLowerCase())
+              periodName.includes(era.toLowerCase())
             );
 
-          // Check if fact matches tag preferences
-          const factTags = fact.tags || [];
+          // Tags match (case-insensitive, substring)
+          const factTags = (fact.tags || []).map((t: string) => t.toLowerCase());
           const matchesTags = preferredTags.length === 0 ||
             preferredTags.some((tag: string) => 
-              factTags.includes(tag.toLowerCase())
+              factTags.some((ft: string) => ft.includes(tag.toLowerCase()))
             );
 
-          // Fact must match all preference categories (if that category has preferences)
-          return matchesRegion && matchesEra && matchesTags;
+          // Match if at least one category fits
+          return matchesRegion || matchesEra || matchesTags;
         });
 
-        // Sort filtered facts by preference match strength
+        // Sort filtered facts by preference match strength (case-insensitive)
         const sortedFacts = filteredFacts.sort((a, b) => {
-          const aMatchesRegion = a.region && preferredRegions.includes(a.region);
-          const bMatchesRegion = b.region && preferredRegions.includes(b.region);
+          const aMatchesRegion = a.region && preferredRegions.some((r: string) => r.toLowerCase() === String(a.region).toLowerCase());
+          const bMatchesRegion = b.region && preferredRegions.some((r: string) => r.toLowerCase() === String(b.region).toLowerCase());
           
-          const aPeriodName = a.historical_periods?.name || '';
-          const bPeriodName = b.historical_periods?.name || '';
+          const aPeriodName = (a.historical_periods?.name || '').toLowerCase();
+          const bPeriodName = (b.historical_periods?.name || '').toLowerCase();
           
-          const aMatchesEra = preferredEras.some((era: string) => 
-            aPeriodName.toLowerCase().includes(era.toLowerCase())
-          );
-          const bMatchesEra = preferredEras.some((era: string) => 
-            bPeriodName.toLowerCase().includes(era.toLowerCase())
-          );
+          const aMatchesEra = preferredEras.some((era: string) => aPeriodName.includes(era.toLowerCase()));
+          const bMatchesEra = preferredEras.some((era: string) => bPeriodName.includes(era.toLowerCase()));
 
-          const aFactTags = a.tags || [];
-          const bFactTags = b.tags || [];
-          const aMatchesTags = preferredTags.some((tag: string) => aFactTags.includes(tag.toLowerCase()));
-          const bMatchesTags = preferredTags.some((tag: string) => bFactTags.includes(tag.toLowerCase()));
+          const aFactTags = (a.tags || []).map((t: string) => t.toLowerCase());
+          const bFactTags = (b.tags || []).map((t: string) => t.toLowerCase());
+          const aMatchesTags = preferredTags.some((tag: string) => aFactTags.some((ft: string) => ft.includes(tag.toLowerCase())));
+          const bMatchesTags = preferredTags.some((tag: string) => bFactTags.some((ft: string) => ft.includes(tag.toLowerCase())));
 
           // Calculate match score (higher is better)
           const aScore = (aMatchesRegion ? 3 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
