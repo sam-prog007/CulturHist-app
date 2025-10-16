@@ -13,7 +13,22 @@ export async function getDailyFactForUser(userId: string) {
     // Check if user already has a fact assigned for today
     const { data: existingAssignment } = await supabase
       .from('daily_fact_assignments')
-      .select('fact_id, historical_facts(*)')
+      .select(`
+        fact_id,
+        historical_facts (
+          id,
+          title,
+          description,
+          date_text,
+          image_url,
+          period_id,
+          difficulty,
+          region,
+          points,
+          tags,
+          historical_periods (name)
+        )
+      `)
       .eq('user_id', userId)
       .eq('date', today)
       .maybeSingle();
