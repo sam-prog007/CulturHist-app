@@ -86,7 +86,7 @@ const AppPage = () => {
       <Navbar />
       
       {/* Hero Section with Stats */}
-      <section className="relative bg-gradient-to-br from-primary/5 via-accent/5 to-background border-b">
+      <section className="relative bg-gradient-to-br from-primary/5 via-accent/5 to-background border-b pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-6xl mx-auto">
             <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
