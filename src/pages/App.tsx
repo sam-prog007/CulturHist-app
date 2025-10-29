@@ -16,6 +16,7 @@ import StreakIndicator from "@/components/StreakIndicator";
 import DailyGoal from "@/components/DailyGoal";
 import LearningPath from "@/components/LearningPath";
 import { getFactImage } from "@/assets/factsImages";
+import { OptimizedImage } from "@/components/OptimizedImage";
 import { getDailyFactForUser } from "@/lib/dailyFact";
 
 const AppPage = () => {
@@ -146,16 +147,13 @@ const AppPage = () => {
                 </div>
               ) : dailyFact ? (
                 <div className="space-y-6">
-                  {dailyFact.image_url && (
-                    <div className="w-full rounded-xl overflow-hidden card-shadow">
-                      <img 
-                        src={getFactImage(dailyFact.image_url) || heroImage} 
-                        alt={dailyFact.title}
-                        className="w-full h-72 object-cover hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                  )}
-                  
+                  <div className="w-full rounded-xl overflow-hidden card-shadow">
+                    <OptimizedImage 
+                      src={getFactImage(dailyFact.image_url) || dailyFact.image_url || heroImage} 
+                      alt={dailyFact.title}
+                      className="w-full h-72 object-cover hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
                   <div className="space-y-4">
                     <h3 className="text-2xl md:text-3xl font-bold text-foreground">
                       {dailyFact.title}

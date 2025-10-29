@@ -60,9 +60,11 @@ export const getFactImage = (key: string | null): string | undefined => {
   
   // Extract the filename without path and extension if it's a full path
   // e.g., "/src/assets/facts/pyramids-egypt.jpg" -> "pyramids-egypt"
-  const cleanKey = key.includes('/') 
-    ? key.split('/').pop()?.replace('.jpg', '').replace('.png', '') || key
-    : key;
+  const clean = (key.includes('/') 
+    ? key.split('/').pop() || key
+    : key)
+    .replace(/\.(jpg|jpeg|png|webp)$/i, '')
+    .toLowerCase();
   
-  return factsImages[cleanKey];
+  return factsImages[clean];
 };

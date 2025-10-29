@@ -367,7 +367,7 @@ const FactsList = () => {
           ) : (
             <div className="space-y-4 md:space-y-6">
               {facts.map((fact) => {
-                const imageUrl = getFactImage(fact.image_url);
+                const imageUrl = getFactImage(fact.image_url) || fact.image_url;
                 return (
                   <Card key={fact.id} className="p-4 md:p-6 space-y-4">
                     {imageUrl && (
@@ -379,7 +379,7 @@ const FactsList = () => {
                         />
                       </div>
                     )}
-                    
+                  
                     <div className="space-y-2">
                       <h3 className="text-lg md:text-xl font-bold">{fact.title}</h3>
                       <p className="text-sm md:text-base text-muted-foreground">{fact.description}</p>
