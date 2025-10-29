@@ -167,41 +167,56 @@ export type Database = {
         Row: {
           created_at: string | null
           date_text: string | null
+          date_text_fr: string | null
           description: string
+          description_fr: string | null
           difficulty: string | null
           id: string
           image_url: string | null
           period_id: string | null
           points_reward: number | null
           region: string | null
+          region_fr: string | null
           tags: string[] | null
+          tags_fr: string[] | null
           title: string
+          title_fr: string | null
         }
         Insert: {
           created_at?: string | null
           date_text?: string | null
+          date_text_fr?: string | null
           description: string
+          description_fr?: string | null
           difficulty?: string | null
           id?: string
           image_url?: string | null
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
+          region_fr?: string | null
           tags?: string[] | null
+          tags_fr?: string[] | null
           title: string
+          title_fr?: string | null
         }
         Update: {
           created_at?: string | null
           date_text?: string | null
+          date_text_fr?: string | null
           description?: string
+          description_fr?: string | null
           difficulty?: string | null
           id?: string
           image_url?: string | null
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
+          region_fr?: string | null
           tags?: string[] | null
+          tags_fr?: string[] | null
           title?: string
+          title_fr?: string | null
         }
         Relationships: [
           {

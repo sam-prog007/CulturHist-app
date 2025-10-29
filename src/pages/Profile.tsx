@@ -10,6 +10,7 @@ import PremiumButton from "@/components/PremiumButton";
 import GradesDialog from "@/components/GradesDialog";
 import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
+import { TranslateFacts } from "@/components/TranslateFacts";
 
 const ProfilePage = () => {
   const { user, loading } = useAuth();
@@ -178,6 +179,9 @@ const ProfilePage = () => {
             </h3>
             {user && <AchievementsList userId={user.id} />}
           </Card>
+
+          {/* Translation Tool (Admin) */}
+          <TranslateFacts />
 
           {/* Progress Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

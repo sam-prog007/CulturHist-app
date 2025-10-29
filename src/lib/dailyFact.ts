@@ -18,14 +18,19 @@ export async function getDailyFactForUser(userId: string) {
         historical_facts (
           id,
           title,
+          title_fr,
           description,
+          description_fr,
           date_text,
+          date_text_fr,
           image_url,
           period_id,
           difficulty,
           region,
+          region_fr,
           points_reward,
           tags,
+          tags_fr,
           historical_periods (name)
         )
       `)
@@ -65,7 +70,7 @@ export async function getDailyFactForUser(userId: string) {
     const preferredEras = profile?.preferred_eras || [];
     const preferredTags = profile?.preferred_tags || [];
 
-    // Fetch all available facts
+    // Fetch all available facts with French columns
     let query = supabase
       .from('historical_facts')
       .select('*, historical_periods(name)');

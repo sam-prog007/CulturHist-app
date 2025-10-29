@@ -156,17 +156,17 @@ const AppPage = () => {
                   </div>
                   <div className="space-y-4">
                     <h3 className="text-2xl md:text-3xl font-bold text-foreground">
-                      {dailyFact.title}
+                      {dailyFact.title_fr || dailyFact.title}
                     </h3>
                     
                     <p className="text-lg text-muted-foreground leading-relaxed">
-                      {dailyFact.description}
+                      {dailyFact.description_fr || dailyFact.description}
                     </p>
 
-                    {dailyFact.date_text && (
+                    {(dailyFact.date_text_fr || dailyFact.date_text) && (
                       <div className="flex items-center gap-2 text-accent">
                         <Calendar className="w-4 h-4" />
-                        <span className="font-medium">{dailyFact.date_text}</span>
+                        <span className="font-medium">{dailyFact.date_text_fr || dailyFact.date_text}</span>
                       </div>
                     )}
 

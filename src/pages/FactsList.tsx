@@ -381,11 +381,11 @@ const FactsList = () => {
                     )}
                   
                     <div className="space-y-2">
-                      <h3 className="text-lg md:text-xl font-bold">{fact.title}</h3>
-                      <p className="text-sm md:text-base text-muted-foreground">{fact.description}</p>
-                      {fact.date_text && (
+                      <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
+                      <p className="text-sm md:text-base text-muted-foreground">{fact.description_fr || fact.description}</p>
+                      {(fact.date_text_fr || fact.date_text) && (
                         <p className="text-sm font-medium text-accent">
-                          📅 {fact.date_text}
+                          📅 {fact.date_text_fr || fact.date_text}
                         </p>
                       )}
                     </div>
