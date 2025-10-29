@@ -71,7 +71,19 @@ const Quiz = () => {
           .from('user_progress')
           .select(`
             fact_id,
-            historical_facts (*)
+            historical_facts (
+              id,
+              title,
+              title_fr,
+              description,
+              description_fr,
+              date_text,
+              date_text_fr,
+              region,
+              region_fr,
+              tags,
+              tags_fr
+            )
           `)
           .eq('user_id', user.id)
           .eq('completed', true)
@@ -105,23 +117,29 @@ const Quiz = () => {
           if (!fact || usedFacts.has(fact.id)) continue;
           usedFacts.add(fact.id);
 
+          // Prepare French/English display values
+          const displayTitle = fact.title_fr || fact.title;
+          const displayDate = fact.date_text_fr || fact.date_text;
+          const displayDesc = fact.description_fr || fact.description;
+          const displayRegion = fact.region_fr || fact.region;
+
           // Generate different types of questions (3 types)
           const questionType = Math.floor(Math.random() * 3);
 
-          if (questionType === 0 && fact.date_text) {
+          if (questionType === 0 && displayDate) {
             // Question: Given fact, find date
             const otherDates = recentProgress
-              .map((p: any) => p.historical_facts?.date_text)
-              .filter((d: string) => d && d !== fact.date_text)
+              .map((p: any) => (p.historical_facts?.date_text_fr || p.historical_facts?.date_text))
+              .filter((d: string) => d && d !== displayDate)
               .slice(0, 3);
 
             if (otherDates.length >= 2) {
-              const options = [fact.date_text, ...otherDates].sort(() => Math.random() - 0.5);
+              const options = [displayDate, ...otherDates].sort(() => Math.random() - 0.5);
               generatedQuestions.push({
                 id: `${fact.id}-date`,
-                question: `Quand s'est produit l'événement suivant : "${fact.title}" ?`,
+                question: `Quand s'est produit l'événement suivant : "${displayTitle}" ?`,
                 options,
-                correctAnswer: options.indexOf(fact.date_text),
+                correctAnswer: options.indexOf(displayDate),
                 factId: fact.id
               });
             }
@@ -129,37 +147,37 @@ const Quiz = () => {
             // Question: Given date, find fact
             const otherFacts = recentProgress
               .map((p: any) => p.historical_facts)
-              .filter((f: any) => f && f.id !== fact.id && f.title)
+              .filter((f: any) => f && f.id !== fact.id && (f.title_fr || f.title))
               .slice(0, 3);
 
             if (otherFacts.length >= 2) {
-              const options = [fact.title, ...otherFacts.map((f: any) => f.title)].sort(() => Math.random() - 0.5);
-              const questionText = fact.date_text 
-                ? `Quel événement s'est produit en ${fact.date_text} ?`
-                : `Parmi ces événements, lequel correspond à : "${fact.description.substring(0, 60)}..." ?`;
+              const options = [displayTitle, ...otherFacts.map((f: any) => f.title_fr || f.title)].sort(() => Math.random() - 0.5);
+              const questionText = displayDate
+                ? `Quel événement s'est produit en ${displayDate} ?`
+                : `Parmi ces événements, lequel correspond à : "${displayDesc.substring(0, 60)}..." ?`;
               
               generatedQuestions.push({
                 id: `${fact.id}-fact`,
                 question: questionText,
                 options,
-                correctAnswer: options.indexOf(fact.title),
+                correctAnswer: options.indexOf(displayTitle),
                 factId: fact.id
               });
             }
-          } else if (fact.region) {
+          } else if (displayRegion) {
             // Question: Given fact, find region
             const otherRegions = [...new Set(recentProgress
-              .map((p: any) => p.historical_facts?.region)
-              .filter((r: string) => r && r !== fact.region))]
+              .map((p: any) => (p.historical_facts?.region_fr || p.historical_facts?.region))
+              .filter((r: string) => r && r !== displayRegion))]
               .slice(0, 3);
 
             if (otherRegions.length >= 2) {
-              const options = [fact.region, ...otherRegions].sort(() => Math.random() - 0.5);
+              const options = [displayRegion, ...otherRegions].sort(() => Math.random() - 0.5);
               generatedQuestions.push({
                 id: `${fact.id}-region`,
-                question: `Dans quelle région du monde se situe l'événement : "${fact.title}" ?`,
+                question: `Dans quelle région du monde se situe l'événement : "${displayTitle}" ?`,
                 options,
-                correctAnswer: options.indexOf(fact.region),
+                correctAnswer: options.indexOf(displayRegion),
                 factId: fact.id
               });
             }

@@ -33,12 +33,17 @@ const LearnedFacts = () => {
             historical_facts (
               id,
               title,
+              title_fr,
               description,
+              description_fr,
               date_text,
+              date_text_fr,
               region,
+              region_fr,
               image_url,
               points_reward,
-              tags
+              tags,
+              tags_fr
             )
           `)
           .eq('user_id', user.id)
@@ -114,35 +119,35 @@ const LearnedFacts = () => {
           ) : (
             <div className="space-y-4 md:space-y-6">
               {learnedFacts.map((fact) => {
-                const imageUrl = getFactImage(fact.image_url);
+              const imageUrl = getFactImage(fact.image_url) || fact.image_url;
                 return (
                   <Card key={fact.id} className="p-4 md:p-6 space-y-4">
                     {imageUrl && (
                       <div className="w-full rounded-lg overflow-hidden">
                         <OptimizedImage
                           src={imageUrl} 
-                          alt={fact.title}
+                          alt={fact.title_fr || fact.title}
                           className="w-full h-48 md:h-64 object-cover"
                         />
                       </div>
                     )}
                     
                     <div className="space-y-2">
-                      <h3 className="text-lg md:text-xl font-bold">{fact.title}</h3>
-                      <p className="text-sm md:text-base text-muted-foreground">{fact.description}</p>
-                      {fact.date_text && (
+                      <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
+                      <p className="text-sm md:text-base text-muted-foreground">{fact.description_fr || fact.description}</p>
+                      {(fact.date_text_fr || fact.date_text) && (
                         <p className="text-sm font-medium text-accent">
-                          📅 {fact.date_text}
+                          📅 {fact.date_text_fr || fact.date_text}
                         </p>
                       )}
-                      {fact.region && (
+                      {(fact.region_fr || fact.region) && (
                         <p className="text-sm text-muted-foreground">
-                          🌍 {fact.region}
+                          🌍 {fact.region_fr || fact.region}
                         </p>
                       )}
-                      {fact.tags && fact.tags.length > 0 && (
+                      {((fact.tags_fr && fact.tags_fr.length > 0) || (fact.tags && fact.tags.length > 0)) && (
                         <div className="flex flex-wrap gap-2">
-                          {fact.tags.map((tag: string) => (
+                          {(fact.tags_fr || fact.tags).map((tag: string) => (
                             <span 
                               key={tag}
                               className="px-2 py-1 bg-primary/10 text-primary text-xs rounded-full"
