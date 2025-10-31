@@ -18,7 +18,6 @@ import LearningPath from "@/components/LearningPath";
 import { getFactImage } from "@/assets/factsImages";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { getDailyFactForUser } from "@/lib/dailyFact";
-import AdSense from "@/components/AdSense";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -37,34 +36,30 @@ const AppPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-      
+
       try {
         // Fetch daily fact for this user
         const fact = await getDailyFactForUser(user.id);
         setDailyFact(fact);
 
         // Fetch user stats
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('points, exp')
-          .eq('id', user.id)
-          .single();
+        const { data: profile } = await supabase.from("profiles").select("points, exp").eq("id", user.id).single();
 
         const { count } = await supabase
-          .from('user_progress')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('completed', true);
+          .from("user_progress")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("completed", true);
 
         const level = profile ? Math.floor(Math.sqrt(profile.exp / 100)) + 1 : 1;
-        
+
         setUserStats({
           points: profile?.points || 0,
           level,
           factsLearned: count || 0,
         });
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoadingFact(false);
       }
@@ -73,12 +68,14 @@ const AppPage = () => {
     fetchData();
   }, [user]);
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="text-muted-foreground">Chargement...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
   if (!user) {
     return null;
@@ -86,7 +83,7 @@ const AppPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       {/* Hero Section with Stats */}
       <section className="relative bg-gradient-to-br from-primary/5 via-accent/5 to-background border-b pt-16">
         <div className="container mx-auto px-4 py-8">
@@ -97,11 +94,9 @@ const AppPage = () => {
                   <Sparkles className="w-8 h-8 text-accent" />
                   Bonjour !
                 </h1>
-                <p className="text-lg text-muted-foreground">
-                  Continuons votre apprentissage
-                </p>
+                <p className="text-lg text-muted-foreground">Continuons votre apprentissage</p>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="text-center px-6 py-3 bg-primary/10 rounded-2xl border border-primary/20">
                   <p className="text-3xl font-bold text-primary">{userStats.level}</p>
@@ -132,9 +127,6 @@ const AppPage = () => {
             </div>
           )}
 
-          {/* Ad Space */}
-          <AdSense slot="2234567890" format="auto" className="animate-fade-in-up" />
-
           {/* Daily Fact Card */}
           <Card className="p-8 card-shadow hover:shadow-lg transition-shadow animate-fade-in-up">
             <div className="space-y-6">
@@ -144,7 +136,7 @@ const AppPage = () => {
                 </div>
                 <h2 className="text-2xl font-bold">Fait du jour</h2>
               </div>
-              
+
               {loadingFact ? (
                 <div className="py-12 text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -152,8 +144,8 @@ const AppPage = () => {
               ) : dailyFact ? (
                 <div className="space-y-6">
                   <div className="w-full rounded-xl overflow-hidden card-shadow">
-                    <OptimizedImage 
-                      src={getFactImage(dailyFact.image_url) || dailyFact.image_url || heroImage} 
+                    <OptimizedImage
+                      src={getFactImage(dailyFact.image_url) || dailyFact.image_url || heroImage}
                       alt={dailyFact.title}
                       className="w-full h-72 object-cover hover:scale-105 transition-transform duration-500"
                     />
@@ -162,7 +154,7 @@ const AppPage = () => {
                     <h3 className="text-2xl md:text-3xl font-bold text-foreground">
                       {dailyFact.title_fr || dailyFact.title}
                     </h3>
-                    
+
                     <p className="text-lg text-muted-foreground leading-relaxed">
                       {dailyFact.description_fr || dailyFact.description}
                     </p>
@@ -174,11 +166,7 @@ const AppPage = () => {
                       </div>
                     )}
 
-                    <Button 
-                      size="lg" 
-                      className="w-full md:w-auto group"
-                      onClick={() => navigate('/facts')}
-                    >
+                    <Button size="lg" className="w-full md:w-auto group" onClick={() => navigate("/facts")}>
                       <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
                       Explorer les faits
                     </Button>
@@ -191,9 +179,7 @@ const AppPage = () => {
                   </div>
                   <div>
                     <h3 className="text-xl font-bold mb-2">Aucun fait disponible</h3>
-                    <p className="text-muted-foreground">
-                      Revenez bientôt pour découvrir de nouveaux faits !
-                    </p>
+                    <p className="text-muted-foreground">Revenez bientôt pour découvrir de nouveaux faits !</p>
                   </div>
                 </div>
               )}
@@ -204,9 +190,6 @@ const AppPage = () => {
           <div className="animate-fade-in-up">
             <PreferencesDashboard />
           </div>
-
-          {/* Ad Space */}
-          <AdSense slot="2234567891" format="auto" className="animate-fade-in-up" />
 
           {/* Progress and Premium */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
