@@ -7,6 +7,7 @@ import Features from "@/components/Features";
 import HowItWorks from "@/components/HowItWorks";
 import CTA from "@/components/CTA";
 import Footer from "@/components/Footer";
+import AdSense from "@/components/AdSense";
 
 const Index = () => {
   const { user, loading } = useAuth();
@@ -27,13 +28,16 @@ const Index = () => {
       <Navbar />
       <main>
         <Hero />
+        <AdSense slot="1234567890" format="auto" className="my-8" />
         <div id="features">
           <Features />
         </div>
+        <AdSense slot="1234567891" format="auto" className="my-8" />
         <div id="how-it-works">
           <HowItWorks />
         </div>
         <CTA />
+        <AdSense slot="1234567892" format="auto" className="my-8" />
       </main>
       <Footer />
     </div>

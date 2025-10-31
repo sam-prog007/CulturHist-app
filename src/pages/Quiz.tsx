@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Trophy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import AdSense from "@/components/AdSense";
 
 type Question = {
   id: string;
@@ -362,6 +363,10 @@ const Quiz = () => {
                 +{pointsEarned} points gagnés {isPerfect && "🏆"}
               </p>
             </div>
+            
+            {/* Ad Space */}
+            <AdSense slot="4234567890" format="rectangle" />
+            
             <div className="flex gap-4 justify-center pt-4">
               <Button variant="outline" onClick={() => navigate('/app')}>
                 Retour à l'accueil
@@ -384,6 +389,9 @@ const Quiz = () => {
       <Navbar />
       <main className="container mx-auto px-4 py-24">
         <div className="max-w-3xl mx-auto space-y-6">
+          {/* Ad Space */}
+          <AdSense slot="4234567891" format="horizontal" />
+          
           {/* Progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm text-muted-foreground">

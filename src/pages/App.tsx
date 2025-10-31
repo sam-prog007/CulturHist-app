@@ -18,6 +18,7 @@ import LearningPath from "@/components/LearningPath";
 import { getFactImage } from "@/assets/factsImages";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import { getDailyFactForUser } from "@/lib/dailyFact";
+import AdSense from "@/components/AdSense";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -131,6 +132,9 @@ const AppPage = () => {
             </div>
           )}
 
+          {/* Ad Space */}
+          <AdSense slot="2234567890" format="auto" className="animate-fade-in-up" />
+
           {/* Daily Fact Card */}
           <Card className="p-8 card-shadow hover:shadow-lg transition-shadow animate-fade-in-up">
             <div className="space-y-6">
@@ -200,6 +204,9 @@ const AppPage = () => {
           <div className="animate-fade-in-up">
             <PreferencesDashboard />
           </div>
+
+          {/* Ad Space */}
+          <AdSense slot="2234567891" format="auto" className="animate-fade-in-up" />
 
           {/* Progress and Premium */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">

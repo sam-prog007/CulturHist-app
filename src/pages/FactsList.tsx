@@ -9,6 +9,7 @@ import { CheckCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getFactImage } from "@/assets/factsImages";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import AdSense from "@/components/AdSense";
 
 const FactsList = () => {
   const { user, loading, isPremium } = useAuth();
@@ -357,6 +358,9 @@ const FactsList = () => {
               )}
             </p>
           </div>
+
+          {/* Ad Space */}
+          <AdSense slot="3234567890" format="auto" />
 
           {facts.length === 0 ? (
             <Card className="p-6 md:p-8 text-center">
