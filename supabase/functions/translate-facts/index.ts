@@ -1,10 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+// Validation schema for AI translation responses
+const translationSchema = z.object({
+  title_fr: z.string().trim().max(500, "Title too long"),
+  description_fr: z.string().trim().max(2000, "Description too long"),
+  date_text_fr: z.string().trim().max(200, "Date text too long").optional(),
+  region_fr: z.string().trim().max(200, "Region too long").optional(),
+  tags_fr: z.array(z.string().trim().max(100, "Tag too long")).max(20, "Too many tags").optional(),
+});
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -92,9 +102,12 @@ Important: Maintain historical accuracy and proper French terminology.`;
         let translatedData;
         try {
           const cleanContent = content.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-          translatedData = JSON.parse(cleanContent);
+          const parsedData = JSON.parse(cleanContent);
+          
+          // Validate with Zod schema
+          translatedData = translationSchema.parse(parsedData);
         } catch (parseError) {
-          console.error(`Parse error for fact ${fact.id}:`, parseError);
+          console.error(`Parse or validation error for fact ${fact.id}:`, parseError);
           continue;
         }
 
