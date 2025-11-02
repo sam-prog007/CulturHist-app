@@ -38,6 +38,20 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil" 
     });
 
+    // Validate price exists in Stripe and is active
+    console.log("Validating price:", priceId);
+    const price = await stripe.prices.retrieve(priceId);
+    
+    if (!price.active) {
+      throw new Error("Price is not active");
+    }
+    
+    if (price.type !== 'recurring') {
+      throw new Error("Price must be a recurring subscription price");
+    }
+    
+    console.log("Price validated:", price.id, "Product:", price.product);
+
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
     if (customers.data.length > 0) {

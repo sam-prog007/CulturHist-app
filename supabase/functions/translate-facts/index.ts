@@ -32,6 +32,41 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Verify user authentication
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "No authorization header provided" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !userData.user) {
+      return new Response(
+        JSON.stringify({ error: "User not authenticated" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check if user has admin role
+    const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
+      _user_id: userData.user.id,
+      _role: 'admin'
+    });
+
+    if (roleError || !hasAdminRole) {
+      console.log(`Non-admin user ${userData.user.id} attempted to access translate-facts`);
+      return new Response(
+        JSON.stringify({ error: "Access denied. Admin role required." }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`Admin user ${userData.user.id} starting translation batch`);
+
     // Fetch all facts without French translations
     const { data: facts, error: fetchError } = await supabase
       .from('historical_facts')
