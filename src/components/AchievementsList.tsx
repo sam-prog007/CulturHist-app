@@ -62,11 +62,14 @@ const AchievementsList = ({ userId }: AchievementsListProps) => {
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId);
 
-        const { count: perfectQuizCount } = await supabase
+        const { data: allQuizSessions } = await supabase
           .from('quiz_sessions')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .filter('score', 'eq', 'total_questions');
+          .select('score, total_questions')
+          .eq('user_id', userId);
+
+        const perfectQuizCount = allQuizSessions?.filter(
+          session => session.score === session.total_questions
+        ).length || 0;
 
         // Calculate progress for each achievement
         const achievementsWithProgress = allAchievements?.map(achievement => {
