@@ -76,13 +76,14 @@ const FactsList = () => {
         // Fetch user preferences including new tags
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('preferred_regions, preferred_eras, preferred_tags')
+          .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty')
           .eq('id', user.id)
           .single();
 
         const preferredRegions = profileData?.preferred_regions || [];
         const preferredEras = profileData?.preferred_eras || [];
         const preferredTags = profileData?.preferred_tags || [];
+        const preferredDifficulty = profileData?.preferred_difficulty || [];
 
         // Fetch validated facts
         const { data: validatedFactIds } = await supabase
@@ -120,7 +121,7 @@ const FactsList = () => {
         // Filter facts by user preferences (flexible: match at least one category)
         const filteredFacts = (allFacts || []).filter((fact) => {
           // If no preferences set, show all facts
-          if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0) {
+          if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0 && preferredDifficulty.length === 0) {
             return true;
           }
 
@@ -144,8 +145,12 @@ const FactsList = () => {
               factTags.some((ft: string) => ft.includes(tag.toLowerCase()))
             );
 
+          // Difficulty match
+          const matchesDifficulty = preferredDifficulty.length === 0 ||
+            (fact.difficulty && preferredDifficulty.includes(fact.difficulty));
+
           // Match if at least one category fits
-          return matchesRegion || matchesEra || matchesTags;
+          return matchesRegion || matchesEra || matchesTags || matchesDifficulty;
         });
 
         // Sort filtered facts by preference match strength (case-insensitive)
@@ -164,9 +169,12 @@ const FactsList = () => {
           const aMatchesTags = preferredTags.some((tag: string) => aFactTags.some((ft: string) => ft.includes(tag.toLowerCase())));
           const bMatchesTags = preferredTags.some((tag: string) => bFactTags.some((ft: string) => ft.includes(tag.toLowerCase())));
 
+          const aMatchesDifficulty = a.difficulty && preferredDifficulty.includes(a.difficulty);
+          const bMatchesDifficulty = b.difficulty && preferredDifficulty.includes(b.difficulty);
+
           // Calculate match score (higher is better)
-          const aScore = (aMatchesRegion ? 3 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
-          const bScore = (bMatchesRegion ? 3 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
+          const aScore = (aMatchesRegion ? 4 : 0) + (aMatchesEra ? 3 : 0) + (aMatchesTags ? 2 : 0) + (aMatchesDifficulty ? 1 : 0);
+          const bScore = (bMatchesRegion ? 4 : 0) + (bMatchesEra ? 3 : 0) + (bMatchesTags ? 2 : 0) + (bMatchesDifficulty ? 1 : 0);
           
           return bScore - aScore;
         });

@@ -20,6 +20,7 @@ const Onboarding = () => {
   const [learningGoal, setLearningGoal] = useState("");
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedEras, setSelectedEras] = useState<string[]>([]);
+  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -79,19 +80,32 @@ const Onboarding = () => {
     );
   };
 
+  const toggleDifficulty = (difficulty: string) => {
+    setSelectedDifficulties(prev =>
+      prev.includes(difficulty) ? prev.filter(d => d !== difficulty) : [...prev, difficulty]
+    );
+  };
+
+  const difficulties = [
+    { value: "easy", label: "Facile", description: "Faits accessibles et simples" },
+    { value: "medium", label: "Moyen", description: "Faits avec détails modérés" },
+    { value: "hard", label: "Difficile", description: "Faits complexes et détaillés" },
+  ];
+
   useEffect(() => {
     const fetchUserPreferences = async () => {
       if (!user || !isEditMode) return;
 
       const { data } = await supabase
         .from('profiles')
-        .select('preferred_regions, preferred_eras')
+        .select('preferred_regions, preferred_eras, preferred_difficulty')
         .eq('id', user.id)
         .single();
 
       if (data) {
         setSelectedRegions(data.preferred_regions || []);
         setSelectedEras(data.preferred_eras || []);
+        setSelectedDifficulties(data.preferred_difficulty || []);
       }
     };
 
@@ -105,12 +119,14 @@ const Onboarding = () => {
       ? {
           preferred_regions: selectedRegions,
           preferred_eras: selectedEras,
+          preferred_difficulty: selectedDifficulties,
         }
       : {
           profile_type: profileType,
           learning_goal: learningGoal,
           preferred_regions: selectedRegions,
           preferred_eras: selectedEras,
+          preferred_difficulty: selectedDifficulties,
           onboarding_completed: true,
         };
 
@@ -195,7 +211,7 @@ const Onboarding = () => {
               {isEditMode ? "Modifiez vos préférences" : "Personnalisez votre expérience"}
             </h1>
             <p className="text-muted-foreground">
-              {isEditMode ? "Modifiez vos régions et périodes d'intérêt" : `Étape ${step} sur 4`}
+              {isEditMode ? "Modifiez vos régions, périodes et niveau de difficulté" : `Étape ${step} sur 5`}
             </p>
           </div>
 
@@ -365,6 +381,37 @@ const Onboarding = () => {
               </div>
             )}
 
+            {/* Step 5: Difficulty */}
+            {step === 5 && (
+              <div className="space-y-6 animate-fade-in">
+                <div>
+                  <h2 className="text-xl font-semibold mb-2">
+                    Quel niveau de difficulté préférez-vous ?
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Choisissez un ou plusieurs niveaux
+                  </p>
+                </div>
+                <div className="space-y-3">
+                  {difficulties.map((difficulty) => (
+                    <Button
+                      key={difficulty.value}
+                      variant={selectedDifficulties.includes(difficulty.value) ? "default" : "outline"}
+                      className="w-full justify-start h-auto py-4"
+                      onClick={() => toggleDifficulty(difficulty.value)}
+                    >
+                      <div className="flex-1 text-left">
+                        <div className="font-medium">{difficulty.label}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {difficulty.description}
+                        </div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t">
               {!isEditMode && (
@@ -383,7 +430,7 @@ const Onboarding = () => {
                   Annuler
                 </Button>
               )}
-              {step < 4 ? (
+              {step < 5 ? (
                 <Button onClick={nextStep}>
                   Suivant
                   <ArrowRight className="w-4 h-4 ml-2" />

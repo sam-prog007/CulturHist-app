@@ -274,6 +274,7 @@ export type Database = {
           level: number | null
           onboarding_completed: boolean | null
           points: number | null
+          preferred_difficulty: string[] | null
           preferred_eras: string[] | null
           preferred_regions: string[] | null
           preferred_tags: string[] | null
@@ -295,6 +296,7 @@ export type Database = {
           level?: number | null
           onboarding_completed?: boolean | null
           points?: number | null
+          preferred_difficulty?: string[] | null
           preferred_eras?: string[] | null
           preferred_regions?: string[] | null
           preferred_tags?: string[] | null
@@ -316,6 +318,7 @@ export type Database = {
           level?: number | null
           onboarding_completed?: boolean | null
           points?: number | null
+          preferred_difficulty?: string[] | null
           preferred_eras?: string[] | null
           preferred_regions?: string[] | null
           preferred_tags?: string[] | null

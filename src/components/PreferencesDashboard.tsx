@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 interface PreferencesData {
   preferred_regions: string[];
   preferred_eras: string[];
+  preferred_difficulty: string[];
 }
 
 interface ProgressData {
@@ -21,7 +22,8 @@ const PreferencesDashboard = () => {
   const navigate = useNavigate();
   const [preferences, setPreferences] = useState<PreferencesData>({
     preferred_regions: [],
-    preferred_eras: []
+    preferred_eras: [],
+    preferred_difficulty: []
   });
   const [regionProgress, setRegionProgress] = useState<ProgressData>({});
   const [eraProgress, setEraProgress] = useState<ProgressData>({});
@@ -37,6 +39,12 @@ const PreferencesDashboard = () => {
     "middle-east": "Moyen-Orient"
   };
 
+  const difficultyLabels: Record<string, string> = {
+    easy: "Facile",
+    medium: "Moyen",
+    hard: "Difficile"
+  };
+
   useEffect(() => {
     const fetchPreferencesAndProgress = async () => {
       if (!user) return;
@@ -45,7 +53,7 @@ const PreferencesDashboard = () => {
         // Fetch user preferences
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('preferred_regions, preferred_eras')
+          .select('preferred_regions, preferred_eras, preferred_difficulty')
           .eq('id', user.id)
           .single();
 
@@ -53,7 +61,8 @@ const PreferencesDashboard = () => {
 
         setPreferences({
           preferred_regions: profileData?.preferred_regions || [],
-          preferred_eras: profileData?.preferred_eras || []
+          preferred_eras: profileData?.preferred_eras || [],
+          preferred_difficulty: profileData?.preferred_difficulty || []
         });
 
         // Calculate real progress based on facts learned
@@ -161,7 +170,7 @@ const PreferencesDashboard = () => {
     );
   }
 
-  if (preferences.preferred_regions.length === 0 && preferences.preferred_eras.length === 0) {
+  if (preferences.preferred_regions.length === 0 && preferences.preferred_eras.length === 0 && preferences.preferred_difficulty.length === 0) {
     return (
       <Card className="p-6 card-shadow">
         <div className="text-center py-8 space-y-4">
@@ -238,6 +247,26 @@ const PreferencesDashboard = () => {
             </div>
           )}
         </div>
+
+        {/* Difficulty Preferences */}
+        {preferences.preferred_difficulty.length > 0 && (
+          <div className="space-y-4 pt-6 border-t">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Settings className="w-5 h-5 text-primary" />
+              <h3>Niveaux de difficulté</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {preferences.preferred_difficulty.map((difficulty) => (
+                <div
+                  key={difficulty}
+                  className="px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium"
+                >
+                  {difficultyLabels[difficulty] || difficulty}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Modify Preferences Button */}
         <div className="flex justify-center pt-4 border-t">

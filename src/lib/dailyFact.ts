@@ -62,13 +62,14 @@ export async function getDailyFactForUser(userId: string) {
     // Get user preferences for better fact selection
     const { data: profile } = await supabase
       .from('profiles')
-      .select('preferred_regions, preferred_eras, preferred_tags')
+      .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty')
       .eq('id', userId)
       .single();
 
     const preferredRegions = profile?.preferred_regions || [];
     const preferredEras = profile?.preferred_eras || [];
     const preferredTags = profile?.preferred_tags || [];
+    const preferredDifficulty = profile?.preferred_difficulty || [];
 
     // Fetch all available facts with French columns
     let query = supabase
@@ -88,7 +89,7 @@ export async function getDailyFactForUser(userId: string) {
     // Filter facts by user preferences (flexible filtering)
     const filteredFacts = availableFacts.filter((fact) => {
       // If no preferences set, show all facts
-      if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0) {
+      if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0 && preferredDifficulty.length === 0) {
         return true;
       }
 
@@ -112,9 +113,12 @@ export async function getDailyFactForUser(userId: string) {
           )
         );
 
+      const matchesDifficulty = preferredDifficulty.length === 0 ||
+        (fact.difficulty && preferredDifficulty.includes(fact.difficulty));
+
       // Fact must match at least ONE preference category (OR logic)
       // This is more permissive and will show more facts
-      return matchesRegion || matchesEra || matchesTags;
+      return matchesRegion || matchesEra || matchesTags || matchesDifficulty;
     });
 
     if (filteredFacts.length === 0) {
@@ -149,8 +153,11 @@ export async function getDailyFactForUser(userId: string) {
         bFactTags.some((factTag: string) => factTag.toLowerCase().includes(tag.toLowerCase()))
       );
 
-      const aScore = (aMatchesRegion ? 3 : 0) + (aMatchesEra ? 2 : 0) + (aMatchesTags ? 1 : 0);
-      const bScore = (bMatchesRegion ? 3 : 0) + (bMatchesEra ? 2 : 0) + (bMatchesTags ? 1 : 0);
+      const aMatchesDifficulty = a.difficulty && preferredDifficulty.includes(a.difficulty);
+      const bMatchesDifficulty = b.difficulty && preferredDifficulty.includes(b.difficulty);
+
+      const aScore = (aMatchesRegion ? 4 : 0) + (aMatchesEra ? 3 : 0) + (aMatchesTags ? 2 : 0) + (aMatchesDifficulty ? 1 : 0);
+      const bScore = (bMatchesRegion ? 4 : 0) + (bMatchesEra ? 3 : 0) + (bMatchesTags ? 2 : 0) + (bMatchesDifficulty ? 1 : 0);
       
       return bScore - aScore;
     });
