@@ -11,6 +11,7 @@ interface PreferencesData {
   preferred_regions: string[];
   preferred_eras: string[];
   preferred_difficulty: string[];
+  preferred_tags: string[];
 }
 
 interface ProgressData {
@@ -23,10 +24,12 @@ const PreferencesDashboard = () => {
   const [preferences, setPreferences] = useState<PreferencesData>({
     preferred_regions: [],
     preferred_eras: [],
-    preferred_difficulty: []
+    preferred_difficulty: [],
+    preferred_tags: []
   });
   const [regionProgress, setRegionProgress] = useState<ProgressData>({});
   const [eraProgress, setEraProgress] = useState<ProgressData>({});
+  const [tagProgress, setTagProgress] = useState<ProgressData>({});
   const [loading, setLoading] = useState(true);
 
   const regionLabels: Record<string, string> = {
@@ -53,7 +56,7 @@ const PreferencesDashboard = () => {
         // Fetch user preferences
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('preferred_regions, preferred_eras, preferred_difficulty')
+          .select('preferred_regions, preferred_eras, preferred_difficulty, preferred_tags')
           .eq('id', user.id)
           .single();
 
@@ -62,44 +65,41 @@ const PreferencesDashboard = () => {
         setPreferences({
           preferred_regions: profileData?.preferred_regions || [],
           preferred_eras: profileData?.preferred_eras || [],
-          preferred_difficulty: profileData?.preferred_difficulty || []
+          preferred_difficulty: profileData?.preferred_difficulty || [],
+          preferred_tags: profileData?.preferred_tags || []
         });
 
         // Calculate real progress based on facts learned
         const tempRegionProgress: ProgressData = {};
         const tempEraProgress: ProgressData = {};
+        const tempTagProgress: ProgressData = {};
+
+        // Get all completed fact IDs once
+        const { data: completedFacts } = await supabase
+          .from('user_progress')
+          .select('fact_id')
+          .eq('user_id', user.id)
+          .eq('completed', true);
+
+        const completedFactIds = completedFacts?.map(f => f.fact_id) || [];
 
         // Calculate progress for each preferred region
         for (const region of (profileData?.preferred_regions || [])) {
-          // Count total facts in this region
-          const { count: totalCount } = await supabase
+          // Get all facts for this region
+          const { data: allRegionFacts } = await supabase
             .from('historical_facts')
-            .select('*', { count: 'exact', head: true })
+            .select('id')
             .eq('region', region);
 
-          // Count completed facts in this region
-          const { data: completedFacts } = await supabase
-            .from('user_progress')
-            .select('fact_id')
-            .eq('user_id', user.id)
-            .eq('completed', true);
+          const totalCount = allRegionFacts?.length || 0;
+          const completedCount = allRegionFacts?.filter(fact => 
+            completedFactIds.includes(fact.id)
+          ).length || 0;
 
-          const completedFactIds = completedFacts?.map(f => f.fact_id) || [];
-
-          if (completedFactIds.length > 0) {
-            const { count: completedCount } = await supabase
-              .from('historical_facts')
-              .select('*', { count: 'exact', head: true })
-              .eq('region', region)
-              .in('id', completedFactIds);
-
-            const progress = totalCount && totalCount > 0 
-              ? Math.round((completedCount || 0) / totalCount * 100)
-              : 0;
-            tempRegionProgress[region] = progress;
-          } else {
-            tempRegionProgress[region] = 0;
-          }
+          const progress = totalCount > 0 
+            ? Math.round((completedCount / totalCount) * 100)
+            : 0;
+          tempRegionProgress[region] = progress;
         }
 
         // Calculate progress for each preferred era
@@ -113,42 +113,48 @@ const PreferencesDashboard = () => {
           const periodIds = periods?.map(p => p.id) || [];
 
           if (periodIds.length > 0) {
-            // Count total facts in these periods
-            const { count: totalCount } = await supabase
+            // Get all facts for these periods
+            const { data: allEraFacts } = await supabase
               .from('historical_facts')
-              .select('*', { count: 'exact', head: true })
+              .select('id')
               .in('period_id', periodIds);
 
-            // Count completed facts in these periods
-            const { data: completedFacts } = await supabase
-              .from('user_progress')
-              .select('fact_id')
-              .eq('user_id', user.id)
-              .eq('completed', true);
+            const totalCount = allEraFacts?.length || 0;
+            const completedCount = allEraFacts?.filter(fact => 
+              completedFactIds.includes(fact.id)
+            ).length || 0;
 
-            const completedFactIds = completedFacts?.map(f => f.fact_id) || [];
-
-            if (completedFactIds.length > 0) {
-              const { count: completedCount } = await supabase
-                .from('historical_facts')
-                .select('*', { count: 'exact', head: true })
-                .in('period_id', periodIds)
-                .in('id', completedFactIds);
-
-              const progress = totalCount && totalCount > 0 
-                ? Math.round((completedCount || 0) / totalCount * 100)
-                : 0;
-              tempEraProgress[era] = progress;
-            } else {
-              tempEraProgress[era] = 0;
-            }
+            const progress = totalCount > 0 
+              ? Math.round((completedCount / totalCount) * 100)
+              : 0;
+            tempEraProgress[era] = progress;
           } else {
             tempEraProgress[era] = 0;
           }
         }
 
+        // Calculate progress for each preferred tag
+        for (const tag of (profileData?.preferred_tags || [])) {
+          // Get all facts that contain this tag
+          const { data: allTagFacts } = await supabase
+            .from('historical_facts')
+            .select('id, tags')
+            .contains('tags', [tag]);
+
+          const totalCount = allTagFacts?.length || 0;
+          const completedCount = allTagFacts?.filter(fact => 
+            completedFactIds.includes(fact.id)
+          ).length || 0;
+
+          const progress = totalCount > 0 
+            ? Math.round((completedCount / totalCount) * 100)
+            : 0;
+          tempTagProgress[tag] = progress;
+        }
+
         setRegionProgress(tempRegionProgress);
         setEraProgress(tempEraProgress);
+        setTagProgress(tempTagProgress);
 
       } catch (error) {
         console.error('Error fetching preferences:', error);
@@ -170,7 +176,7 @@ const PreferencesDashboard = () => {
     );
   }
 
-  if (preferences.preferred_regions.length === 0 && preferences.preferred_eras.length === 0 && preferences.preferred_difficulty.length === 0) {
+  if (preferences.preferred_regions.length === 0 && preferences.preferred_eras.length === 0 && preferences.preferred_difficulty.length === 0 && preferences.preferred_tags.length === 0) {
     return (
       <Card className="p-6 card-shadow">
         <div className="text-center py-8 space-y-4">
@@ -247,6 +253,29 @@ const PreferencesDashboard = () => {
             </div>
           )}
         </div>
+
+        {/* Tags Preferences */}
+        {preferences.preferred_tags.length > 0 && (
+          <div className="space-y-4 pt-6 border-t">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <Settings className="w-5 h-5 text-secondary" />
+              <h3>Thématiques</h3>
+            </div>
+            <div className="space-y-4">
+              {preferences.preferred_tags.map((tag) => (
+                <div key={tag} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{tag}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {tagProgress[tag] || 0}%
+                    </span>
+                  </div>
+                  <Progress value={tagProgress[tag] || 0} className="h-2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Difficulty Preferences */}
         {preferences.preferred_difficulty.length > 0 && (
