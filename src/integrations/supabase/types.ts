@@ -360,6 +360,36 @@ export type Database = {
         }
         Relationships: []
       }
+      streak_milestones: {
+        Row: {
+          created_at: string | null
+          days: number
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          points_reward: number
+        }
+        Insert: {
+          created_at?: string | null
+          days: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          points_reward?: number
+        }
+        Update: {
+          created_at?: string | null
+          days?: number
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          points_reward?: number
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
