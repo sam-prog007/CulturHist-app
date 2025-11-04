@@ -24,48 +24,58 @@ const AchievementsList = ({ userId }: AchievementsListProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchAchievements = async () => {
       try {
-        // Fetch all achievements
-        const { data: allAchievements, error: achievementsError } = await supabase
-          .from('achievements')
-          .select('*')
-          .order('requirement_value', { ascending: true });
+        // Fetch all data in parallel for better performance
+        const [
+          achievementsResult,
+          unlockedResult,
+          profileResult,
+          factsResult,
+          quizResult,
+          allQuizResult
+        ] = await Promise.all([
+          supabase
+            .from('achievements')
+            .select('*')
+            .order('requirement_value', { ascending: true }),
+          supabase
+            .from('user_achievements')
+            .select('achievement_id')
+            .eq('user_id', userId),
+          supabase
+            .from('profiles')
+            .select('points, current_streak')
+            .eq('id', userId)
+            .single(),
+          supabase
+            .from('user_progress')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId)
+            .eq('completed', true),
+          supabase
+            .from('quiz_sessions')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', userId),
+          supabase
+            .from('quiz_sessions')
+            .select('score, total_questions')
+            .eq('user_id', userId)
+        ]);
 
-        if (achievementsError) throw achievementsError;
+        if (!mounted) return;
 
-        // Fetch user's unlocked achievements
-        const { data: unlockedAchievements, error: unlockedError } = await supabase
-          .from('user_achievements')
-          .select('achievement_id')
-          .eq('user_id', userId);
+        if (achievementsResult.error) throw achievementsResult.error;
+        if (unlockedResult.error) throw unlockedResult.error;
 
-        if (unlockedError) throw unlockedError;
-
-        const unlockedIds = new Set(unlockedAchievements?.map(a => a.achievement_id) || []);
-
-        // Fetch user stats for progress calculation
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('points, current_streak')
-          .eq('id', userId)
-          .single();
-
-        const { count: factsCount } = await supabase
-          .from('user_progress')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('completed', true);
-
-        const { count: quizCount } = await supabase
-          .from('quiz_sessions')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-
-        const { data: allQuizSessions } = await supabase
-          .from('quiz_sessions')
-          .select('score, total_questions')
-          .eq('user_id', userId);
+        const allAchievements = achievementsResult.data;
+        const unlockedIds = new Set(unlockedResult.data?.map(a => a.achievement_id) || []);
+        const profile = profileResult.data;
+        const factsCount = factsResult.count;
+        const quizCount = quizResult.count;
+        const allQuizSessions = allQuizResult.data;
 
         const perfectQuizCount = allQuizSessions?.filter(
           session => session.score === session.total_questions
@@ -115,15 +125,23 @@ const AchievementsList = ({ userId }: AchievementsListProps) => {
           }
         }
 
-        setAchievements(achievementsWithProgress);
+        if (mounted) {
+          setAchievements(achievementsWithProgress);
+        }
       } catch (error) {
         console.error('Error fetching achievements:', error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchAchievements();
+
+    return () => {
+      mounted = false;
+    };
   }, [userId]);
 
   if (loading) {

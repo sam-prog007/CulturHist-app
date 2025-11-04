@@ -27,7 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!session) return;
     
     try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
+      const { data, error } = await supabase.functions.invoke('check-subscription', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
       
       if (error) {
         console.error('Error checking subscription:', error);
@@ -42,18 +46,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let mounted = true;
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, currentSession) => {
+        if (!mounted) return;
+        
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
         setLoading(false);
         
         // Check subscription when user logs in
-        if (session?.user) {
-          setTimeout(() => {
-            checkSubscription();
-          }, 0);
+        if (currentSession?.user) {
+          checkSubscription();
         } else {
           setIsPremium(false);
           setPremiumUntil(null);
@@ -61,20 +67,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      if (!mounted) return;
+      
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
       setLoading(false);
       
-      if (session?.user) {
-        setTimeout(() => {
-          checkSubscription();
-        }, 0);
+      if (currentSession?.user) {
+        checkSubscription();
+      }
+    }).catch((error) => {
+      console.error('Error getting session:', error);
+      if (mounted) {
+        setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {

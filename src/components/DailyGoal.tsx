@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Target, CheckCircle2 } from "lucide-react";
@@ -8,39 +9,51 @@ interface DailyGoalProps {
   userId: string;
 }
 
-const DailyGoal = ({ userId }: DailyGoalProps) => {
+const DailyGoalComponent = ({ userId }: DailyGoalProps) => {
   const [factsValidated, setFactsValidated] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const dailyGoal = 5;
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchProgress = async () => {
-      const today = new Date().toISOString().split('T')[0];
+      try {
+        const today = new Date().toISOString().split('T')[0];
 
-      // Fetch facts validated today
-      const { data: factsData } = await supabase
-        .from('daily_facts_progress')
-        .select('facts_validated')
-        .eq('user_id', userId)
-        .eq('date', today)
-        .maybeSingle();
+        // Fetch both queries in parallel
+        const [factsResult, quizResult] = await Promise.all([
+          supabase
+            .from('daily_facts_progress')
+            .select('facts_validated')
+            .eq('user_id', userId)
+            .eq('date', today)
+            .maybeSingle(),
+          supabase
+            .from('quiz_sessions')
+            .select('id')
+            .eq('user_id', userId)
+            .gte('completed_at', `${today}T00:00:00`)
+            .limit(1)
+        ]);
 
-      if (factsData) {
-        setFactsValidated(factsData.facts_validated || 0);
+        if (!mounted) return;
+
+        if (factsResult.data) {
+          setFactsValidated(factsResult.data.facts_validated || 0);
+        }
+
+        setQuizCompleted(quizResult.data && quizResult.data.length > 0);
+      } catch (error) {
+        console.error('Error fetching progress:', error);
       }
-
-      // Check if quiz completed today
-      const { data: quizData } = await supabase
-        .from('quiz_sessions')
-        .select('id')
-        .eq('user_id', userId)
-        .gte('completed_at', `${today}T00:00:00`)
-        .limit(1);
-
-      setQuizCompleted(quizData && quizData.length > 0);
     };
 
     fetchProgress();
+
+    return () => {
+      mounted = false;
+    };
   }, [userId]);
 
   const progressPercentage = (factsValidated / dailyGoal) * 100;
@@ -89,4 +102,4 @@ const DailyGoal = ({ userId }: DailyGoalProps) => {
   );
 };
 
-export default DailyGoal;
+export default memo(DailyGoalComponent);

@@ -90,10 +90,23 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
+  }
+
+  /* Improve performance */
+  img, video {
+    @apply max-w-full h-auto;
+  }
+  
+  /* Prevent layout shifts */
+  .prevent-shift {
+    content-visibility: auto;
   }
 }
 

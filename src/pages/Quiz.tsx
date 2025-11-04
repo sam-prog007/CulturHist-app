@@ -38,25 +38,56 @@ const Quiz = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
+    let mounted = true;
+
     const generateQuiz = async () => {
       if (!user) return;
 
       try {
-        // Check if user already did a quiz today (unless premium)
         const today = new Date().toISOString().split('T')[0];
-        const { data: todayQuizzes } = await supabase
-          .from('quiz_sessions')
-          .select('id')
-          .eq('user_id', user.id)
-          .gte('completed_at', `${today}T00:00:00`)
-          .limit(1);
+        const fourDaysAgo = new Date();
+        fourDaysAgo.setDate(fourDaysAgo.getDate() - 3);
 
-        // Check if user is premium
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('is_premium')
-          .eq('id', user.id)
-          .single();
+        // Fetch all required data in parallel
+        const [todayQuizzesResult, profileResult, recentProgressResult] = await Promise.all([
+          supabase
+            .from('quiz_sessions')
+            .select('id')
+            .eq('user_id', user.id)
+            .gte('completed_at', `${today}T00:00:00`)
+            .limit(1),
+          supabase
+            .from('profiles')
+            .select('is_premium')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('user_progress')
+            .select(`
+              fact_id,
+              historical_facts (
+                id,
+                title,
+                title_fr,
+                description,
+                description_fr,
+                date_text,
+                date_text_fr,
+                region,
+                region_fr,
+                tags,
+                tags_fr
+              )
+            `)
+            .eq('user_id', user.id)
+            .eq('completed', true)
+            .gte('completed_at', fourDaysAgo.toISOString())
+        ]);
+
+        if (!mounted) return;
+
+        const todayQuizzes = todayQuizzesResult.data;
+        const profile = profileResult.data;
 
         // Redirect to limit page if not premium and already did quiz today
         if (todayQuizzes && todayQuizzes.length > 0 && !profile?.is_premium) {
@@ -64,33 +95,9 @@ const Quiz = () => {
           return;
         }
 
-        // Fetch facts learned in the last 4 days (today + 3 previous days)
-        const fourDaysAgo = new Date();
-        fourDaysAgo.setDate(fourDaysAgo.getDate() - 3);
+        const recentProgress = recentProgressResult.data;
 
-        const { data: recentProgress, error: progressError } = await supabase
-          .from('user_progress')
-          .select(`
-            fact_id,
-            historical_facts (
-              id,
-              title,
-              title_fr,
-              description,
-              description_fr,
-              date_text,
-              date_text_fr,
-              region,
-              region_fr,
-              tags,
-              tags_fr
-            )
-          `)
-          .eq('user_id', user.id)
-          .eq('completed', true)
-          .gte('completed_at', fourDaysAgo.toISOString());
-
-        if (progressError) throw progressError;
+        if (recentProgressResult.error) throw recentProgressResult.error;
 
         if (!recentProgress || recentProgress.length === 0) {
           toast({
@@ -195,20 +202,30 @@ const Quiz = () => {
           return;
         }
 
-        setQuestions(generatedQuestions);
+        if (mounted) {
+          setQuestions(generatedQuestions);
+        }
       } catch (error) {
         console.error('Error generating quiz:', error);
-        toast({
-          title: "Erreur",
-          description: "Impossible de générer le quiz",
-          variant: "destructive"
-        });
+        if (mounted) {
+          toast({
+            title: "Erreur",
+            description: "Impossible de générer le quiz",
+            variant: "destructive"
+          });
+        }
       } finally {
-        setLoadingQuiz(false);
+        if (mounted) {
+          setLoadingQuiz(false);
+        }
       }
     };
 
     generateQuiz();
+
+    return () => {
+      mounted = false;
+    };
   }, [user, toast, navigate]);
 
   const handleAnswerSelect = (answerIndex: number) => {

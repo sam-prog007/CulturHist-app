@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useImageOptimization } from '@/hooks/useImageOptimization';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -10,8 +11,9 @@ interface OptimizedImageProps {
 
 /**
  * Composant d'image optimisé avec lazy loading et fallback
+ * Memoized to prevent unnecessary re-renders
  */
-export const OptimizedImage = ({ 
+const OptimizedImageComponent = ({ 
   src, 
   alt, 
   className = '', 
@@ -41,3 +43,5 @@ export const OptimizedImage = ({
     />
   );
 };
+
+export const OptimizedImage = memo(OptimizedImageComponent);

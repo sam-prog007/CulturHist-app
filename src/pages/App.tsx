@@ -34,38 +34,48 @@ const AppPage = () => {
   }, [user, loading, navigate]);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchData = async () => {
       if (!user) return;
 
       try {
-        // Fetch daily fact for this user
-        const fact = await getDailyFactForUser(user.id);
+        // Fetch data in parallel for better performance
+        const [fact, profileResult, countResult] = await Promise.all([
+          getDailyFactForUser(user.id),
+          supabase.from("profiles").select("points, exp").eq("id", user.id).single(),
+          supabase
+            .from("user_progress")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("completed", true)
+        ]);
+
+        if (!mounted) return;
+
         setDailyFact(fact);
 
-        // Fetch user stats
-        const { data: profile } = await supabase.from("profiles").select("points, exp").eq("id", user.id).single();
-
-        const { count } = await supabase
-          .from("user_progress")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .eq("completed", true);
-
-        const level = profile ? Math.floor(Math.sqrt(profile.exp / 100)) + 1 : 1;
+        const level = profileResult.data ? Math.floor(Math.sqrt(profileResult.data.exp / 100)) + 1 : 1;
 
         setUserStats({
-          points: profile?.points || 0,
+          points: profileResult.data?.points || 0,
           level,
-          factsLearned: count || 0,
+          factsLearned: countResult.count || 0,
         });
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
-        setLoadingFact(false);
+        if (mounted) {
+          setLoadingFact(false);
+        }
       }
     };
 
     fetchData();
+
+    return () => {
+      mounted = false;
+    };
   }, [user]);
   if (loading) {
     return (

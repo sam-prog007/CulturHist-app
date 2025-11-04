@@ -12,30 +12,39 @@ export const useImageOptimization = (src: string, placeholder?: string) => {
   useEffect(() => {
     if (!src) {
       setIsLoading(false);
+      setError(false);
       return;
     }
 
+    let mounted = true;
     setIsLoading(true);
     setError(false);
 
     const img = new Image();
     
-    img.onload = () => {
-      setImageSrc(src);
-      setIsLoading(false);
-    };
-
-    img.onerror = () => {
-      setError(true);
-      setIsLoading(false);
-      if (placeholder) {
-        setImageSrc(placeholder);
+    const handleLoad = () => {
+      if (mounted) {
+        setImageSrc(src);
+        setIsLoading(false);
       }
     };
 
+    const handleError = () => {
+      if (mounted) {
+        setError(true);
+        setIsLoading(false);
+        if (placeholder) {
+          setImageSrc(placeholder);
+        }
+      }
+    };
+
+    img.onload = handleLoad;
+    img.onerror = handleError;
     img.src = src;
 
     return () => {
+      mounted = false;
       img.onload = null;
       img.onerror = null;
     };
