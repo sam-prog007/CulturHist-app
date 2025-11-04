@@ -3,7 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { Globe, Clock, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -83,28 +83,22 @@ const PreferencesDashboard = () => {
 
         const completedFactIds = completedFacts?.map(f => f.fact_id) || [];
 
-        // Calculate progress for each preferred region
+        // Calculate learned count for each preferred region
         for (const region of (profileData?.preferred_regions || [])) {
-          // Get all facts for this region
           const { data: allRegionFacts } = await supabase
             .from('historical_facts')
             .select('id')
             .eq('region', region);
 
-          const totalCount = allRegionFacts?.length || 0;
-          const completedCount = allRegionFacts?.filter(fact => 
+          const completedCount = allRegionFacts?.filter(fact =>
             completedFactIds.includes(fact.id)
           ).length || 0;
 
-          const progress = totalCount > 0 
-            ? Math.round((completedCount / totalCount) * 100)
-            : 0;
-          tempRegionProgress[region] = progress;
+          tempRegionProgress[region] = completedCount;
         }
 
-        // Calculate progress for each preferred era
+        // Calculate learned count for each preferred era
         for (const era of (profileData?.preferred_eras || [])) {
-          // Get all periods that match this era
           const { data: periods } = await supabase
             .from('historical_periods')
             .select('id, name')
@@ -113,43 +107,33 @@ const PreferencesDashboard = () => {
           const periodIds = periods?.map(p => p.id) || [];
 
           if (periodIds.length > 0) {
-            // Get all facts for these periods
             const { data: allEraFacts } = await supabase
               .from('historical_facts')
               .select('id')
               .in('period_id', periodIds);
 
-            const totalCount = allEraFacts?.length || 0;
-            const completedCount = allEraFacts?.filter(fact => 
+            const completedCount = allEraFacts?.filter(fact =>
               completedFactIds.includes(fact.id)
             ).length || 0;
 
-            const progress = totalCount > 0 
-              ? Math.round((completedCount / totalCount) * 100)
-              : 0;
-            tempEraProgress[era] = progress;
+            tempEraProgress[era] = completedCount;
           } else {
             tempEraProgress[era] = 0;
           }
         }
 
-        // Calculate progress for each preferred tag
+        // Calculate learned count for each preferred tag
         for (const tag of (profileData?.preferred_tags || [])) {
-          // Get all facts that contain this tag
           const { data: allTagFacts } = await supabase
             .from('historical_facts')
             .select('id, tags')
             .contains('tags', [tag]);
 
-          const totalCount = allTagFacts?.length || 0;
-          const completedCount = allTagFacts?.filter(fact => 
+          const completedCount = allTagFacts?.filter(fact =>
             completedFactIds.includes(fact.id)
           ).length || 0;
 
-          const progress = totalCount > 0 
-            ? Math.round((completedCount / totalCount) * 100)
-            : 0;
-          tempTagProgress[tag] = progress;
+          tempTagProgress[tag] = completedCount;
         }
 
         setRegionProgress(tempRegionProgress);
@@ -165,7 +149,13 @@ const PreferencesDashboard = () => {
 
     fetchPreferencesAndProgress();
   }, [user]);
-
+  
+  const levelFromCount = (count: number) => {
+    if (count < 10) return 'Débutant';
+    if (count <= 25) return 'Intermédiaire';
+    return 'Expert';
+  };
+  
   if (loading) {
     return (
       <Card className="p-6 card-shadow">
@@ -214,16 +204,15 @@ const PreferencesDashboard = () => {
               </div>
               <div className="space-y-4">
                 {preferences.preferred_regions.map((region) => (
-                  <div key={region} className="space-y-2">
+                  <div key={region} className="py-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">
                         {regionLabels[region] || region}
                       </span>
-                      <span className="text-sm text-muted-foreground">
-                        {regionProgress[region] || 0}%
-                      </span>
+                      <Badge variant="secondary">
+                        {levelFromCount(regionProgress[region] || 0)}
+                      </Badge>
                     </div>
-                    <Progress value={regionProgress[region] || 0} className="h-2" />
                   </div>
                 ))}
               </div>
@@ -239,14 +228,13 @@ const PreferencesDashboard = () => {
               </div>
               <div className="space-y-4">
                 {preferences.preferred_eras.map((era) => (
-                  <div key={era} className="space-y-2">
+                  <div key={era} className="py-2">
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium">{era}</span>
-                      <span className="text-sm text-muted-foreground">
-                        {eraProgress[era] || 0}%
-                      </span>
+                      <Badge variant="secondary">
+                        {levelFromCount(eraProgress[era] || 0)}
+                      </Badge>
                     </div>
-                    <Progress value={eraProgress[era] || 0} className="h-2" />
                   </div>
                 ))}
               </div>
@@ -263,14 +251,13 @@ const PreferencesDashboard = () => {
             </div>
             <div className="space-y-4">
               {preferences.preferred_tags.map((tag) => (
-                <div key={tag} className="space-y-2">
+                <div key={tag} className="py-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">{tag}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {tagProgress[tag] || 0}%
-                    </span>
+                    <Badge variant="secondary">
+                      {levelFromCount(tagProgress[tag] || 0)}
+                    </Badge>
                   </div>
-                  <Progress value={tagProgress[tag] || 0} className="h-2" />
                 </div>
               ))}
             </div>

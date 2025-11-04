@@ -134,10 +134,11 @@ Make it visually engaging and culturally accurate.`;
 
   } catch (error) {
     console.error('Error:', error);
+    const message = error instanceof Error ? error.message : String(error);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to generate image', 
-        details: error.message 
+        details: message 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
