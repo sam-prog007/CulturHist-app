@@ -17,17 +17,19 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 345 45% 15%;
 
-    --primary: 38 75% 45%;
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 25 95% 63%;
 
-    --secondary: 40 50% 95%;
-    --secondary-foreground: 38 45% 20%;
+    --secondary: 200 18% 46%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 40 30% 96%;
-    --muted-foreground: 38 15% 45%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 210 12% 45%;
 
-    --accent: 45 90% 55%;
-    --accent-foreground: 38 45% 20%;
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 142 76% 46%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -39,47 +41,51 @@ All colors MUST be HSL.
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(38 75% 45%), hsl(45 85% 55%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(40 30% 98%));
-    --gradient-accent: linear-gradient(135deg, hsl(45 90% 55%), hsl(48 88% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(25 95% 53%), hsl(35 95% 58%));
+    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(25 30% 98%));
+    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(25 15% 98%));
 
     /* Shadows */
-    --shadow-elegant: 0 10px 40px -10px hsl(38 75% 45% / 0.2);
-    --shadow-card: 0 4px 20px -4px hsl(38 55% 35% / 0.12);
-    --shadow-glow: 0 0 30px hsl(45 90% 55% / 0.3);
+    --shadow-elegant: 0 12px 48px -12px hsl(25 95% 53% / 0.25);
+    --shadow-card: 0 6px 24px -6px hsl(25 55% 35% / 0.15);
+    --shadow-glow: 0 0 40px hsl(25 95% 53% / 0.4);
+    --shadow-hover: 0 16px 56px -16px hsl(25 95% 53% / 0.35);
 
     /* Animations */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 38 25% 8%;
-    --foreground: 40 25% 95%;
+    --background: 25 25% 8%;
+    --foreground: 25 10% 95%;
 
-    --card: 38 20% 12%;
-    --card-foreground: 40 25% 95%;
+    --card: 25 20% 12%;
+    --card-foreground: 25 10% 95%;
 
-    --popover: 38 20% 12%;
-    --popover-foreground: 40 25% 95%;
+    --popover: 25 20% 12%;
+    --popover-foreground: 25 10% 95%;
 
-    --primary: 38 80% 50%;
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
+    --primary-light: 25 95% 63%;
 
-    --secondary: 38 18% 18%;
-    --secondary-foreground: 40 25% 95%;
+    --secondary: 200 18% 26%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 38 18% 18%;
-    --muted-foreground: 40 15% 60%;
+    --muted: 25 18% 18%;
+    --muted-foreground: 25 10% 60%;
 
-    --accent: 45 90% 55%;
-    --accent-foreground: 38 25% 8%;
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 100%;
+    --accent-light: 142 76% 46%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 38 18% 18%;
-    --input: 38 18% 18%;
-    --ring: 38 80% 50%;
+    --border: 25 18% 18%;
+    --input: 25 18% 18%;
+    --ring: 25 95% 53%;
   }
 }
 
@@ -140,10 +146,27 @@ All colors MUST be HSL.
   }
 
   .hover-scale {
-    @apply transition-transform duration-200 hover:scale-105;
+    @apply transition-transform duration-300 hover:scale-[1.02];
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1;
   }
 
   .story-link {
     @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+
+  .quiz-option {
+    @apply relative overflow-hidden transition-all duration-300;
+  }
+
+  .quiz-option::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] transition-transform duration-700;
+  }
+
+  .quiz-option:hover::before {
+    @apply translate-x-[200%];
   }
 }

@@ -95,32 +95,40 @@ const AppPage = () => {
       <Navbar />
 
       {/* Hero Section with Stats */}
-      <section className="relative bg-gradient-to-br from-primary/5 via-accent/5 to-background border-b pt-16">
-        <div className="container mx-auto px-4 py-8">
+      <section className="relative bg-gradient-to-br from-primary/10 via-accent/5 to-background border-b pt-20 pb-8 overflow-hidden">
+        {/* Background decoration */}
+        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-accent/20 to-transparent rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
+        
+        <div className="container mx-auto px-4 relative">
           <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-6">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
               <div className="text-center md:text-left animate-fade-in">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-2 justify-center md:justify-start">
-                  <Sparkles className="w-8 h-8 text-accent" />
-                  Bonjour !
-                </h1>
-                <p className="text-lg text-muted-foreground">Continuons votre apprentissage</p>
+                <div className="inline-flex items-center gap-3 mb-3">
+                  <div className="p-3 rounded-full bg-gradient-to-br from-primary to-accent glow-shadow">
+                    <Sparkles className="w-6 h-6 text-white" />
+                  </div>
+                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+                    Bonjour !
+                  </h1>
+                </div>
+                <p className="text-xl text-muted-foreground font-medium">Continuons votre apprentissage</p>
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="text-center px-6 py-3 bg-primary/10 rounded-2xl border border-primary/20">
-                  <p className="text-3xl font-bold text-primary">{userStats.level}</p>
-                  <p className="text-xs text-muted-foreground">Niveau</p>
+                <div className="group text-center px-8 py-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl border-2 border-primary/30 hover-lift card-shadow hover:shadow-elegant smooth-transition">
+                  <p className="text-4xl font-bold bg-gradient-to-br from-primary to-primary-light bg-clip-text text-transparent">{userStats.level}</p>
+                  <p className="text-sm text-muted-foreground font-semibold">Niveau</p>
                 </div>
-                <div className="text-center px-6 py-3 bg-accent/10 rounded-2xl border border-accent/20">
-                  <p className="text-3xl font-bold text-accent">{userStats.points}</p>
-                  <p className="text-xs text-muted-foreground">Points</p>
+                <div className="group text-center px-8 py-4 bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl border-2 border-accent/30 hover-lift card-shadow hover:shadow-elegant smooth-transition">
+                  <p className="text-4xl font-bold bg-gradient-to-br from-accent to-accent-light bg-clip-text text-transparent">{userStats.points}</p>
+                  <p className="text-sm text-muted-foreground font-semibold">Points</p>
                 </div>
               </div>
             </div>
 
             {/* Streak and Daily Goal */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in-up">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
               {user && <StreakIndicator userId={user.id} />}
               {user && <DailyGoal userId={user.id} />}
             </div>
@@ -138,13 +146,16 @@ const AppPage = () => {
           )}
 
           {/* Daily Fact Card */}
-          <Card className="p-8 card-shadow hover:shadow-lg transition-shadow animate-fade-in-up">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-full bg-accent/10">
-                  <Calendar className="w-5 h-5 text-accent" />
+          <Card className="p-8 md:p-10 card-shadow hover:shadow-hover border-2 hover-lift smooth-transition animate-fade-in-up overflow-hidden relative">
+            {/* Background gradient */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-2xl"></div>
+            
+            <div className="space-y-6 relative">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-gradient-to-br from-accent to-accent-light">
+                  <Calendar className="w-6 h-6 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold">Fait du jour</h2>
+                <h2 className="text-3xl font-bold">Fait du jour</h2>
               </div>
 
               {loadingFact ? (
@@ -152,32 +163,36 @@ const AppPage = () => {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
                 </div>
               ) : dailyFact ? (
-                <div className="space-y-6">
-                  <div className="w-full rounded-xl overflow-hidden card-shadow">
+                <div className="space-y-8">
+                  <div className="w-full rounded-2xl overflow-hidden elegant-shadow hover:shadow-hover smooth-transition group">
                     <OptimizedImage
                       src={getFactImage(dailyFact.image_url) || dailyFact.image_url || heroImage}
                       alt={dailyFact.title}
-                      className="w-full h-72 object-cover hover:scale-105 transition-transform duration-500"
+                      className="w-full h-80 md:h-96 object-cover group-hover:scale-110 smooth-transition"
                     />
                   </div>
-                  <div className="space-y-4">
-                    <h3 className="text-2xl md:text-3xl font-bold text-foreground">
+                  <div className="space-y-5">
+                    <h3 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
                       {dailyFact.title_fr || dailyFact.title}
                     </h3>
 
-                    <p className="text-lg text-muted-foreground leading-relaxed">
+                    <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
                       {dailyFact.description_fr || dailyFact.description}
                     </p>
 
                     {(dailyFact.date_text_fr || dailyFact.date_text) && (
-                      <div className="flex items-center gap-2 text-accent">
-                        <Calendar className="w-4 h-4" />
-                        <span className="font-medium">{dailyFact.date_text_fr || dailyFact.date_text}</span>
+                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
+                        <Calendar className="w-5 h-5 text-accent" />
+                        <span className="font-semibold text-accent">{dailyFact.date_text_fr || dailyFact.date_text}</span>
                       </div>
                     )}
 
-                    <Button size="lg" className="w-full md:w-auto group" onClick={() => navigate("/facts")}>
-                      <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />
+                    <Button 
+                      size="lg" 
+                      className="w-full md:w-auto group bg-gradient-to-r from-primary to-primary-light hover:shadow-lg hover-lift text-lg px-8"
+                      onClick={() => navigate("/facts")}
+                    >
+                      <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 smooth-transition" />
                       Explorer les faits
                     </Button>
                   </div>
