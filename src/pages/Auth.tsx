@@ -11,6 +11,7 @@ import { Book, Mail, Lock, User, Crown } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PREMIUM_PRICES } from '@/lib/pricing';
 
 // Validation schemas
 const emailSchema = z.string()
@@ -112,17 +113,25 @@ export default function Auth() {
       
       // If user wants premium, redirect to checkout
       if (wantsPremium) {
-        try {
-          const { data, error: checkoutError } = await supabase.functions.invoke('create-checkout');
-          if (checkoutError) throw checkoutError;
-          
-          if (data?.url) {
-            window.open(data.url, '_blank');
-            toast.success('Redirection vers le paiement...');
+        // With email confirmation enabled there is no session yet, so checkout can't be created
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          toast.info('Confirmez votre email puis passez Premium depuis votre espace.');
+        } else {
+          try {
+            const { data, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
+              body: { priceId: PREMIUM_PRICES.monthly }
+            });
+            if (checkoutError) throw checkoutError;
+
+            if (data?.url) {
+              window.open(data.url, '_blank');
+              toast.success('Redirection vers le paiement...');
+            }
+          } catch (error) {
+            console.error('Error creating checkout:', error);
+            toast.error('Erreur lors de la création du paiement');
           }
-        } catch (error) {
-          console.error('Error creating checkout:', error);
-          toast.error('Erreur lors de la création du paiement');
         }
       }
       
@@ -139,7 +148,7 @@ export default function Auth() {
               <Book className="w-8 h-8 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Bienvenue sur HistoireApp</CardTitle>
+          <CardTitle className="text-2xl font-bold">Bienvenue sur CulturHist</CardTitle>
           <CardDescription>
             Connectez-vous ou créez un compte pour commencer votre aventure historique
           </CardDescription>
@@ -237,7 +246,7 @@ export default function Auth() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-10"
                       required
-                      minLength={6}
+                      minLength={8}
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">

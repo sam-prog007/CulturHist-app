@@ -24,11 +24,11 @@ export const TranslateFacts = () => {
         title: "Traduction réussie",
         description: data.message,
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error("Translation error:", error);
       toast({
         title: "Erreur de traduction",
-        description: error.message || "Une erreur est survenue",
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
         variant: "destructive",
       });
       setProgress("Erreur lors de la traduction");

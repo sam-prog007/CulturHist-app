@@ -10,14 +10,18 @@ import { useToast } from "@/hooks/use-toast";
 import { getFactImage } from "@/assets/factsImages";
 import { OptimizedImage } from "@/components/OptimizedImage";
 import AdSense from "@/components/AdSense";
+import type { Tables } from "@/integrations/supabase/types";
+
+type Fact = Tables<"historical_facts"> & { historical_periods: { name: string } | null };
 
 const FactsList = () => {
   const { user, loading, isPremium } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [facts, setFacts] = useState<any[]>([]);
-  const [dailyProgress, setDailyProgress] = useState<any>(null);
+  const [facts, setFacts] = useState<Fact[]>([]);
+  const [dailyProgress, setDailyProgress] = useState<Tables<"daily_facts_progress"> | null>(null);
   const [loadingFacts, setLoadingFacts] = useState(true);
+  const [hasPremium, setHasPremium] = useState(isPremium);
   const [stats, setStats] = useState({
     factsLearned: 0,
     points: 0,
@@ -40,7 +44,7 @@ const FactsList = () => {
         const today = new Date().toISOString().split('T')[0];
 
         // Check daily progress
-        let { data: progressData, error: progressError } = await supabase
+        const { data: existingProgress, error: progressError } = await supabase
           .from('daily_facts_progress')
           .select('*')
           .eq('user_id', user.id)
@@ -48,6 +52,8 @@ const FactsList = () => {
           .maybeSingle();
 
         if (progressError && progressError.code !== 'PGRST116') throw progressError;
+
+        let progressData = existingProgress;
 
         // If no progress for today, create it
         if (!progressData) {
@@ -67,18 +73,22 @@ const FactsList = () => {
 
         setDailyProgress(progressData);
 
-        // If already validated 5 facts today and not premium, redirect to limit page
-        if (progressData.facts_validated >= 5 && !isPremium) {
-          navigate('/facts-limit');
-          return;
-        }
-
         // Fetch user preferences including new tags
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty')
+          .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty, is_premium')
           .eq('id', user.id)
           .single();
+
+        // The profile flag is known immediately, unlike the async subscription check
+        const premium = isPremium || !!profileData?.is_premium;
+        setHasPremium(premium);
+
+        // If already validated 5 facts today and not premium, redirect to limit page
+        if (progressData.facts_validated >= 5 && !premium) {
+          navigate('/facts-limit');
+          return;
+        }
 
         const preferredRegions = profileData?.preferred_regions || [];
         const preferredEras = profileData?.preferred_eras || [];
@@ -213,7 +223,7 @@ const FactsList = () => {
     fetchFacts();
   }, [user, navigate, toast, isPremium]);
 
-  const handleValidateFact = async (fact: any) => {
+  const handleValidateFact = async (fact: Fact) => {
     if (!user || !dailyProgress) return;
 
     try {
@@ -307,21 +317,21 @@ const FactsList = () => {
 
       toast({
         title: "Fait validé !",
-        description: `+${fact.points_reward} points${isPremium ? '' : ` • ${5 - newFactsValidated} faits restants aujourd'hui`}`,
+        description: `+${fact.points_reward} points${hasPremium ? '' : ` • ${5 - newFactsValidated} faits restants aujourd'hui`}`,
       });
 
       // If reached daily limit and not premium
-      if (newFactsValidated >= 5 && !isPremium) {
+      if (newFactsValidated >= 5 && !hasPremium) {
         toast({
           title: "Limite atteinte !",
           description: "Vous avez validé vos 5 faits du jour. À demain !",
         });
         setTimeout(() => navigate('/facts-limit'), 2000);
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Erreur",
-        description: error.message,
+        description: error instanceof Error ? error.message : String(error),
         variant: "destructive"
       });
     }
@@ -359,7 +369,7 @@ const FactsList = () => {
           <div className="text-center space-y-2">
             <h1 className="text-2xl md:text-3xl font-bold">Explorer les faits</h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              {isPremium ? (
+              {hasPremium ? (
                 "Accès illimité aux faits historiques ✨"
               ) : (
                 dailyProgress && `${dailyProgress.facts_validated}/5 faits validés aujourd'hui`

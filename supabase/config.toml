@@ -11,3 +11,6 @@ verify_jwt = true
 
 [functions.translate-facts]
 verify_jwt = true
+
+[functions.generate-fact-images]
+verify_jwt = true

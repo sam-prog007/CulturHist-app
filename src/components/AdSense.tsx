@@ -1,5 +1,11 @@
 import { useEffect } from "react";
 
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
+
 interface AdSenseProps {
   slot: string;
   format?: "auto" | "fluid" | "rectangle" | "vertical" | "horizontal";
@@ -15,7 +21,6 @@ const AdSense = ({
 }: AdSenseProps) => {
   useEffect(() => {
     try {
-      // @ts-ignore
       (window.adsbygoogle = window.adsbygoogle || []).push({});
     } catch (error) {
       console.error("AdSense error:", error);

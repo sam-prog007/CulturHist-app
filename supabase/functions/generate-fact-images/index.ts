@@ -12,6 +12,40 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // This function writes with the service role key: restrict it to admins
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'No authorization header provided' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !userData.user) {
+      return new Response(
+        JSON.stringify({ error: 'User not authenticated' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const { data: hasAdminRole, error: roleError } = await supabase.rpc('has_role', {
+      _user_id: userData.user.id,
+      _role: 'admin'
+    });
+    if (roleError || !hasAdminRole) {
+      return new Response(
+        JSON.stringify({ error: 'Access denied. Admin role required.' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
     const { factId, title, description, region } = await req.json();
 
     if (!factId || !title || !description) {
@@ -62,11 +96,6 @@ Make it visually engaging and culturally accurate.`;
     }
 
     console.log('Image generated successfully');
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Convert base64 to blob
     const base64Data = generatedImageUrl.split(',')[1];

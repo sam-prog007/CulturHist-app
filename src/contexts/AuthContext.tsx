@@ -1,15 +1,16 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, username?: string) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string, username?: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   loading: boolean;
   isPremium: boolean;
+  isAdmin: boolean;
   premiumUntil: string | null;
   checkSubscription: () => Promise<void>;
 }
@@ -21,15 +22,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [premiumUntil, setPremiumUntil] = useState<string | null>(null);
 
-  const checkSubscription = async () => {
-    if (!session) return;
-    
+  // Takes the session explicitly: callers inside the auth listener must not
+  // rely on the `session` state, which is still stale at that point.
+  const refreshSubscription = async (currentSession: Session | null) => {
+    if (!currentSession) return;
+
     try {
       const { data, error } = await supabase.functions.invoke('check-subscription', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`
+          Authorization: `Bearer ${currentSession.access_token}`
         }
       });
       
@@ -45,6 +49,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const checkSubscription = () => refreshSubscription(session);
+
+  const refreshAdminRole = async (userId: string) => {
+    const { data, error } = await supabase.rpc('has_role', { _user_id: userId, _role: 'admin' });
+    if (error) {
+      console.error('Error checking admin role:', error);
+    }
+    setIsAdmin(!error && data === true);
+  };
+
   useEffect(() => {
     let mounted = true;
 
@@ -57,11 +71,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(currentSession?.user ?? null);
         setLoading(false);
         
-        // Check subscription when user logs in
+        // Check subscription when user logs in. Deferred so no Supabase call
+        // runs inside the auth callback (supabase-js can deadlock otherwise).
         if (currentSession?.user) {
-          checkSubscription();
+          setTimeout(() => {
+            refreshSubscription(currentSession);
+            refreshAdminRole(currentSession.user.id);
+          }, 0);
         } else {
           setIsPremium(false);
+          setIsAdmin(false);
           setPremiumUntil(null);
         }
       }
@@ -76,7 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       
       if (currentSession?.user) {
-        checkSubscription();
+        refreshSubscription(currentSession);
+        refreshAdminRole(currentSession.user.id);
       }
     }).catch((error) => {
       console.error('Error getting session:', error);
@@ -120,7 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading, isPremium, premiumUntil, checkSubscription }}>
+    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading, isPremium, isAdmin, premiumUntil, checkSubscription }}>
       {children}
     </AuthContext.Provider>
   );

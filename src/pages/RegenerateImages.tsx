@@ -18,7 +18,7 @@ interface HistoricalFact {
 }
 
 const RegenerateImages = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [facts, setFacts] = useState<HistoricalFact[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,13 +31,16 @@ const RegenerateImages = () => {
   });
 
   useEffect(() => {
+    if (authLoading) return;
     if (!user) {
       navigate("/auth");
       return;
     }
+    // Access is enforced server-side; this only avoids a useless fetch
+    if (!isAdmin) return;
 
     fetchFacts();
-  }, [user, navigate]);
+  }, [user, authLoading, isAdmin, navigate]);
 
   const fetchFacts = async () => {
     try {
@@ -91,7 +94,7 @@ const RegenerateImages = () => {
       } catch (error) {
         console.error(`Error regenerating image for ${fact.title}:`, error);
         failedCount++;
-        toast.error(`✗ ${fact.title}: ${error.message}`);
+        toast.error(`✗ ${fact.title}: ${error instanceof Error ? error.message : String(error)}`);
       }
 
       setResults({ success: successCount, failed: failedCount });
@@ -107,6 +110,17 @@ const RegenerateImages = () => {
     // Refresh facts to show new images
     await fetchFacts();
   };
+
+  if (!authLoading && user && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-4 py-24 text-center">
+          <p className="text-muted-foreground">Accès réservé aux administrateurs.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

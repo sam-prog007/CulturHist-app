@@ -13,7 +13,7 @@ import AchievementsList from "@/components/AchievementsList";
 import { TranslateFacts } from "@/components/TranslateFacts";
 
 const ProfilePage = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [gradesDialogOpen, setGradesDialogOpen] = useState(false);
   const [stats, setStats] = useState({
@@ -181,7 +181,7 @@ const ProfilePage = () => {
           </Card>
 
           {/* Translation Tool (Admin) */}
-          <TranslateFacts />
+          {isAdmin && <TranslateFacts />}
 
           {/* Progress Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

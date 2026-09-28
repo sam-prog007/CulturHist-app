@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { getFactImage } from "@/assets/factsImages";
 import { OptimizedImage } from "@/components/OptimizedImage";
+import type { Tables } from "@/integrations/supabase/types";
+
+type LearnedFact = Partial<Tables<"historical_facts">> & { completed_at: string | null };
 
 const LearnedFacts = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [learnedFacts, setLearnedFacts] = useState<any[]>([]);
+  const [learnedFacts, setLearnedFacts] = useState<LearnedFact[]>([]);
   const [loadingFacts, setLoadingFacts] = useState(true);
 
   useEffect(() => {

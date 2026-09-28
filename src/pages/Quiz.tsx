@@ -120,7 +120,7 @@ const Quiz = () => {
 
         for (let i = 0; i < numQuestions && generatedQuestions.length < numQuestions; i++) {
           const randomFact = recentProgress[Math.floor(Math.random() * recentProgress.length)];
-          const fact = randomFact.historical_facts as any;
+          const fact = randomFact.historical_facts;
 
           if (!fact || usedFacts.has(fact.id)) continue;
           usedFacts.add(fact.id);
@@ -137,8 +137,8 @@ const Quiz = () => {
           if (questionType === 0 && displayDate) {
             // Question: Given fact, find date
             const otherDates = recentProgress
-              .map((p: any) => (p.historical_facts?.date_text_fr || p.historical_facts?.date_text))
-              .filter((d: string) => d && d !== displayDate)
+              .map((p) => (p.historical_facts?.date_text_fr || p.historical_facts?.date_text))
+              .filter((d) => d && d !== displayDate)
               .slice(0, 3);
 
             if (otherDates.length >= 2) {
@@ -154,12 +154,12 @@ const Quiz = () => {
           } else if (questionType === 1) {
             // Question: Given date, find fact
             const otherFacts = recentProgress
-              .map((p: any) => p.historical_facts)
-              .filter((f: any) => f && f.id !== fact.id && (f.title_fr || f.title))
+              .map((p) => p.historical_facts)
+              .filter((f) => f && f.id !== fact.id && (f.title_fr || f.title))
               .slice(0, 3);
 
             if (otherFacts.length >= 2) {
-              const options = [displayTitle, ...otherFacts.map((f: any) => f.title_fr || f.title)].sort(() => Math.random() - 0.5);
+              const options = [displayTitle, ...otherFacts.map((f) => f.title_fr || f.title)].sort(() => Math.random() - 0.5);
               const questionText = displayDate
                 ? `Quel événement s'est produit en ${displayDate} ?`
                 : `Parmi ces événements, lequel correspond à : "${displayDesc.substring(0, 60)}..." ?`;
@@ -175,8 +175,8 @@ const Quiz = () => {
           } else if (displayRegion) {
             // Question: Given fact, find region
             const otherRegions = [...new Set(recentProgress
-              .map((p: any) => (p.historical_facts?.region_fr || p.historical_facts?.region))
-              .filter((r: string) => r && r !== displayRegion))]
+              .map((p) => (p.historical_facts?.region_fr || p.historical_facts?.region))
+              .filter((r) => r && r !== displayRegion))]
               .slice(0, 3);
 
             if (otherRegions.length >= 2) {
@@ -266,14 +266,15 @@ const Quiz = () => {
     const currentQuestion = questions[currentQuestionIndex];
     const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
 
-    // If wrong answer and not yet answered correctly, add to end
+    // If wrong answer and not yet answered correctly, add to end.
+    // Use the updated list below: `questions` state only changes on next render.
+    let nextQuestions = questions;
     if (!isCorrect && !answeredQuestions.has(currentQuestion.id)) {
-      const remainingQuestions = questions.slice(currentQuestionIndex + 1);
-      const newQuestions = [...remainingQuestions, currentQuestion];
-      setQuestions([...questions.slice(0, currentQuestionIndex + 1), ...newQuestions]);
+      nextQuestions = [...questions, currentQuestion];
+      setQuestions(nextQuestions);
     }
 
-    if (currentQuestionIndex + 1 >= questions.length || answeredQuestions.size === questions.length) {
+    if (currentQuestionIndex + 1 >= nextQuestions.length) {
       // Quiz complete - Calculate points based on performance
       const isPerfect = score === questions.length;
       const pointsEarned = isPerfect ? 30 : Math.round((score / questions.length) * 30);
@@ -565,7 +566,7 @@ const Quiz = () => {
                     size="lg"
                     className="bg-gradient-to-r from-accent to-accent-light hover:shadow-lg hover-lift text-lg px-8"
                   >
-                    {currentQuestionIndex + 1 >= questions.length || answeredQuestions.size === questions.length
+                    {currentQuestionIndex + 1 >= questions.length && selectedAnswer === currentQuestion.correctAnswer
                       ? 'Voir les résultats'
                       : 'Question suivante'}
                   </Button>

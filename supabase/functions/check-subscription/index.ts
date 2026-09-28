@@ -7,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const logStep = (step: string, details?: any) => {
+const logStep = (step: string, details?: unknown) => {
   const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
   console.log(`[CHECK-SUBSCRIPTION] ${step}${detailsStr}`);
 };
@@ -76,7 +76,9 @@ serve(async (req) => {
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
-      subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
+      // Since the 2025-03-31.basil API, the period end lives on subscription items
+      const periodEnd = subscription.items.data[0]?.current_period_end;
+      subscriptionEnd = periodEnd ? new Date(periodEnd * 1000).toISOString() : null;
       logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
       
       await supabaseClient

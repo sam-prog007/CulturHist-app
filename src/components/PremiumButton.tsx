@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { PREMIUM_PRICES } from '@/lib/pricing';
 
 interface PremiumButtonProps {
   variant?: 'default' | 'card';
@@ -28,7 +29,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
         window.open(data.url, '_blank');
         toast.success('Redirection vers le paiement...');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating checkout:', error);
       toast.error('Erreur lors de la création du paiement');
     } finally {
@@ -47,7 +48,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
         window.open(data.url, '_blank');
         toast.success('Redirection vers la gestion...');
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error opening portal:', error);
       toast.error('Erreur lors de l\'ouverture du portail');
     } finally {
@@ -121,7 +122,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
                 <div>
                   <p className="text-2xl font-bold mb-1">1,99€<span className="text-sm font-normal text-muted-foreground">/mois</span></p>
                   <Button 
-                    onClick={() => handleSubscribe('price_1SGGVyHPnO1VlDbG9d5dPOQc')}
+                    onClick={() => handleSubscribe(PREMIUM_PRICES.monthly)}
                     disabled={loading}
                     className="w-full"
                   >
@@ -142,7 +143,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
                   <p className="text-2xl font-bold mb-1">12,99€<span className="text-sm font-normal text-muted-foreground">/an</span></p>
                   <p className="text-xs text-accent mb-2">Économisez 35% !</p>
                   <Button 
-                    onClick={() => handleSubscribe('price_1SGGX2HPnO1VlDbG01hfQrdG')}
+                    onClick={() => handleSubscribe(PREMIUM_PRICES.yearly)}
                     disabled={loading}
                     variant="outline"
                     className="w-full border-accent text-accent hover:bg-accent/10"
@@ -194,7 +195,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
   return (
     <div className="flex gap-2">
       <Button 
-        onClick={() => handleSubscribe('price_1SGGVyHPnO1VlDbG9d5dPOQc')}
+        onClick={() => handleSubscribe(PREMIUM_PRICES.monthly)}
         disabled={loading}
         className="gap-2"
       >
@@ -211,7 +212,7 @@ export default function PremiumButton({ variant = 'default' }: PremiumButtonProp
         )}
       </Button>
       <Button 
-        onClick={() => handleSubscribe('price_1SGGX2HPnO1VlDbG01hfQrdG')}
+        onClick={() => handleSubscribe(PREMIUM_PRICES.yearly)}
         disabled={loading}
         variant="outline"
         className="gap-2 border-accent text-accent hover:bg-accent/10"

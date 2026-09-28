@@ -23,7 +23,7 @@ const AppPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [dailyFact, setDailyFact] = useState<any>(null);
+  const [dailyFact, setDailyFact] = useState<Awaited<ReturnType<typeof getDailyFactForUser>>>(null);
   const [loadingFact, setLoadingFact] = useState(true);
   const [userStats, setUserStats] = useState({ points: 0, level: 1, factsLearned: 0 });
 
