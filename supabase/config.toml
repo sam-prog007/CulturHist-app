@@ -1,4 +1,4 @@
-project_id = "cobswvfohgdcwrlkyspm"
+project_id = "culturhist"
 
 [functions.create-checkout]
 verify_jwt = true
