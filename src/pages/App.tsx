@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Trophy, Calendar, TrendingUp, CheckCircle, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@/assets/hero-history.jpg";
 import PremiumButton from "@/components/PremiumButton";
 import PreferencesDashboard from "@/components/PreferencesDashboard";
 import AchievementsList from "@/components/AchievementsList";
@@ -15,9 +14,10 @@ import ProgressChart from "@/components/ProgressChart";
 import StreakIndicator from "@/components/StreakIndicator";
 import DailyGoal from "@/components/DailyGoal";
 import LearningPath from "@/components/LearningPath";
-import { getFactImage } from "@/assets/factsImages";
-import { OptimizedImage } from "@/components/OptimizedImage";
+import { FactImage } from "@/components/FactImage";
+import { DifficultyStars } from "@/components/DifficultyStars";
 import { getDailyFactForUser } from "@/lib/dailyFact";
+import { PREMIUM_ENABLED } from "@/lib/pricing";
 
 const AppPage = () => {
   const { user, loading } = useAuth();
@@ -164,17 +164,21 @@ const AppPage = () => {
                 </div>
               ) : dailyFact ? (
                 <div className="space-y-8">
-                  <div className="w-full rounded-2xl overflow-hidden elegant-shadow hover:shadow-hover smooth-transition group">
-                    <OptimizedImage
-                      src={getFactImage(dailyFact.image_url) || dailyFact.image_url || heroImage}
-                      alt={dailyFact.title}
-                      className="w-full h-80 md:h-96 object-cover group-hover:scale-110 smooth-transition"
-                    />
-                  </div>
+                  <FactImage
+                    src={dailyFact.image_url}
+                    alt={dailyFact.title_fr || dailyFact.title}
+                    credit={dailyFact.image_credit}
+                    sourceUrl={dailyFact.image_source_url}
+                    label={[dailyFact.region_fr, dailyFact.historical_periods?.name].filter(Boolean).join(" · ")}
+                    className="h-80 md:h-96 rounded-2xl"
+                  />
                   <div className="space-y-5">
-                    <h3 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                      {dailyFact.title_fr || dailyFact.title}
-                    </h3>
+                    <div className="space-y-3">
+                      <DifficultyStars difficulty={dailyFact.difficulty} showLabel />
+                      <h3 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
+                        {dailyFact.title_fr || dailyFact.title}
+                      </h3>
+                    </div>
 
                     <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
                       {dailyFact.description_fr || dailyFact.description}
@@ -217,9 +221,9 @@ const AppPage = () => {
           </div>
 
           {/* Progress and Premium */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
+          <div className={`grid grid-cols-1 ${PREMIUM_ENABLED ? "md:grid-cols-2" : ""} gap-6 animate-fade-in-up`}>
             {user && <ProgressChart userId={user.id} />}
-            <PremiumButton variant="card" />
+            {PREMIUM_ENABLED && <PremiumButton variant="card" />}
           </div>
 
           {/* Achievements Section */}

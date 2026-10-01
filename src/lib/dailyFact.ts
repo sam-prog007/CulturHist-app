@@ -24,6 +24,8 @@ export async function getDailyFactForUser(userId: string) {
           date_text,
           date_text_fr,
           image_url,
+          image_credit,
+          image_source_url,
           period_id,
           difficulty,
           region,

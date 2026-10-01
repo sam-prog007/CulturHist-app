@@ -11,7 +11,7 @@ import { Book, Mail, Lock, User, Crown } from 'lucide-react';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PREMIUM_PRICES } from '@/lib/pricing';
+import { PREMIUM_ENABLED, PREMIUM_PRICES } from '@/lib/pricing';
 
 // Validation schemas
 const emailSchema = z.string()
@@ -254,20 +254,22 @@ export default function Auth() {
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2 p-4 rounded-lg bg-accent/5 border border-accent/20">
-                  <Checkbox 
-                    id="premium" 
-                    checked={wantsPremium}
-                    onCheckedChange={(checked) => setWantsPremium(checked as boolean)}
-                  />
-                  <label
-                    htmlFor="premium"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
-                  >
-                    <Crown className="w-4 h-4 text-accent" />
-                    <span>Je veux devenir Premium (CulturHist +) - 1,99€/mois</span>
-                  </label>
-                </div>
+                {PREMIUM_ENABLED && (
+                  <div className="flex items-center space-x-2 p-4 rounded-lg bg-accent/5 border border-accent/20">
+                    <Checkbox 
+                      id="premium" 
+                      checked={wantsPremium}
+                      onCheckedChange={(checked) => setWantsPremium(checked as boolean)}
+                    />
+                    <label
+                      htmlFor="premium"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Crown className="w-4 h-4 text-accent" />
+                      <span>Je veux devenir Premium (CulturHist +) - 1,99€/mois</span>
+                    </label>
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Création...' : 'Créer un compte'}

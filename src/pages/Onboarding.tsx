@@ -9,7 +9,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import heroImage from "@/assets/hero-history.jpg";
+import { DifficultyStars } from "@/components/DifficultyStars";
+import { DIFFICULTIES } from "@/lib/difficulty";
 
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
@@ -86,11 +87,12 @@ const Onboarding = () => {
     );
   };
 
-  const difficulties = [
-    { value: "easy", label: "Facile", description: "Faits accessibles et simples" },
-    { value: "medium", label: "Moyen", description: "Faits avec détails modérés" },
-    { value: "hard", label: "Difficile", description: "Faits complexes et détaillés" },
-  ];
+  const difficultyDescriptions: Record<string, string> = {
+    easy: "Faits accessibles et simples",
+    medium: "Faits avec détails modérés",
+    hard: "Faits complexes et détaillés",
+  };
+  const difficulties = DIFFICULTIES.map((d) => ({ ...d, description: difficultyDescriptions[d.value] }));
 
   useEffect(() => {
     const fetchUserPreferences = async () => {
@@ -186,16 +188,6 @@ const Onboarding = () => {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center subtle-gradient overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Fond historique"
-          className="w-full h-full object-cover opacity-10"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background"></div>
-      </div>
-
       {/* Content */}
       <div className="container mx-auto px-4 py-16 z-10 relative">
         <div className="max-w-2xl mx-auto animate-fade-in">
@@ -203,7 +195,7 @@ const Onboarding = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-4">
               <Sparkles className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent-foreground">
+              <span className="text-sm font-medium text-accent">
                 Configuration de votre profil
               </span>
             </div>
@@ -393,21 +385,27 @@ const Onboarding = () => {
                   </p>
                 </div>
                 <div className="space-y-3">
-                  {difficulties.map((difficulty) => (
-                    <Button
-                      key={difficulty.value}
-                      variant={selectedDifficulties.includes(difficulty.value) ? "default" : "outline"}
-                      className="w-full justify-start h-auto py-4"
-                      onClick={() => toggleDifficulty(difficulty.value)}
-                    >
-                      <div className="flex-1 text-left">
-                        <div className="font-medium">{difficulty.label}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {difficulty.description}
+                  {difficulties.map((difficulty) => {
+                    const selected = selectedDifficulties.includes(difficulty.value);
+                    return (
+                      <Button
+                        key={difficulty.value}
+                        variant={selected ? "default" : "outline"}
+                        className="w-full justify-start h-auto py-4"
+                        onClick={() => toggleDifficulty(difficulty.value)}
+                      >
+                        <div className="flex-1 text-left">
+                          <div className="flex items-center gap-2 font-medium">
+                            {difficulty.label}
+                            <DifficultyStars difficulty={difficulty.value} tone={selected ? "current" : "gold"} />
+                          </div>
+                          <div className={`text-sm ${selected ? "opacity-80" : "text-muted-foreground"}`}>
+                            {difficulty.description}
+                          </div>
                         </div>
-                      </div>
-                    </Button>
-                  ))}
+                      </Button>
+                    );
+                  })}
                 </div>
               </div>
             )}

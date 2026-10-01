@@ -60,14 +60,14 @@ const DailyGoalComponent = ({ userId }: DailyGoalProps) => {
   const isGoalComplete = factsValidated >= dailyGoal;
 
   return (
-    <Card className="p-6 bg-gradient-to-br from-blue-500 to-purple-600 text-white border-0">
+    <Card className="p-6 accent-gradient text-white border-0">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <Target className="w-6 h-6" />
           <h3 className="text-lg font-bold">Objectif quotidien</h3>
         </div>
         {isGoalComplete && (
-          <CheckCircle2 className="w-6 h-6 text-green-300 animate-scale-in" />
+          <CheckCircle2 className="w-6 h-6 text-gold animate-scale-in" />
         )}
       </div>
 
@@ -84,7 +84,7 @@ const DailyGoalComponent = ({ userId }: DailyGoalProps) => {
           <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
             quizCompleted ? 'bg-white border-white' : 'border-white/50'
           }`}>
-            {quizCompleted && <CheckCircle2 className="w-3 h-3 text-blue-600" />}
+            {quizCompleted && <CheckCircle2 className="w-3 h-3 text-accent" />}
           </div>
           <span className={quizCompleted ? 'line-through opacity-75' : ''}>
             Compléter un quiz

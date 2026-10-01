@@ -7,21 +7,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getFactImage } from "@/assets/factsImages";
-import { OptimizedImage } from "@/components/OptimizedImage";
+import { FactImage } from "@/components/FactImage";
+import { DifficultyStars } from "@/components/DifficultyStars";
 import AdSense from "@/components/AdSense";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Fact = Tables<"historical_facts"> & { historical_periods: { name: string } | null };
 
+const DAILY_FACTS_GOAL = 5;
+
 const FactsList = () => {
-  const { user, loading, isPremium } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [facts, setFacts] = useState<Fact[]>([]);
   const [dailyProgress, setDailyProgress] = useState<Tables<"daily_facts_progress"> | null>(null);
   const [loadingFacts, setLoadingFacts] = useState(true);
-  const [hasPremium, setHasPremium] = useState(isPremium);
   const [stats, setStats] = useState({
     factsLearned: 0,
     points: 0,
@@ -76,19 +77,9 @@ const FactsList = () => {
         // Fetch user preferences including new tags
         const { data: profileData } = await supabase
           .from('profiles')
-          .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty, is_premium')
+          .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty')
           .eq('id', user.id)
           .single();
-
-        // The profile flag is known immediately, unlike the async subscription check
-        const premium = isPremium || !!profileData?.is_premium;
-        setHasPremium(premium);
-
-        // If already validated 5 facts today and not premium, redirect to limit page
-        if (progressData.facts_validated >= 5 && !premium) {
-          navigate('/facts-limit');
-          return;
-        }
 
         const preferredRegions = profileData?.preferred_regions || [];
         const preferredEras = profileData?.preferred_eras || [];
@@ -221,7 +212,7 @@ const FactsList = () => {
     };
 
     fetchFacts();
-  }, [user, navigate, toast, isPremium]);
+  }, [user]);
 
   const handleValidateFact = async (fact: Fact) => {
     if (!user || !dailyProgress) return;
@@ -316,18 +307,9 @@ const FactsList = () => {
       });
 
       toast({
-        title: "Fait validé !",
-        description: `+${fact.points_reward} points${hasPremium ? '' : ` • ${5 - newFactsValidated} faits restants aujourd'hui`}`,
+        title: newFactsValidated === DAILY_FACTS_GOAL ? "Objectif du jour atteint !" : "Fait validé !",
+        description: `+${fact.points_reward} points • ${newFactsValidated}/${DAILY_FACTS_GOAL} faits validés aujourd'hui`,
       });
-
-      // If reached daily limit and not premium
-      if (newFactsValidated >= 5 && !hasPremium) {
-        toast({
-          title: "Limite atteinte !",
-          description: "Vous avez validé vos 5 faits du jour. À demain !",
-        });
-        setTimeout(() => navigate('/facts-limit'), 2000);
-      }
     } catch (error) {
       toast({
         title: "Erreur",
@@ -369,11 +351,7 @@ const FactsList = () => {
           <div className="text-center space-y-2">
             <h1 className="text-2xl md:text-3xl font-bold">Explorer les faits</h1>
             <p className="text-sm md:text-base text-muted-foreground">
-              {hasPremium ? (
-                "Accès illimité aux faits historiques ✨"
-              ) : (
-                dailyProgress && `${dailyProgress.facts_validated}/5 faits validés aujourd'hui`
-              )}
+              {dailyProgress && `${dailyProgress.facts_validated}/${DAILY_FACTS_GOAL} faits validés aujourd'hui`}
             </p>
           </div>
 
@@ -389,21 +367,22 @@ const FactsList = () => {
           ) : (
             <div className="space-y-4 md:space-y-6">
               {facts.map((fact) => {
-                const imageUrl = getFactImage(fact.image_url) || fact.image_url;
                 return (
                   <Card key={fact.id} className="p-4 md:p-6 space-y-4">
-                    {imageUrl && (
-                      <div className="w-full rounded-lg overflow-hidden">
-                        <OptimizedImage
-                          src={imageUrl} 
-                          alt={fact.title}
-                          className="w-full h-48 md:h-64 object-cover"
-                        />
-                      </div>
-                    )}
-                  
+                    <FactImage
+                      src={fact.image_url}
+                      alt={fact.title_fr || fact.title}
+                      credit={fact.image_credit}
+                      sourceUrl={fact.image_source_url}
+                      label={[fact.region_fr, fact.historical_periods?.name].filter(Boolean).join(" · ")}
+                      className="h-48 md:h-64"
+                    />
+
                     <div className="space-y-2">
-                      <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
+                        <DifficultyStars difficulty={fact.difficulty} className="shrink-0 pt-1" />
+                      </div>
                       <p className="text-sm md:text-base text-muted-foreground">{fact.description_fr || fact.description}</p>
                       {(fact.date_text_fr || fact.date_text) && (
                         <p className="text-sm font-medium text-accent">

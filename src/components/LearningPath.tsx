@@ -48,7 +48,7 @@ const LearningPath = ({ userId }: LearningPathProps) => {
       title: 'Apprendre',
       description: 'Découvrir de nouveaux faits',
       icon: BookOpen,
-      color: 'from-green-500 to-emerald-600',
+      color: 'from-primary to-primary-light',
       completed: stats.factsLearned > 0,
       locked: false,
       action: () => navigate('/facts'),
@@ -58,7 +58,7 @@ const LearningPath = ({ userId }: LearningPathProps) => {
       title: 'Réviser',
       description: 'Tester vos connaissances',
       icon: Brain,
-      color: 'from-blue-500 to-indigo-600',
+      color: 'from-accent to-accent-light',
       completed: stats.quizCompleted > 0,
       locked: stats.factsLearned === 0,
       action: () => navigate('/quiz'),
@@ -68,7 +68,7 @@ const LearningPath = ({ userId }: LearningPathProps) => {
       title: 'Succès',
       description: 'Voir vos accomplissements',
       icon: Trophy,
-      color: 'from-yellow-500 to-orange-600',
+      color: 'from-primary-light to-gold',
       completed: false,
       locked: false,
       action: () => navigate('/profile'),
@@ -101,7 +101,7 @@ const LearningPath = ({ userId }: LearningPathProps) => {
                     )}
                   </div>
                   {activity.completed && (
-                    <CheckCircle2 className="w-6 h-6 text-green-500 animate-scale-in" />
+                    <CheckCircle2 className="w-6 h-6 text-success animate-scale-in" />
                   )}
                 </div>
 

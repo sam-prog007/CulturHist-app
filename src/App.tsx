@@ -13,12 +13,9 @@ const Auth = lazy(() => import("./pages/Auth"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const AppPage = lazy(() => import("./pages/App"));
 const Quiz = lazy(() => import("./pages/Quiz"));
-const QuizLimit = lazy(() => import("./pages/QuizLimit"));
 const FactsList = lazy(() => import("./pages/FactsList"));
-const FactsLimit = lazy(() => import("./pages/FactsLimit"));
 const Profile = lazy(() => import("./pages/Profile"));
 const LearnedFacts = lazy(() => import("./pages/LearnedFacts"));
-const RegenerateImages = lazy(() => import("./pages/RegenerateImages"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -47,12 +44,9 @@ const App = () => (
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/app" element={<AppPage />} />
                 <Route path="/quiz" element={<Quiz />} />
-                <Route path="/quiz-limit" element={<QuizLimit />} />
                 <Route path="/facts" element={<FactsList />} />
-                <Route path="/facts-limit" element={<FactsLimit />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learned-facts" element={<LearnedFacts />} />
-                <Route path="/regenerate-images" element={<RegenerateImages />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

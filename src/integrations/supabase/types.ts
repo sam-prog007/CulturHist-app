@@ -165,58 +165,82 @@ export type Database = {
       }
       historical_facts: {
         Row: {
+          countries: string[] | null
           created_at: string | null
           date_text: string | null
           date_text_fr: string | null
+          day: number | null
           description: string
           description_fr: string | null
           difficulty: string | null
           id: string
+          image_credit: string | null
+          image_source_url: string | null
           image_url: string | null
+          month: number | null
           period_id: string | null
           points_reward: number | null
           region: string | null
           region_fr: string | null
+          slug: string | null
+          source_url: string | null
           tags: string[] | null
           tags_fr: string[] | null
           title: string
           title_fr: string | null
+          year: number | null
         }
         Insert: {
+          countries?: string[] | null
           created_at?: string | null
           date_text?: string | null
           date_text_fr?: string | null
+          day?: number | null
           description: string
           description_fr?: string | null
           difficulty?: string | null
           id?: string
+          image_credit?: string | null
+          image_source_url?: string | null
           image_url?: string | null
+          month?: number | null
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
           region_fr?: string | null
+          slug?: string | null
+          source_url?: string | null
           tags?: string[] | null
           tags_fr?: string[] | null
           title: string
           title_fr?: string | null
+          year?: number | null
         }
         Update: {
+          countries?: string[] | null
           created_at?: string | null
           date_text?: string | null
           date_text_fr?: string | null
+          day?: number | null
           description?: string
           description_fr?: string | null
           difficulty?: string | null
           id?: string
+          image_credit?: string | null
+          image_source_url?: string | null
           image_url?: string | null
+          month?: number | null
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
           region_fr?: string | null
+          slug?: string | null
+          source_url?: string | null
           tags?: string[] | null
           tags_fr?: string[] | null
           title?: string
           title_fr?: string | null
+          year?: number | null
         }
         Relationships: [
           {
@@ -357,6 +381,48 @@ export type Database = {
           score?: number
           total_questions?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          author: string
+          context: string | null
+          context_fr: string | null
+          created_at: string | null
+          id: string
+          original_text: string | null
+          slug: string
+          source_url: string | null
+          text: string | null
+          text_fr: string
+          year: number | null
+        }
+        Insert: {
+          author: string
+          context?: string | null
+          context_fr?: string | null
+          created_at?: string | null
+          id?: string
+          original_text?: string | null
+          slug: string
+          source_url?: string | null
+          text?: string | null
+          text_fr: string
+          year?: number | null
+        }
+        Update: {
+          author?: string
+          context?: string | null
+          context_fr?: string | null
+          created_at?: string | null
+          id?: string
+          original_text?: string | null
+          slug?: string
+          source_url?: string | null
+          text?: string | null
+          text_fr?: string
+          year?: number | null
         }
         Relationships: []
       }

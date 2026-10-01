@@ -44,56 +44,32 @@ const Quiz = () => {
       if (!user) return;
 
       try {
-        const today = new Date().toISOString().split('T')[0];
         const fourDaysAgo = new Date();
         fourDaysAgo.setDate(fourDaysAgo.getDate() - 3);
 
-        // Fetch all required data in parallel
-        const [todayQuizzesResult, profileResult, recentProgressResult] = await Promise.all([
-          supabase
-            .from('quiz_sessions')
-            .select('id')
-            .eq('user_id', user.id)
-            .gte('completed_at', `${today}T00:00:00`)
-            .limit(1),
-          supabase
-            .from('profiles')
-            .select('is_premium')
-            .eq('id', user.id)
-            .single(),
-          supabase
-            .from('user_progress')
-            .select(`
-              fact_id,
-              historical_facts (
-                id,
-                title,
-                title_fr,
-                description,
-                description_fr,
-                date_text,
-                date_text_fr,
-                region,
-                region_fr,
-                tags,
-                tags_fr
-              )
-            `)
-            .eq('user_id', user.id)
-            .eq('completed', true)
-            .gte('completed_at', fourDaysAgo.toISOString())
-        ]);
+        const recentProgressResult = await supabase
+          .from('user_progress')
+          .select(`
+            fact_id,
+            historical_facts (
+              id,
+              title,
+              title_fr,
+              description,
+              description_fr,
+              date_text,
+              date_text_fr,
+              region,
+              region_fr,
+              tags,
+              tags_fr
+            )
+          `)
+          .eq('user_id', user.id)
+          .eq('completed', true)
+          .gte('completed_at', fourDaysAgo.toISOString());
 
         if (!mounted) return;
-
-        const todayQuizzes = todayQuizzesResult.data;
-        const profile = profileResult.data;
-
-        // Redirect to limit page if not premium and already did quiz today
-        if (todayQuizzes && todayQuizzes.length > 0 && !profile?.is_premium) {
-          navigate('/quiz-limit');
-          return;
-        }
 
         const recentProgress = recentProgressResult.data;
 

@@ -9,7 +9,7 @@
 --   historical_facts.difficulty  easy | medium | hard
 --                                (same keys as profiles.preferred_difficulty)
 --
--- Demo facts live in supabase/seed.sql, not here.
+-- Demo content (facts, quotes) lives in supabase/content/, not here.
 
 -- ============================================================================
 -- Roles
@@ -208,7 +208,7 @@ CREATE TABLE public.historical_facts (
   difficulty TEXT CHECK (difficulty IN ('easy', 'medium', 'hard')),
   tags TEXT[],
   points_reward INTEGER DEFAULT 10,
-  -- Either a key from src/assets/factsImages.ts (e.g. 'pyramids-egypt') or a full URL.
+  -- Full URL of a real photo, painting or illustration (never AI-generated).
   image_url TEXT,
   -- French versions shown by the UI (falls back to the base columns when NULL).
   title_fr TEXT,

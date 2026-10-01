@@ -11,6 +11,7 @@ import GradesDialog from "@/components/GradesDialog";
 import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
 import { TranslateFacts } from "@/components/TranslateFacts";
+import { PREMIUM_ENABLED } from "@/lib/pricing";
 
 const ProfilePage = () => {
   const { user, loading, isAdmin } = useAuth();
@@ -184,9 +185,9 @@ const ProfilePage = () => {
           {isAdmin && <TranslateFacts />}
 
           {/* Progress Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className={`grid grid-cols-1 ${PREMIUM_ENABLED ? "md:grid-cols-2" : ""} gap-6`}>
             {user && <ProgressChart userId={user.id} />}
-            <PremiumButton variant="card" />
+            {PREMIUM_ENABLED && <PremiumButton variant="card" />}
           </div>
         </div>
       </main>

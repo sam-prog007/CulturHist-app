@@ -246,7 +246,7 @@ const PreferencesDashboard = () => {
         {preferences.preferred_tags.length > 0 && (
           <div className="space-y-4 pt-6 border-t">
             <div className="flex items-center gap-2 text-lg font-semibold">
-              <Settings className="w-5 h-5 text-secondary" />
+              <Settings className="w-5 h-5 text-muted-foreground" />
               <h3>Thématiques</h3>
             </div>
             <div className="space-y-4">

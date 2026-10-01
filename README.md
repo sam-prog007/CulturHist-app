@@ -1,6 +1,6 @@
 # CulturHist
 
-Daily history facts app (French UI): users pick preferences, validate facts of the day, take quizzes, earn points, streaks and grades. Premium ("CulturHist +") is a Stripe subscription.
+Daily history facts app (French UI, English planned): users pick preferences, validate facts of the day, take quizzes, earn points, streaks and grades. Premium ("CulturHist +", Stripe) exists in the code but is switched off for now: the free version is complete (`PREMIUM_ENABLED` in `src/lib/pricing.ts`).
 
 Originally generated with Lovable, now maintained as a regular Vite project.
 
@@ -15,9 +15,10 @@ Originally generated with Lovable, now maintained as a regular Vite project.
 
 ```sh
 npm ci
-cp .env.example .env   # then fill in the Supabase anon key
-npm run dev            # http://localhost:8080
+npm run dev   # http://localhost:8080
 ```
+
+`.env` holds the Supabase project URL and publishable (anon) key, which are safe to expose; edit it to use another project.
 
 Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`.
 
@@ -25,13 +26,15 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 
 | Path | Content |
 | --- | --- |
-| `src/pages/` | Routes: landing, auth, onboarding, `/app` dashboard, facts, quiz, profile, admin image regeneration |
+| `src/pages/` | Routes: landing, auth, onboarding, `/app` dashboard, facts, learned facts, quiz, profile |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |
 | `src/contexts/AuthContext.tsx` | Session, premium status (via `check-subscription`), admin role |
 | `src/lib/dailyFact.ts` | Fact-of-the-day selection |
-| `src/lib/pricing.ts` | Stripe price IDs |
+| `src/lib/pricing.ts` | Premium switch and Stripe price IDs |
+| `src/lib/difficulty.ts` | Difficulty levels (1 to 3 stars) |
+| `src/components/FactImage.tsx` | Fact image with its credit, or a placeholder |
 | `supabase/migrations/` | Database schema, RLS policies, triggers, reference data (grades, periods, achievements, streak milestones) |
-| `supabase/seed.sql` | 10 demo facts |
+| `supabase/content/` | Content files (demo facts, quotes of the day), rerunnable upserts |
 | `supabase/functions/` | Edge functions (see below) |
 
 ## Edge functions
@@ -42,15 +45,15 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `check-subscription` | Syncs Stripe subscription into `profiles.is_premium` | `STRIPE_SECRET_KEY` |
 | `customer-portal` | Stripe billing portal | `STRIPE_SECRET_KEY` |
 | `translate-facts` | Admin: EN→FR translation of facts | `LOVABLE_API_KEY` |
-| `generate-fact-images` | Admin: AI image per fact | `LOVABLE_API_KEY` |
 
-The two AI functions call the Lovable AI gateway, which only works while the project has Lovable credits. Switch them to a direct provider API if needed.
+`translate-facts` calls the Lovable AI gateway, which only works while the project has Lovable credits. The Stripe functions are only needed once premium is switched back on.
 
 ## Setting up a Supabase project
 
-The whole schema is one migration, `supabase/migrations/20261001000000_baseline.sql`. On a new, empty project, either:
+Run the migrations in `supabase/migrations/` in file-name order, then the content files in `supabase/content/` in file-name order. Either:
 
-- **Dashboard:** paste `supabase/migrations/20261001000000_baseline.sql` into the SQL editor and run it, then do the same with `supabase/seed.sql`.
+- **Dashboard:** paste each file into its own SQL editor tab and run it.
+  Content files are upserts keyed on `slug`: running one again updates its rows without duplicates and keeps users' progress.
 - **CLI:**
 
   ```sh
@@ -64,7 +67,10 @@ Value conventions shared with the frontend:
 
 - `historical_facts.region`: `europe`, `asia`, `africa`, `americas`, `oceania`, `middle-east` (onboarding keys)
 - `historical_facts.difficulty`: `easy`, `medium`, `hard` (same as `profiles.preferred_difficulty`)
-- `historical_facts.image_url`: a key from `src/assets/factsImages.ts` (e.g. `pyramids-egypt`) or a full URL
+- `historical_facts.year`: negative for BCE (`-44` = 44 av. J.-C.), no year 0; `month`/`day` only when the exact date is known (they feed "On this day")
+- `historical_facts.countries`: present-day ISO 3166-1 alpha-2 codes (`{FR}`, `{ML,EG}`), used by the world map
+- Images: real photos, paintings or illustrations only, never AI-generated. `image_url` is the full image URL, `image_credit` the author and license shown under it, `image_source_url` the page stating them (e.g. Wikimedia Commons)
+- Languages: base columns hold English and `_fr` columns French (`title` / `title_fr`, `text` / `text_fr`)
 
 Admins are rows in `public.user_roles` with role `admin`. To make yourself admin after signing up, run in the SQL editor:
 
