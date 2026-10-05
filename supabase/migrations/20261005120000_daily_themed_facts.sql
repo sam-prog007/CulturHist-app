@@ -10,16 +10,21 @@
 -- Schema
 -- ============================================================================
 
+-- Written to be safe to run again (IF NOT EXISTS / CREATE OR REPLACE).
+
 -- Several facts per day instead of one.
 ALTER TABLE public.daily_fact_assignments
   DROP CONSTRAINT IF EXISTS daily_fact_assignments_user_id_date_key,
-  ADD COLUMN slot SMALLINT,
+  ADD COLUMN IF NOT EXISTS slot SMALLINT;
+
+ALTER TABLE public.daily_fact_assignments
+  DROP CONSTRAINT IF EXISTS daily_fact_assignments_user_date_fact_key,
   ADD CONSTRAINT daily_fact_assignments_user_date_fact_key UNIQUE (user_id, date, fact_id);
 
 -- The day's theme.
 ALTER TABLE public.daily_facts_progress
-  ADD COLUMN region TEXT,
-  ADD COLUMN period_id UUID REFERENCES public.historical_periods(id) ON DELETE SET NULL;
+  ADD COLUMN IF NOT EXISTS region TEXT,
+  ADD COLUMN IF NOT EXISTS period_id UUID REFERENCES public.historical_periods(id) ON DELETE SET NULL;
 
 -- The streak used to follow any points change, quizzes included. It is now
 -- set by validate_daily_fact only.
