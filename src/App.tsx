@@ -16,6 +16,7 @@ const Quiz = lazy(() => import("./pages/Quiz"));
 const FactsList = lazy(() => import("./pages/FactsList"));
 const Profile = lazy(() => import("./pages/Profile"));
 const LearnedFacts = lazy(() => import("./pages/LearnedFacts"));
+const Maps = lazy(() => import("./pages/Maps"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -47,6 +48,7 @@ const App = () => (
                 <Route path="/facts" element={<FactsList />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/learned-facts" element={<LearnedFacts />} />
+                <Route path="/cartes" element={<Maps />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

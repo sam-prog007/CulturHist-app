@@ -26,7 +26,10 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 
 | Path | Content |
 | --- | --- |
-| `src/pages/` | Routes: landing, auth, onboarding, `/app` dashboard, facts, learned facts, quiz, profile |
+| `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (map and timeline, coming), profile |
+| `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
+| `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
+| `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |
 | `src/contexts/AuthContext.tsx` | Session, premium status (via `check-subscription`), admin role |
 | `src/lib/dailyFact.ts` | Fact-of-the-day selection |

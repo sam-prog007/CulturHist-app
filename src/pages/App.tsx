@@ -1,242 +1,212 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, Flame, Quote, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Trophy, Calendar, TrendingUp, CheckCircle, Sparkles } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import PremiumButton from "@/components/PremiumButton";
-import PreferencesDashboard from "@/components/PreferencesDashboard";
-import AchievementsList from "@/components/AchievementsList";
-import ProgressChart from "@/components/ProgressChart";
-import StreakIndicator from "@/components/StreakIndicator";
-import DailyGoal from "@/components/DailyGoal";
-import LearningPath from "@/components/LearningPath";
+import BottomNav from "@/components/BottomNav";
 import { FactImage } from "@/components/FactImage";
-import { DifficultyStars } from "@/components/DifficultyStars";
-import { getDailyFactForUser } from "@/lib/dailyFact";
-import { PREMIUM_ENABLED } from "@/lib/pricing";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatYear, todayKey } from "@/lib/dates";
+import { getOnThisDay } from "@/lib/onThisDay";
+import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
 
-const AppPage = () => {
+const DAILY_FACTS_GOAL = 5;
+
+const HomePage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [dailyFact, setDailyFact] = useState<Awaited<ReturnType<typeof getDailyFactForUser>>>(null);
-  const [loadingFact, setLoadingFact] = useState(true);
-  const [userStats, setUserStats] = useState({ points: 0, level: 1, factsLearned: 0 });
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
+    if (!loading && !user) navigate("/auth");
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    let mounted = true;
+  const { data: profile } = useQuery({
+    queryKey: ["home-profile", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("username, points, current_streak")
+        .eq("id", user!.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+  });
 
-    const fetchData = async () => {
-      if (!user) return;
+  const { data: factsValidated = 0 } = useQuery({
+    queryKey: ["home-daily-progress", user?.id, todayKey()],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("daily_facts_progress")
+        .select("facts_validated")
+        .eq("user_id", user!.id)
+        .eq("date", todayKey())
+        .maybeSingle();
+      return data?.facts_validated ?? 0;
+    },
+  });
 
-      try {
-        // Fetch data in parallel for better performance
-        const [fact, profileResult, countResult] = await Promise.all([
-          getDailyFactForUser(user.id),
-          supabase.from("profiles").select("points, exp").eq("id", user.id).single(),
-          supabase
-            .from("user_progress")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .eq("completed", true)
-        ]);
-
-        if (!mounted) return;
-
-        setDailyFact(fact);
-
-        const level = profileResult.data ? Math.floor(Math.sqrt(profileResult.data.exp / 100)) + 1 : 1;
-
-        setUserStats({
-          points: profileResult.data?.points || 0,
-          level,
-          factsLearned: countResult.count || 0,
-        });
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        if (mounted) {
-          setLoadingFact(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      mounted = false;
-    };
-  }, [user]);
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
-  if (!user) {
-    return null;
-  }
+
+  const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-
-      {/* Hero Section with Stats */}
-      <section className="relative bg-gradient-to-br from-primary/10 via-accent/5 to-background border-b pt-20 pb-8 overflow-hidden">
-        {/* Background decoration */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-accent/20 to-transparent rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
-        
-        <div className="container mx-auto px-4 relative">
-          <div className="max-w-6xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-8">
-              <div className="text-center md:text-left animate-fade-in">
-                <div className="inline-flex items-center gap-3 mb-3">
-                  <div className="p-3 rounded-full bg-gradient-to-br from-primary to-accent glow-shadow">
-                    <Sparkles className="w-6 h-6 text-white" />
-                  </div>
-                  <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-                    Bonjour !
-                  </h1>
-                </div>
-                <p className="text-xl text-muted-foreground font-medium">Continuons votre apprentissage</p>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="group text-center px-8 py-4 bg-gradient-to-br from-primary/20 to-primary/10 rounded-2xl border-2 border-primary/30 hover-lift card-shadow hover:shadow-elegant smooth-transition">
-                  <p className="text-4xl font-bold bg-gradient-to-br from-primary to-primary-light bg-clip-text text-transparent">{userStats.level}</p>
-                  <p className="text-sm text-muted-foreground font-semibold">Niveau</p>
-                </div>
-                <div className="group text-center px-8 py-4 bg-gradient-to-br from-accent/20 to-accent/10 rounded-2xl border-2 border-accent/30 hover-lift card-shadow hover:shadow-elegant smooth-transition">
-                  <p className="text-4xl font-bold bg-gradient-to-br from-accent to-accent-light bg-clip-text text-transparent">{userStats.points}</p>
-                  <p className="text-sm text-muted-foreground font-semibold">Points</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Streak and Daily Goal */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
-              {user && <StreakIndicator userId={user.id} />}
-              {user && <DailyGoal userId={user.id} />}
-            </div>
+    <div className="min-h-screen subtle-gradient">
+      <main className="mx-auto max-w-md space-y-5 px-4 pb-32 pt-[max(1.5rem,env(safe-area-inset-top))]">
+        <header className="space-y-3 animate-fade-in">
+          <p className="text-sm font-medium text-muted-foreground first-letter:uppercase">{today}</p>
+          <h1 className="text-3xl font-bold leading-tight">
+            Bon retour{profile?.username ? `, ${profile.username}` : ""}
+          </h1>
+          <div className="flex gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-sm font-semibold card-shadow">
+              <Flame className="h-4 w-4 text-orange-500" />
+              {profile?.current_streak ?? 0} {(profile?.current_streak ?? 0) > 1 ? "jours" : "jour"}
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-sm font-semibold card-shadow">
+              <Star className="h-4 w-4 fill-gold text-gold" />
+              {profile?.points ?? 0} points
+            </span>
           </div>
-        </div>
-      </section>
+        </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto space-y-8">
-          {/* Learning Path */}
-          {user && (
-            <div className="animate-fade-in-up">
-              <LearningPath userId={user.id} />
-            </div>
-          )}
-
-          {/* Daily Fact Card */}
-          <Card className="p-8 md:p-10 card-shadow hover:shadow-hover border-2 hover-lift smooth-transition animate-fade-in-up overflow-hidden relative">
-            {/* Background gradient */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-primary/10 to-transparent rounded-full blur-2xl"></div>
-            
-            <div className="space-y-6 relative">
-              <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-gradient-to-br from-accent to-accent-light">
-                  <Calendar className="w-6 h-6 text-white" />
-                </div>
-                <h2 className="text-3xl font-bold">Fait du jour</h2>
-              </div>
-
-              {loadingFact ? (
-                <div className="py-12 text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-                </div>
-              ) : dailyFact ? (
-                <div className="space-y-8">
-                  <FactImage
-                    src={dailyFact.image_url}
-                    alt={dailyFact.title_fr || dailyFact.title}
-                    credit={dailyFact.image_credit}
-                    sourceUrl={dailyFact.image_source_url}
-                    label={[dailyFact.region_fr, dailyFact.historical_periods?.name].filter(Boolean).join(" · ")}
-                    className="h-80 md:h-96 rounded-2xl"
-                  />
-                  <div className="space-y-5">
-                    <div className="space-y-3">
-                      <DifficultyStars difficulty={dailyFact.difficulty} showLabel />
-                      <h3 className="text-3xl md:text-4xl font-bold text-foreground leading-tight">
-                        {dailyFact.title_fr || dailyFact.title}
-                      </h3>
-                    </div>
-
-                    <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
-                      {dailyFact.description_fr || dailyFact.description}
-                    </p>
-
-                    {(dailyFact.date_text_fr || dailyFact.date_text) && (
-                      <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20">
-                        <Calendar className="w-5 h-5 text-accent" />
-                        <span className="font-semibold text-accent">{dailyFact.date_text_fr || dailyFact.date_text}</span>
-                      </div>
-                    )}
-
-                    <Button 
-                      size="lg" 
-                      className="w-full md:w-auto group bg-gradient-to-r from-primary to-primary-light hover:shadow-lg hover-lift text-lg px-8"
-                      onClick={() => navigate("/facts")}
-                    >
-                      <BookOpen className="w-5 h-5 mr-2 group-hover:scale-110 smooth-transition" />
-                      Explorer les faits
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 space-y-4">
-                  <div className="w-16 h-16 mx-auto bg-muted rounded-full flex items-center justify-center">
-                    <BookOpen className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold mb-2">Aucun fait disponible</h3>
-                    <p className="text-muted-foreground">Revenez bientôt pour découvrir de nouveaux faits !</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
-
-          {/* Preferences Dashboard */}
-          <div className="animate-fade-in-up">
-            <PreferencesDashboard />
-          </div>
-
-          {/* Progress and Premium */}
-          <div className={`grid grid-cols-1 ${PREMIUM_ENABLED ? "md:grid-cols-2" : ""} gap-6 animate-fade-in-up`}>
-            {user && <ProgressChart userId={user.id} />}
-            {PREMIUM_ENABLED && <PremiumButton variant="card" />}
-          </div>
-
-          {/* Achievements Section */}
-          <Card className="p-6 card-shadow animate-fade-in-up">
-            <h3 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-accent" />
-              Vos succès récents
-            </h3>
-            {user && <AchievementsList userId={user.id} />}
-          </Card>
-        </div>
+        <DailyFactsCard validated={factsValidated} onOpen={() => navigate("/facts")} />
+        <OnThisDayCard />
+        <QuoteCard />
       </main>
+      <BottomNav />
     </div>
   );
 };
-export default AppPage;
+
+const DailyFactsCard = ({ validated, onOpen }: { validated: number; onOpen: () => void }) => {
+  const done = validated >= DAILY_FACTS_GOAL;
+  const remaining = DAILY_FACTS_GOAL - validated;
+
+  return (
+    <Card className="overflow-hidden border-0 accent-gradient p-5 text-accent-foreground elegant-shadow animate-fade-in-up">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-gold" />
+          <h2 className="text-lg font-bold">Vos 5 faits du jour</h2>
+        </div>
+        <span className="text-sm font-semibold">
+          {Math.min(validated, DAILY_FACTS_GOAL)}/{DAILY_FACTS_GOAL}
+        </span>
+      </div>
+      <Progress
+        value={(Math.min(validated, DAILY_FACTS_GOAL) / DAILY_FACTS_GOAL) * 100}
+        className="mt-3 h-2 bg-white/20 [&>div]:bg-gold"
+      />
+      <p className="mt-3 text-sm opacity-90">
+        {done
+          ? "Objectif atteint, votre série continue. Revenez demain !"
+          : validated === 0
+            ? "Validez-les pour faire grandir votre série."
+            : `Encore ${remaining} ${remaining > 1 ? "faits" : "fait"} pour garder votre série.`}
+      </p>
+      {done ? (
+        <p className="mt-4 inline-flex items-center gap-2 font-semibold">
+          <CheckCircle2 className="h-5 w-5 text-gold" /> Journée validée
+        </p>
+      ) : (
+        <Button variant="hero" className="mt-4 w-full" onClick={onOpen}>
+          {validated === 0 ? "Commencer" : "Continuer"}
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      )}
+    </Card>
+  );
+};
+
+const OnThisDayCard = () => {
+  const { data: event, isLoading } = useQuery({
+    queryKey: ["on-this-day", new Date().toDateString()],
+    queryFn: () => getOnThisDay(),
+    staleTime: 6 * 60 * 60 * 1000,
+  });
+  const date = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+
+  return (
+    <Card className="space-y-4 p-5 card-shadow animate-fade-in-up">
+      <div className="flex items-center gap-2">
+        <CalendarDays className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-bold">Ce jour-là</h2>
+        <span className="ml-auto text-sm text-muted-foreground">{date}</span>
+      </div>
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-40 w-full" />
+          <Skeleton className="h-4 w-3/4" />
+        </div>
+      ) : event ? (
+        <>
+          {event.imageUrl && (
+            <FactImage src={event.imageUrl} alt="" credit={event.credit} sourceUrl={event.sourceUrl} className="h-44" />
+          )}
+          <div className="space-y-1">
+            <p className="font-serif text-2xl font-bold text-primary">{formatYear(event.year)}</p>
+            <p className="leading-relaxed">{event.text}</p>
+            {!event.imageUrl && event.sourceUrl && (
+              <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground underline-offset-2 hover:underline">
+                {event.credit}
+              </a>
+            )}
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">Aucun événement disponible pour aujourd'hui.</p>
+      )}
+    </Card>
+  );
+};
+
+const QuoteCard = () => {
+  const { data: quote, isLoading } = useQuery({
+    queryKey: ["quote-of-the-day", new Date().toDateString()],
+    queryFn: () => getQuoteOfTheDay(),
+    staleTime: 6 * 60 * 60 * 1000,
+  });
+
+  if (!isLoading && !quote) return null;
+
+  return (
+    <Card className="space-y-3 p-5 card-shadow animate-fade-in-up">
+      <div className="flex items-center gap-2">
+        <Quote className="h-5 w-5 text-primary" />
+        <h2 className="text-lg font-bold">Citation du jour</h2>
+      </div>
+      {isLoading || !quote ? (
+        <Skeleton className="h-16 w-full" />
+      ) : (
+        <figure className="space-y-3">
+          <blockquote className="font-serif text-xl leading-snug">« {quote.text_fr} »</blockquote>
+          {quote.original_text && <p className="text-sm italic text-muted-foreground">{quote.original_text}</p>}
+          <figcaption className="text-sm">
+            <span className="font-semibold text-accent">{quote.author}</span>
+            {(quote.context_fr || quote.year) && (
+              <span className="text-muted-foreground">
+                {" — "}
+                {[quote.context_fr, quote.year ? formatYear(quote.year) : null].filter(Boolean).join(", ")}
+              </span>
+            )}
+          </figcaption>
+        </figure>
+      )}
+    </Card>
+  );
+};
+
+export default HomePage;

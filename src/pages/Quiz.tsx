@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Trophy, Sparkles, Zap, Target } from "lucide-react";
@@ -344,8 +344,7 @@ const Quiz = () => {
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/5">
-        <Navbar />
-        <main className="container mx-auto px-4 py-24">
+          <main className="container mx-auto px-4 pt-6 pb-32">
           <Card className="max-w-2xl mx-auto p-8 md:p-12 elegant-shadow border-2 overflow-hidden relative animate-scale-in">
             {/* Background decoration */}
             <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/10 to-accent/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
@@ -417,6 +416,7 @@ const Quiz = () => {
             </div>
           </Card>
         </main>
+        <BottomNav />
       </div>
     );
   }
@@ -426,8 +426,7 @@ const Quiz = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-accent/5">
-      <Navbar />
-      <main className="container mx-auto px-4 py-24">
+      <main className="container mx-auto px-4 pt-6 pb-32">
         <div className="max-w-3xl mx-auto space-y-6 animate-fade-in-up">
           {/* Ad Space */}
           <AdSense slot="4234567891" format="horizontal" />
@@ -552,6 +551,7 @@ const Quiz = () => {
           </Card>
         </div>
       </main>
+      <BottomNav />
     </div>
   );
 };

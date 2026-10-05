@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, ArrowLeft } from "lucide-react";
@@ -336,8 +336,7 @@ const FactsList = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="container mx-auto px-4 py-20 md:py-24">
+      <main className="container mx-auto px-4 pt-6 pb-32">
         <div className="max-w-4xl mx-auto space-y-6">
           <Button
             variant="ghost"
@@ -405,6 +404,7 @@ const FactsList = () => {
           )}
         </div>
       </main>
+      <BottomNav />
     </div>
   );
 };

@@ -2,21 +2,30 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Trophy, Calendar, TrendingUp, Crown, Library } from "lucide-react";
+import { BookOpen, Trophy, Calendar, TrendingUp, Crown, Library, LogOut } from "lucide-react";
 import PremiumButton from "@/components/PremiumButton";
 import GradesDialog from "@/components/GradesDialog";
 import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
 import { TranslateFacts } from "@/components/TranslateFacts";
 import { PREMIUM_ENABLED } from "@/lib/pricing";
+import StreakIndicator from "@/components/StreakIndicator";
+import PreferencesDashboard from "@/components/PreferencesDashboard";
+import { toast } from "sonner";
 
 const ProfilePage = () => {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
   const [gradesDialogOpen, setGradesDialogOpen] = useState(false);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Déconnexion réussie");
+    navigate("/");
+  };
   const [stats, setStats] = useState({
     factsLearned: 0,
     points: 0,
@@ -100,9 +109,8 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
       
-      <main className="container mx-auto px-4 py-24">
+      <main className="container mx-auto px-4 pt-6 pb-32">
         <div className="max-w-6xl mx-auto space-y-8">
           <div className="text-center space-y-2">
             <h1 className="text-4xl md:text-5xl font-bold text-foreground">
@@ -189,8 +197,18 @@ const ProfilePage = () => {
             {user && <ProgressChart userId={user.id} />}
             {PREMIUM_ENABLED && <PremiumButton variant="card" />}
           </div>
+
+          {user && <StreakIndicator userId={user.id} />}
+          <PreferencesDashboard />
+
+          <Button variant="outline" className="w-full" onClick={handleSignOut}>
+            <LogOut className="w-4 h-4" />
+            Se déconnecter
+          </Button>
         </div>
       </main>
+
+      <BottomNav />
 
       <GradesDialog 
         open={gradesDialogOpen}
