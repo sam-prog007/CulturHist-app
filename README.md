@@ -29,6 +29,7 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (map and timeline, coming), profile |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
+| `src/lib/quiz.ts` | Quiz questions for a chosen region, era and difficulty; points via `complete_quiz` |
 | `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
 | `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |

@@ -601,6 +601,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_quiz: {
+        Args: { p_date: string; p_difficulty: string; p_score: number; p_total: number }
+        Returns: Json
+      }
       get_daily_facts: {
         Args: { p_date: string }
         Returns: { fact_id: string; slot: number }[]
