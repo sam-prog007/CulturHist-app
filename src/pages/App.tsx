@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatYear, todayKey } from "@/lib/dates";
+import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
 import { getOnThisDay } from "@/lib/onThisDay";
 import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
 
@@ -30,7 +30,7 @@ const HomePage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, points, current_streak")
+        .select("username, points, current_streak, last_activity_date")
         .eq("id", user!.id)
         .single();
       if (error) throw error;
@@ -60,6 +60,7 @@ const HomePage = () => {
     );
   }
 
+  const streak = effectiveStreak(profile?.current_streak, profile?.last_activity_date);
   const today = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
@@ -73,7 +74,7 @@ const HomePage = () => {
           <div className="flex gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-sm font-semibold card-shadow">
               <Flame className="h-4 w-4 text-orange-500" />
-              {profile?.current_streak ?? 0} {(profile?.current_streak ?? 0) > 1 ? "jours" : "jour"}
+              {streak} {streak > 1 ? "jours" : "jour"}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1 text-sm font-semibold card-shadow">
               <Star className="h-4 w-4 fill-gold text-gold" />

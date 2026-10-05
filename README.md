@@ -28,6 +28,7 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | --- | --- |
 | `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (map and timeline, coming), profile |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
+| `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
 | `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
 | `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |
@@ -65,6 +66,8 @@ Run the migrations in `supabase/migrations/` in file-name order, then the conten
   ```
 
 Then put the project URL and anon key in `.env`, set the edge function secrets, and deploy them with `supabase functions deploy <name>`.
+
+Daily facts: each day the server picks 5 facts on one theme (a region and an era from the user's preferences), topping up with facts from the same region, then the same era, when the theme has fewer than 5. The streak only grows when all of the day's facts are validated; quizzes only give points. Days are the user's local date.
 
 Value conventions shared with the frontend:
 

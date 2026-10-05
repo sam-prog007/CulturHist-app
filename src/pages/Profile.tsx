@@ -15,6 +15,7 @@ import { PREMIUM_ENABLED } from "@/lib/pricing";
 import StreakIndicator from "@/components/StreakIndicator";
 import PreferencesDashboard from "@/components/PreferencesDashboard";
 import { toast } from "sonner";
+import { effectiveStreak } from "@/lib/dates";
 
 const ProfilePage = () => {
   const { user, loading, isAdmin, signOut } = useAuth();
@@ -48,7 +49,7 @@ const ProfilePage = () => {
         // Fetch user stats
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('points, current_streak, exp')
+          .select('points, current_streak, last_activity_date, exp')
           .eq('id', user.id)
           .single();
 
@@ -81,7 +82,7 @@ const ProfilePage = () => {
         setStats({
           factsLearned: count || 0,
           points: profileData?.points || 0,
-          streak: profileData?.current_streak || 0,
+          streak: effectiveStreak(profileData?.current_streak, profileData?.last_activity_date),
           level
         });
       } catch (error) {

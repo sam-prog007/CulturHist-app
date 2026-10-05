@@ -1,6 +1,15 @@
-/** Today's date as YYYY-MM-DD in UTC, the key used by daily tables (daily_facts_progress...). */
-export function todayKey(): string {
-  return new Date().toISOString().split("T")[0];
+/** A date as YYYY-MM-DD in the user's time zone: the day key of daily facts and streaks. */
+export function todayKey(date = new Date()): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+/** The streak still alive today: it is lost once a whole day was missed. */
+export function effectiveStreak(streak: number | null | undefined, lastActivityDate: string | null | undefined): number {
+  if (!streak || !lastActivityDate) return 0;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  return lastActivityDate >= todayKey(yesterday) ? streak : 0;
 }
 
 /** Days since 1970-01-01 in the user's time zone: changes at local midnight. */
