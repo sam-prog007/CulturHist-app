@@ -52,6 +52,7 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `check-subscription` | Syncs Stripe subscription into `profiles.is_premium` | `STRIPE_SECRET_KEY` |
 | `customer-portal` | Stripe billing portal | `STRIPE_SECRET_KEY` |
 | `translate-facts` | Admin: EN→FR translation of facts | `LOVABLE_API_KEY` |
+| `send-notifications` | Push notifications ("Ce jour-là", daily facts reminder), called every 15 min by cron | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `CRON_SECRET` |
 
 `translate-facts` calls the Lovable AI gateway, which only works while the project has Lovable credits. The Stripe functions are only needed once premium is switched back on.
 
@@ -87,3 +88,32 @@ Admins are rows in `public.user_roles` with role `admin`. To make yourself admin
 INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 ```
+
+## Push notifications
+
+The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages.
+
+Setup, once:
+
+1. Generate VAPID keys: `npx web-push generate-vapid-keys`.
+2. Put the public key in `.env` as `VITE_VAPID_PUBLIC_KEY`.
+3. Set the function secrets and deploy it:
+
+   ```sh
+   npx supabase login
+   npx supabase link --project-ref <project-ref>
+   npx supabase secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:you@example.com CRON_SECRET=<random string>
+   npx supabase functions deploy send-notifications
+   ```
+
+4. Enable the `pg_cron` and `pg_net` extensions (Database → Extensions), then schedule the function:
+
+   ```sql
+   select cron.schedule('send-notifications', '*/15 * * * *', $$
+     select net.http_post(
+       url := 'https://<project-ref>.supabase.co/functions/v1/send-notifications',
+       headers := jsonb_build_object('Content-Type', 'application/json', 'x-cron-secret', '<CRON_SECRET>'),
+       body := '{}'::jsonb
+     );
+   $$);
+   ```

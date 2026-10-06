@@ -303,8 +303,14 @@ export type Database = {
           id: string
           is_premium: boolean | null
           last_activity_date: string | null
+          last_daily_facts_sent_on: string | null
+          last_on_this_day_sent_on: string | null
           learning_goal: string | null
           level: number | null
+          notify_daily_facts: boolean | null
+          notify_daily_facts_time: string | null
+          notify_on_this_day: boolean | null
+          notify_on_this_day_time: string | null
           onboarding_completed: boolean | null
           points: number | null
           preferred_difficulty: string[] | null
@@ -314,6 +320,7 @@ export type Database = {
           premium_until: string | null
           profile_type: string | null
           stripe_customer_id: string | null
+          timezone: string | null
           updated_at: string | null
           username: string | null
         }
@@ -325,8 +332,14 @@ export type Database = {
           id: string
           is_premium?: boolean | null
           last_activity_date?: string | null
+          last_daily_facts_sent_on?: string | null
+          last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null
+          notify_daily_facts?: boolean | null
+          notify_daily_facts_time?: string | null
+          notify_on_this_day?: boolean | null
+          notify_on_this_day_time?: string | null
           onboarding_completed?: boolean | null
           points?: number | null
           preferred_difficulty?: string[] | null
@@ -336,6 +349,7 @@ export type Database = {
           premium_until?: string | null
           profile_type?: string | null
           stripe_customer_id?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -347,8 +361,14 @@ export type Database = {
           id?: string
           is_premium?: boolean | null
           last_activity_date?: string | null
+          last_daily_facts_sent_on?: string | null
+          last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null
+          notify_daily_facts?: boolean | null
+          notify_daily_facts_time?: string | null
+          notify_on_this_day?: boolean | null
+          notify_on_this_day_time?: string | null
           onboarding_completed?: boolean | null
           points?: number | null
           preferred_difficulty?: string[] | null
@@ -358,8 +378,39 @@ export type Database = {
           premium_until?: string | null
           profile_type?: string | null
           stripe_customer_id?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }

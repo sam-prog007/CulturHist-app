@@ -17,3 +17,7 @@ verify_jwt = true
 [functions.translate-facts]
 verify_jwt = true
 
+
+# Called by the cron job with the x-cron-secret header, not with a user JWT.
+[functions.send-notifications]
+verify_jwt = false

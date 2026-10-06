@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import NotificationSettings from "@/components/NotificationSettings";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,9 +237,7 @@ const SettingsPage = () => {
         </Section>
 
         <Section icon={Bell} title="Notifications">
-          <p className="text-sm text-muted-foreground">
-            Bientôt : « Ce jour-là » et le rappel de vos 5 faits du jour, à l'heure de votre choix.
-          </p>
+          <NotificationSettings userId={user.id} />
         </Section>
 
         <Button variant="outline" className="w-full" onClick={handleSignOut}>
