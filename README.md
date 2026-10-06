@@ -26,9 +26,11 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 
 | Path | Content |
 | --- | --- |
-| `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (map and timeline, coming), profile |
+| `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
+| `src/components/WorldMap.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`); countries turn gold as their facts are learned, tap one to add its region to the preferences |
+| `src/components/EraTimeline.tsx`, `src/lib/progress.ts` | Era timeline filling with learned facts; tap an era to add it to the preferences |
 | `src/lib/quiz.ts` | Quiz questions for a chosen region, era and difficulty; points via `complete_quiz` |
 | `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
 | `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |

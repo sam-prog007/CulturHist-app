@@ -17,7 +17,10 @@ export function localDayNumber(date = new Date()): number {
   return Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000);
 }
 
-/** -44 -> "44 av. J.-C.", 1789 -> "1789". */
+/** -44 -> "44 av. J.-C.", 1789 -> "1789", -3000000 -> "3 000 000 av. J.-C.". */
 export function formatYear(year: number): string {
-  return year < 0 ? `${-year} av. J.-C.` : String(year);
+  // Group thousands only for very old dates: "3 000 000 av. J.-C.", but "1789".
+  const n = Math.abs(year);
+  const text = n >= 10_000 ? n.toLocaleString("fr-FR") : String(n);
+  return year < 0 ? `${text} av. J.-C.` : text;
 }
