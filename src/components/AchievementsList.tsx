@@ -153,7 +153,7 @@ const AchievementsList = ({ userId }: AchievementsListProps) => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-3">
       {achievements.map((achievement) => (
         <Card
           key={achievement.id}
@@ -163,14 +163,14 @@ const AchievementsList = ({ userId }: AchievementsListProps) => {
               : 'bg-muted/30 opacity-70'
           }`}
         >
-          <div className="flex items-start gap-4">
-            <div className={`text-4xl ${achievement.unlocked ? '' : 'grayscale'}`}>
+          <div className="flex items-start gap-3">
+            <div className={`shrink-0 text-3xl ${achievement.unlocked ? '' : 'grayscale'}`}>
               {achievement.icon}
             </div>
-            <div className="flex-1 space-y-2">
-              <div className="flex items-start justify-between">
-                <div>
-                  <h4 className="font-semibold text-foreground">
+            <div className="min-w-0 flex-1 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <h4 className="break-words font-semibold text-foreground">
                     {achievement.name}
                   </h4>
                   <p className="text-sm text-muted-foreground">
