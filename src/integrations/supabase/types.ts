@@ -605,6 +605,10 @@ export type Database = {
         Args: { p_date: string; p_difficulty: string; p_score: number; p_total: number }
         Returns: Json
       }
+      delete_my_account: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_daily_facts: {
         Args: { p_date: string }
         Returns: { fact_id: string; slot: number }[]

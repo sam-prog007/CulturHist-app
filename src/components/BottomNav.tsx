@@ -6,7 +6,7 @@ const TABS = [
   { to: "/app", label: "Accueil", icon: Home, also: ["/facts"] },
   { to: "/quiz", label: "Quiz", icon: Brain, also: [] },
   { to: "/cartes", label: "Cartes", icon: Map, also: [] },
-  { to: "/profile", label: "Profil", icon: User, also: ["/learned-facts"] },
+  { to: "/profile", label: "Profil", icon: User, also: ["/learned-facts", "/settings"] },
 ];
 
 /** Bottom tab bar of the signed-in app, in a frosted "liquid glass" style. */

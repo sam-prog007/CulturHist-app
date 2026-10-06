@@ -1,221 +1,149 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { BookOpen, ChevronRight, Crown, Flame, Settings, Star, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { BookOpen, Trophy, Calendar, TrendingUp, Crown, Library, LogOut } from "lucide-react";
-import PremiumButton from "@/components/PremiumButton";
 import GradesDialog from "@/components/GradesDialog";
 import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
-import { TranslateFacts } from "@/components/TranslateFacts";
-import { PREMIUM_ENABLED } from "@/lib/pricing";
 import StreakIndicator from "@/components/StreakIndicator";
-import PreferencesDashboard from "@/components/PreferencesDashboard";
-import { toast } from "sonner";
+import PremiumButton from "@/components/PremiumButton";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { PREMIUM_ENABLED } from "@/lib/pricing";
 import { effectiveStreak } from "@/lib/dates";
 
 const ProfilePage = () => {
-  const { user, loading, isAdmin, signOut } = useAuth();
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const [gradesDialogOpen, setGradesDialogOpen] = useState(false);
-
-  const handleSignOut = async () => {
-    await signOut();
-    toast.success("Déconnexion réussie");
-    navigate("/");
-  };
-  const [stats, setStats] = useState({
-    factsLearned: 0,
-    points: 0,
-    streak: 0,
-    level: 1
-  });
-  const [currentGrade, setCurrentGrade] = useState<{ name: string; historical_figure: string } | null>(null);
+  const [gradesOpen, setGradesOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
+    if (!loading && !user) navigate("/auth");
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!user) return;
-      
-      try {
-        // Fetch user stats
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('points, current_streak, last_activity_date, exp')
-          .eq('id', user.id)
-          .single();
+  const { data } = useQuery({
+    queryKey: ["profile-stats", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const [profile, learned, grades] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("username, points, current_streak, last_activity_date")
+          .eq("id", user!.id)
+          .single(),
+        supabase
+          .from("user_progress")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .eq("completed", true),
+        supabase.from("grades").select("level, name, historical_figure, min_points, max_points").order("level"),
+      ]);
+      if (profile.error) throw profile.error;
+      const points = profile.data.points ?? 0;
+      const gradeList = grades.data ?? [];
+      const grade = gradeList.find((g) => points >= g.min_points && points < g.max_points) ?? gradeList.at(-1) ?? null;
+      const next = grade ? gradeList.find((g) => g.level === grade.level + 1) ?? null : null;
+      return {
+        username: profile.data.username,
+        points,
+        streak: effectiveStreak(profile.data.current_streak, profile.data.last_activity_date),
+        factsLearned: learned.count ?? 0,
+        grade,
+        next,
+      };
+    },
+  });
 
-        if (profileError) throw profileError;
-
-        // Fetch facts learned count
-        const { count, error: countError } = await supabase
-          .from('user_progress')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('completed', true);
-
-        if (countError) throw countError;
-
-        // Fetch current grade
-        const { data: gradeData } = await supabase
-          .from('grades')
-          .select('name, historical_figure, min_points, max_points')
-          .lte('min_points', profileData?.points || 0)
-          .gt('max_points', profileData?.points || 0)
-          .single();
-
-        if (gradeData) {
-          setCurrentGrade(gradeData);
-        }
-
-        // Calculate level from exp
-        const level = Math.floor(Math.sqrt((profileData?.exp || 0) / 100)) + 1;
-
-        setStats({
-          factsLearned: count || 0,
-          points: profileData?.points || 0,
-          streak: effectiveStreak(profileData?.current_streak, profileData?.last_activity_date),
-          level
-        });
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-      }
-    };
-
-    fetchStats();
-  }, [user]);
-
-  if (loading) {
+  if (loading || !user || !data) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  const { grade, next } = data;
+  const gradeProgress = grade && next ? ((data.points - grade.min_points) / (grade.max_points - grade.min_points)) * 100 : 100;
+  const initial = (data.username || user.email || "?").charAt(0).toUpperCase();
 
   return (
-    <div className="min-h-screen bg-background">
-      
-      <main className="container mx-auto px-4 pt-6 pb-32">
-        <div className="max-w-6xl mx-auto space-y-8">
-          <div className="text-center space-y-2">
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground">
-              Mon Profil
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Suivez votre progression et vos statistiques
-            </p>
+    <div className="min-h-screen subtle-gradient">
+      <main className="mx-auto max-w-md space-y-5 px-4 pb-32 pt-[max(1.5rem,env(safe-area-inset-top))]">
+        <header className="flex items-center gap-4">
+          <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full accent-gradient font-serif text-2xl font-bold text-gold elegant-shadow">
+            {initial}
           </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card 
-              className="p-6 card-shadow hover-scale smooth-transition cursor-pointer"
-              onClick={() => navigate('/learned-facts')}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-primary/10">
-                  <BookOpen className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.factsLearned}</p>
-                  <p className="text-sm text-muted-foreground">Faits appris</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-accent/10">
-                  <Trophy className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.points}</p>
-                  <p className="text-sm text-muted-foreground">Points</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card className="p-6 card-shadow hover-scale smooth-transition">
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <Calendar className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{stats.streak}</p>
-                  <p className="text-sm text-muted-foreground">Série</p>
-                </div>
-              </div>
-            </Card>
-
-            <Card 
-              className="p-6 card-shadow hover-scale smooth-transition cursor-pointer"
-              onClick={() => setGradesDialogOpen(true)}
-            >
-              <div className="flex items-center gap-4">
-                <div className="p-3 rounded-lg bg-accent/20">
-                  <Crown className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <p className="text-lg font-bold">{currentGrade?.name || 'Débutant'}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {currentGrade?.historical_figure || 'Cliquez pour voir les grades'}
-                  </p>
-                </div>
-              </div>
-            </Card>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-2xl font-bold">{data.username || "Mon profil"}</h1>
+            {grade && (
+              <p className="text-sm text-muted-foreground">
+                {grade.name} · {grade.historical_figure}
+              </p>
+            )}
           </div>
-
-          {/* Achievements Section */}
-          <Card className="p-6 card-shadow">
-            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <Trophy className="w-5 h-5 text-accent" />
-              Vos succès
-            </h3>
-            {user && <AchievementsList userId={user.id} />}
-          </Card>
-
-          {/* Translation Tool (Admin) */}
-          {isAdmin && <TranslateFacts />}
-
-          {/* Progress Section */}
-          <div className={`grid grid-cols-1 ${PREMIUM_ENABLED ? "md:grid-cols-2" : ""} gap-6`}>
-            {user && <ProgressChart userId={user.id} />}
-            {PREMIUM_ENABLED && <PremiumButton variant="card" />}
-          </div>
-
-          {user && <StreakIndicator userId={user.id} />}
-          <PreferencesDashboard />
-
-          <Button variant="outline" className="w-full" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4" />
-            Se déconnecter
+          <Button variant="outline" size="icon" aria-label="Réglages" onClick={() => navigate("/settings")}>
+            <Settings className="h-5 w-5" />
           </Button>
+        </header>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Card className="p-3 text-center card-shadow">
+            <Star className="mx-auto h-5 w-5 fill-gold text-gold" />
+            <p className="mt-1 text-xl font-bold">{data.points}</p>
+            <p className="text-xs text-muted-foreground">Points</p>
+          </Card>
+          <Card className="p-3 text-center card-shadow">
+            <Flame className="mx-auto h-5 w-5 text-orange-500" />
+            <p className="mt-1 text-xl font-bold">{data.streak}</p>
+            <p className="text-xs text-muted-foreground">{data.streak > 1 ? "Jours de série" : "Jour de série"}</p>
+          </Card>
+          <button type="button" onClick={() => navigate("/learned-facts")} className="text-left">
+            <Card className="h-full p-3 text-center card-shadow hover:border-primary/50 smooth-transition">
+              <BookOpen className="mx-auto h-5 w-5 text-primary" />
+              <p className="mt-1 text-xl font-bold">{data.factsLearned}</p>
+              <p className="text-xs text-muted-foreground">Faits appris</p>
+            </Card>
+          </button>
         </div>
+
+        {grade && (
+          <Card className="space-y-3 p-5 card-shadow">
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-gold" />
+              <h2 className="text-lg font-bold">Grade : {grade.name}</h2>
+            </div>
+            <Progress value={gradeProgress} className="h-2 [&>div]:bg-gold" />
+            <p className="text-sm text-muted-foreground">
+              {next
+                ? `Encore ${next.min_points - data.points} points pour devenir ${next.name} (${next.historical_figure}).`
+                : "Vous avez atteint le grade le plus élevé !"}
+            </p>
+            <Button variant="ghost" className="w-full justify-between" onClick={() => setGradesOpen(true)}>
+              Voir tous les grades <ChevronRight className="h-4 w-4" />
+            </Button>
+          </Card>
+        )}
+
+        <StreakIndicator userId={user.id} />
+
+        <Card className="space-y-4 p-5 card-shadow">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Trophy className="h-5 w-5 text-primary" /> Succès
+          </h2>
+          <AchievementsList userId={user.id} />
+        </Card>
+
+        <ProgressChart userId={user.id} />
+
+        {PREMIUM_ENABLED && <PremiumButton variant="card" />}
       </main>
 
       <BottomNav />
-
-      <GradesDialog 
-        open={gradesDialogOpen}
-        onOpenChange={setGradesDialogOpen}
-        currentPoints={stats.points}
-      />
+      <GradesDialog open={gradesOpen} onOpenChange={setGradesOpen} currentPoints={data.points} />
     </div>
   );
 };
