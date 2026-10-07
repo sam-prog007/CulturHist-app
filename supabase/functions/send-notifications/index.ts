@@ -59,6 +59,16 @@ const formatYear = (year: number) => (year < 0 ? `${-year} av. J.-C.` : String(y
 const truncate = (text: string, max = 140) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 
 Deno.serve(async (req) => {
+  // Any unexpected failure still answers with its cause instead of an empty 500.
+  try {
+    return await handle(req);
+  } catch (e) {
+    log("Unexpected error", String(e));
+    return Response.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
+  }
+});
+
+async function handle(req: Request): Promise<Response> {
   const secret = Deno.env.get("CRON_SECRET");
   if (!secret || req.headers.get("x-cron-secret") !== secret) {
     return new Response("Forbidden", { status: 403 });
@@ -194,4 +204,4 @@ Deno.serve(async (req) => {
 
   log("Done", { profiles: profiles?.length ?? 0, sent });
   return new Response(JSON.stringify({ sent }), { headers: { "Content-Type": "application/json" } });
-});
+}
