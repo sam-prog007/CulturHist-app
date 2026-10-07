@@ -95,7 +95,12 @@ export default function Auth() {
         toast.error(error.message);
       }
     } else {
-      toast.success('Compte créé avec succès !');
+      const { data: { session: newSession } } = await supabase.auth.getSession();
+      toast.success(
+        newSession
+          ? 'Compte créé avec succès !'
+          : 'Compte créé ! Un e-mail de confirmation vous a été envoyé : répondez aux questions, puis confirmez votre adresse.'
+      );
       
       // If user wants premium, redirect to checkout
       if (wantsPremium) {
