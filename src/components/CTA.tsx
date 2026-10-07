@@ -3,10 +3,10 @@ import { ArrowRight, Sparkles } from "lucide-react";
 const CTA = () => {
   return <section className="py-20 px-4 bg-background">
       <div className="container mx-auto max-w-4xl">
-        <div className="hero-gradient rounded-3xl p-12 md:p-16 text-center space-y-8 elegant-shadow animate-fade-in relative overflow-hidden">
+        <div className="accent-gradient rounded-3xl p-12 md:p-16 text-center space-y-8 elegant-shadow animate-fade-in relative overflow-hidden">
           {/* Decorative elements */}
-          <div className="absolute top-0 right-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-accent/10 rounded-full blur-3xl"></div>
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gold/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-gold/20 rounded-full blur-3xl"></div>
 
           <div className="relative z-10 space-y-6">
             {/* Badge */}
@@ -27,7 +27,7 @@ const CTA = () => {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
-              <Button size="xl" variant="accent" className="w-full sm:w-auto group" onClick={() => document.getElementById('features')?.scrollIntoView({
+              <Button size="xl" variant="hero" className="w-full sm:w-auto group" onClick={() => document.getElementById('features')?.scrollIntoView({
               behavior: 'smooth'
             })}>
                 Commencer maintenant

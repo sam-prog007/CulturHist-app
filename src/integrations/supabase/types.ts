@@ -53,6 +53,7 @@ export type Database = {
           date: string
           fact_id: string
           id: string
+          slot: number | null
           user_id: string
         }
         Insert: {
@@ -60,6 +61,7 @@ export type Database = {
           date?: string
           fact_id: string
           id?: string
+          slot?: number | null
           user_id: string
         }
         Update: {
@@ -67,6 +69,7 @@ export type Database = {
           date?: string
           fact_id?: string
           id?: string
+          slot?: number | null
           user_id?: string
         }
         Relationships: [
@@ -85,6 +88,8 @@ export type Database = {
           date: string
           facts_validated: number | null
           id: string
+          period_id: string | null
+          region: string | null
           user_id: string
         }
         Insert: {
@@ -92,6 +97,8 @@ export type Database = {
           date?: string
           facts_validated?: number | null
           id?: string
+          period_id?: string | null
+          region?: string | null
           user_id: string
         }
         Update: {
@@ -99,6 +106,8 @@ export type Database = {
           date?: string
           facts_validated?: number | null
           id?: string
+          period_id?: string | null
+          region?: string | null
           user_id?: string
         }
         Relationships: []
@@ -165,58 +174,82 @@ export type Database = {
       }
       historical_facts: {
         Row: {
+          countries: string[] | null
           created_at: string | null
           date_text: string | null
           date_text_fr: string | null
+          day: number | null
           description: string
           description_fr: string | null
           difficulty: string | null
           id: string
+          image_credit: string | null
+          image_source_url: string | null
           image_url: string | null
+          month: number | null
           period_id: string | null
           points_reward: number | null
           region: string | null
           region_fr: string | null
+          slug: string | null
+          source_url: string | null
           tags: string[] | null
           tags_fr: string[] | null
           title: string
           title_fr: string | null
+          year: number | null
         }
         Insert: {
+          countries?: string[] | null
           created_at?: string | null
           date_text?: string | null
           date_text_fr?: string | null
+          day?: number | null
           description: string
           description_fr?: string | null
           difficulty?: string | null
           id?: string
+          image_credit?: string | null
+          image_source_url?: string | null
           image_url?: string | null
+          month?: number | null
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
           region_fr?: string | null
+          slug?: string | null
+          source_url?: string | null
           tags?: string[] | null
           tags_fr?: string[] | null
           title: string
           title_fr?: string | null
+          year?: number | null
         }
         Update: {
+          countries?: string[] | null
           created_at?: string | null
           date_text?: string | null
           date_text_fr?: string | null
+          day?: number | null
           description?: string
           description_fr?: string | null
           difficulty?: string | null
           id?: string
+          image_credit?: string | null
+          image_source_url?: string | null
           image_url?: string | null
+          month?: number | null
           period_id?: string | null
           points_reward?: number | null
           region?: string | null
           region_fr?: string | null
+          slug?: string | null
+          source_url?: string | null
           tags?: string[] | null
           tags_fr?: string[] | null
           title?: string
           title_fr?: string | null
+          year?: number | null
         }
         Relationships: [
           {
@@ -270,8 +303,14 @@ export type Database = {
           id: string
           is_premium: boolean | null
           last_activity_date: string | null
+          last_daily_facts_sent_on: string | null
+          last_on_this_day_sent_on: string | null
           learning_goal: string | null
           level: number | null
+          notify_daily_facts: boolean | null
+          notify_daily_facts_time: string | null
+          notify_on_this_day: boolean | null
+          notify_on_this_day_time: string | null
           onboarding_completed: boolean | null
           points: number | null
           preferred_difficulty: string[] | null
@@ -281,6 +320,7 @@ export type Database = {
           premium_until: string | null
           profile_type: string | null
           stripe_customer_id: string | null
+          timezone: string | null
           updated_at: string | null
           username: string | null
         }
@@ -292,8 +332,14 @@ export type Database = {
           id: string
           is_premium?: boolean | null
           last_activity_date?: string | null
+          last_daily_facts_sent_on?: string | null
+          last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null
+          notify_daily_facts?: boolean | null
+          notify_daily_facts_time?: string | null
+          notify_on_this_day?: boolean | null
+          notify_on_this_day_time?: string | null
           onboarding_completed?: boolean | null
           points?: number | null
           preferred_difficulty?: string[] | null
@@ -303,6 +349,7 @@ export type Database = {
           premium_until?: string | null
           profile_type?: string | null
           stripe_customer_id?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string | null
         }
@@ -314,8 +361,14 @@ export type Database = {
           id?: string
           is_premium?: boolean | null
           last_activity_date?: string | null
+          last_daily_facts_sent_on?: string | null
+          last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null
+          notify_daily_facts?: boolean | null
+          notify_daily_facts_time?: string | null
+          notify_on_this_day?: boolean | null
+          notify_on_this_day_time?: string | null
           onboarding_completed?: boolean | null
           points?: number | null
           preferred_difficulty?: string[] | null
@@ -325,8 +378,39 @@ export type Database = {
           premium_until?: string | null
           profile_type?: string | null
           stripe_customer_id?: string | null
+          timezone?: string | null
           updated_at?: string | null
           username?: string | null
+        }
+        Relationships: []
+      }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          p256dh: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          p256dh: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          user_agent?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -357,6 +441,48 @@ export type Database = {
           score?: number
           total_questions?: number
           user_id?: string
+        }
+        Relationships: []
+      }
+      quotes: {
+        Row: {
+          author: string
+          context: string | null
+          context_fr: string | null
+          created_at: string | null
+          id: string
+          original_text: string | null
+          slug: string
+          source_url: string | null
+          text: string | null
+          text_fr: string
+          year: number | null
+        }
+        Insert: {
+          author: string
+          context?: string | null
+          context_fr?: string | null
+          created_at?: string | null
+          id?: string
+          original_text?: string | null
+          slug: string
+          source_url?: string | null
+          text?: string | null
+          text_fr: string
+          year?: number | null
+        }
+        Update: {
+          author?: string
+          context?: string | null
+          context_fr?: string | null
+          created_at?: string | null
+          id?: string
+          original_text?: string | null
+          slug?: string
+          source_url?: string | null
+          text?: string | null
+          text_fr?: string
+          year?: number | null
         }
         Relationships: []
       }
@@ -526,12 +652,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      complete_quiz: {
+        Args: { p_date: string; p_difficulty: string; p_score: number; p_total: number }
+        Returns: Json
+      }
+      delete_my_account: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      get_daily_facts: {
+        Args: { p_date: string }
+        Returns: { fact_id: string; slot: number }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      validate_daily_fact: {
+        Args: { p_date: string; p_fact_id: string }
+        Returns: Json
       }
     }
     Enums: {

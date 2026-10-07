@@ -8,26 +8,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { Book, Mail, Lock, User, Crown } from 'lucide-react';
-import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PREMIUM_PRICES } from '@/lib/pricing';
+import { PREMIUM_ENABLED, PREMIUM_PRICES } from '@/lib/pricing';
+import { emailSchema, passwordSchema, usernameSchema } from '@/lib/validation';
 
-// Validation schemas
-const emailSchema = z.string()
-  .email('Email invalide')
-  .max(255, 'Email trop long');
-
-const passwordSchema = z.string()
-  .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
-  .regex(/[A-Z]/, 'Le mot de passe doit contenir au moins une majuscule')
-  .regex(/[0-9]/, 'Le mot de passe doit contenir au moins un chiffre');
-
-const usernameSchema = z.string()
-  .min(3, 'Le nom d\'utilisateur doit contenir au moins 3 caractères')
-  .max(30, 'Le nom d\'utilisateur ne peut pas dépasser 30 caractères')
-  .regex(/^[a-zA-Z0-9_-]+$/, 'Seuls les lettres, chiffres, tirets et underscores sont autorisés')
-  .optional();
+const optionalUsernameSchema = usernameSchema.optional();
 
 export default function Auth() {
   const [email, setEmail] = useState('');
@@ -91,7 +77,7 @@ export default function Auth() {
 
     // Validate username if provided
     if (username) {
-      const usernameValidation = usernameSchema.safeParse(username);
+      const usernameValidation = optionalUsernameSchema.safeParse(username);
       if (!usernameValidation.success) {
         toast.error(usernameValidation.error.issues[0].message);
         return;
@@ -254,20 +240,22 @@ export default function Auth() {
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2 p-4 rounded-lg bg-accent/5 border border-accent/20">
-                  <Checkbox 
-                    id="premium" 
-                    checked={wantsPremium}
-                    onCheckedChange={(checked) => setWantsPremium(checked as boolean)}
-                  />
-                  <label
-                    htmlFor="premium"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
-                  >
-                    <Crown className="w-4 h-4 text-accent" />
-                    <span>Je veux devenir Premium (CulturHist +) - 1,99€/mois</span>
-                  </label>
-                </div>
+                {PREMIUM_ENABLED && (
+                  <div className="flex items-center space-x-2 p-4 rounded-lg bg-accent/5 border border-accent/20">
+                    <Checkbox 
+                      id="premium" 
+                      checked={wantsPremium}
+                      onCheckedChange={(checked) => setWantsPremium(checked as boolean)}
+                    />
+                    <label
+                      htmlFor="premium"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
+                    >
+                      <Crown className="w-4 h-4 text-accent" />
+                      <span>Je veux devenir Premium (CulturHist +) - 1,99€/mois</span>
+                    </label>
+                  </div>
+                )}
 
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? 'Création...' : 'Créer un compte'}

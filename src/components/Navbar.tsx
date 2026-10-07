@@ -22,7 +22,7 @@ const Navbar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   
-  const isAppSection = ['/app', '/quiz', '/facts', '/profile', '/quiz-limit', '/facts-limit', '/learned-facts'].includes(location.pathname);
+  const isAppSection = ['/app', '/quiz', '/facts', '/profile', '/learned-facts'].includes(location.pathname);
 
   useEffect(() => {
     const fetchStreak = async () => {

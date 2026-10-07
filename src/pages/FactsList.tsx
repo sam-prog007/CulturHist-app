@@ -1,433 +1,166 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { CheckCircle, CheckCircle2, Flame, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
+import { FactImage } from "@/components/FactImage";
+import { DifficultyStars } from "@/components/DifficultyStars";
+import AdSense from "@/components/AdSense";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, ArrowLeft } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { getFactImage } from "@/assets/factsImages";
-import { OptimizedImage } from "@/components/OptimizedImage";
-import AdSense from "@/components/AdSense";
-import type { Tables } from "@/integrations/supabase/types";
+import { todayKey } from "@/lib/dates";
+import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts } from "@/lib/dailyFacts";
 
-type Fact = Tables<"historical_facts"> & { historical_periods: { name: string } | null };
-
-const FactsList = () => {
-  const { user, loading, isPremium } = useAuth();
+const DailyFactsPage = () => {
+  const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [facts, setFacts] = useState<Fact[]>([]);
-  const [dailyProgress, setDailyProgress] = useState<Tables<"daily_facts_progress"> | null>(null);
-  const [loadingFacts, setLoadingFacts] = useState(true);
-  const [hasPremium, setHasPremium] = useState(isPremium);
-  const [stats, setStats] = useState({
-    factsLearned: 0,
-    points: 0,
-    streak: 0,
-    level: 1
-  });
+  const queryClient = useQueryClient();
+  const [validating, setValidating] = useState<string | null>(null);
+  const [streak, setStreak] = useState<number | null>(null);
+  const date = todayKey();
+  const queryKey = ["daily-facts", user?.id, date];
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/auth");
-    }
+    if (!loading && !user) navigate("/auth");
   }, [user, loading, navigate]);
 
-  useEffect(() => {
-    const fetchFacts = async () => {
-      if (!user) return;
+  const { data, isLoading, error } = useQuery({
+    queryKey,
+    enabled: !!user,
+    queryFn: () => getDailyFacts(user!.id, date),
+  });
 
-      try {
-        // Get today's date
-        const today = new Date().toISOString().split('T')[0];
-
-        // Check daily progress
-        const { data: existingProgress, error: progressError } = await supabase
-          .from('daily_facts_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('date', today)
-          .maybeSingle();
-
-        if (progressError && progressError.code !== 'PGRST116') throw progressError;
-
-        let progressData = existingProgress;
-
-        // If no progress for today, create it
-        if (!progressData) {
-          const { data: newProgress, error: insertError } = await supabase
-            .from('daily_facts_progress')
-            .insert({
-              user_id: user.id,
-              date: today,
-              facts_validated: 0
-            })
-            .select()
-            .single();
-
-          if (insertError) throw insertError;
-          progressData = newProgress;
-        }
-
-        setDailyProgress(progressData);
-
-        // Fetch user preferences including new tags
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('preferred_regions, preferred_eras, preferred_tags, preferred_difficulty, is_premium')
-          .eq('id', user.id)
-          .single();
-
-        // The profile flag is known immediately, unlike the async subscription check
-        const premium = isPremium || !!profileData?.is_premium;
-        setHasPremium(premium);
-
-        // If already validated 5 facts today and not premium, redirect to limit page
-        if (progressData.facts_validated >= 5 && !premium) {
-          navigate('/facts-limit');
-          return;
-        }
-
-        const preferredRegions = profileData?.preferred_regions || [];
-        const preferredEras = profileData?.preferred_eras || [];
-        const preferredTags = profileData?.preferred_tags || [];
-        const preferredDifficulty = profileData?.preferred_difficulty || [];
-
-        // Fetch validated facts
-        const { data: validatedFactIds } = await supabase
-          .from('user_progress')
-          .select('fact_id')
-          .eq('user_id', user.id)
-          .eq('completed', true);
-
-        const validatedIds = validatedFactIds?.map(v => v.fact_id) || [];
-
-        // Get all facts the user has seen (including previously assigned daily facts)
-        const { data: previouslyAssigned } = await supabase
-          .from('daily_fact_assignments')
-          .select('fact_id')
-          .eq('user_id', user.id);
-
-        const allSeenIds = [
-          ...validatedIds,
-          ...(previouslyAssigned?.map(f => f.fact_id) || [])
-        ];
-
-        // Fetch all available facts that haven't been seen
-        let query = supabase
-          .from('historical_facts')
-          .select('*, historical_periods(name)');
-
-        if (allSeenIds.length > 0) {
-          query = query.not('id', 'in', `(${allSeenIds.join(',')})`);
-        }
-
-        const { data: allFacts, error: factsError } = await query;
-
-        if (factsError) throw factsError;
-
-        // Filter facts by user preferences (flexible: match at least one category)
-        const filteredFacts = (allFacts || []).filter((fact) => {
-          // If no preferences set, show all facts
-          if (preferredRegions.length === 0 && preferredEras.length === 0 && preferredTags.length === 0 && preferredDifficulty.length === 0) {
-            return true;
-          }
-
-          // Case-insensitive region match
-          const matchesRegion = preferredRegions.length === 0 || 
-            (fact.region && preferredRegions.some((region: string) => 
-              region.toLowerCase() === String(fact.region).toLowerCase()
-            ));
-
-          // Era match (case-insensitive, handles empty period names)
-          const periodName = (fact.historical_periods?.name || '').toLowerCase();
-          const matchesEra = preferredEras.length === 0 ||
-            preferredEras.some((era: string) => 
-              periodName.includes(era.toLowerCase())
-            );
-
-          // Tags match (case-insensitive, substring)
-          const factTags = (fact.tags || []).map((t: string) => t.toLowerCase());
-          const matchesTags = preferredTags.length === 0 ||
-            preferredTags.some((tag: string) => 
-              factTags.some((ft: string) => ft.includes(tag.toLowerCase()))
-            );
-
-          // Difficulty match
-          const matchesDifficulty = preferredDifficulty.length === 0 ||
-            (fact.difficulty && preferredDifficulty.includes(fact.difficulty));
-
-          // Match if at least one category fits
-          return matchesRegion || matchesEra || matchesTags || matchesDifficulty;
-        });
-
-        // Sort filtered facts by preference match strength (case-insensitive)
-        const sortedFacts = filteredFacts.sort((a, b) => {
-          const aMatchesRegion = a.region && preferredRegions.some((r: string) => r.toLowerCase() === String(a.region).toLowerCase());
-          const bMatchesRegion = b.region && preferredRegions.some((r: string) => r.toLowerCase() === String(b.region).toLowerCase());
-          
-          const aPeriodName = (a.historical_periods?.name || '').toLowerCase();
-          const bPeriodName = (b.historical_periods?.name || '').toLowerCase();
-          
-          const aMatchesEra = preferredEras.some((era: string) => aPeriodName.includes(era.toLowerCase()));
-          const bMatchesEra = preferredEras.some((era: string) => bPeriodName.includes(era.toLowerCase()));
-
-          const aFactTags = (a.tags || []).map((t: string) => t.toLowerCase());
-          const bFactTags = (b.tags || []).map((t: string) => t.toLowerCase());
-          const aMatchesTags = preferredTags.some((tag: string) => aFactTags.some((ft: string) => ft.includes(tag.toLowerCase())));
-          const bMatchesTags = preferredTags.some((tag: string) => bFactTags.some((ft: string) => ft.includes(tag.toLowerCase())));
-
-          const aMatchesDifficulty = a.difficulty && preferredDifficulty.includes(a.difficulty);
-          const bMatchesDifficulty = b.difficulty && preferredDifficulty.includes(b.difficulty);
-
-          // Calculate match score (higher is better)
-          const aScore = (aMatchesRegion ? 4 : 0) + (aMatchesEra ? 3 : 0) + (aMatchesTags ? 2 : 0) + (aMatchesDifficulty ? 1 : 0);
-          const bScore = (bMatchesRegion ? 4 : 0) + (bMatchesEra ? 3 : 0) + (bMatchesTags ? 2 : 0) + (bMatchesDifficulty ? 1 : 0);
-          
-          return bScore - aScore;
-        });
-
-        // Take top 5 facts
-        setFacts(sortedFacts.slice(0, 5));
-
-        // Fetch user stats
-        const { data: statsData } = await supabase
-          .from('profiles')
-          .select('points, current_streak, exp')
-          .eq('id', user.id)
-          .single();
-
-        const { count } = await supabase
-          .from('user_progress')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .eq('completed', true);
-
-        const level = Math.floor(Math.sqrt((statsData?.exp || 0) / 100)) + 1;
-
-        setStats({
-          factsLearned: count || 0,
-          points: statsData?.points || 0,
-          streak: statsData?.current_streak || 0,
-          level
-        });
-      } catch (error) {
-        console.error('Error fetching facts:', error);
-      } finally {
-        setLoadingFacts(false);
-      }
-    };
-
-    fetchFacts();
-  }, [user, navigate, toast, isPremium]);
-
-  const handleValidateFact = async (fact: Fact) => {
-    if (!user || !dailyProgress) return;
-
+  const handleValidate = async (factId: string, reward: number | null) => {
+    setValidating(factId);
     try {
-      // Check if already validated
-      const { data: existingProgress } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('fact_id', fact.id)
-        .eq('completed', true)
-        .maybeSingle();
-
-      if (existingProgress) {
-        toast({
-          title: "Déjà validé",
-          description: "Vous avez déjà validé ce fait !",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Insert progress
-      await supabase
-        .from('user_progress')
-        .insert({
-          user_id: user.id,
-          fact_id: fact.id,
-          completed: true,
-          completed_at: new Date().toISOString()
-        });
-
-      // Get current profile data
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('points, current_streak, last_activity_date, exp')
-        .eq('id', user.id)
-        .single();
-
-      const today = new Date().toISOString().split('T')[0];
-      const lastActivity = profile?.last_activity_date;
-      
-      // Calculate new streak
-      let newStreak = profile?.current_streak || 0;
-      if (!lastActivity) {
-        newStreak = 1;
-      } else {
-        const daysDiff = Math.floor(
-          (new Date(today).getTime() - new Date(lastActivity).getTime()) / (1000 * 60 * 60 * 24)
-        );
-        if (daysDiff === 1) {
-          newStreak += 1;
-        } else if (daysDiff > 1) {
-          newStreak = 1;
+      const result = await validateDailyFact(factId, date);
+      queryClient.setQueryData<DailyFacts>(queryKey, (old) =>
+        old && {
+          ...old,
+          validated: result.facts_validated,
+          facts: old.facts.map((f) => (f.id === factId ? { ...f, validated: true } : f)),
         }
-      }
-
-      // Calculate new points and exp
-      const newPoints = (profile?.points || 0) + fact.points_reward;
-      const factsLearned = stats.factsLearned + 1;
-      const newExp = (newPoints * 2) + (newStreak * 10) + (factsLearned * 5);
-
-      // Update profile
-      await supabase
-        .from('profiles')
-        .update({
-          points: newPoints,
-          current_streak: newStreak,
-          last_activity_date: today,
-          exp: newExp
-        })
-        .eq('id', user.id);
-
-      // Update daily progress
-      const newFactsValidated = dailyProgress.facts_validated + 1;
-      await supabase
-        .from('daily_facts_progress')
-        .update({ facts_validated: newFactsValidated })
-        .eq('id', dailyProgress.id);
-
-      // Update local state
-      setDailyProgress({ ...dailyProgress, facts_validated: newFactsValidated });
-      setFacts(facts.filter(f => f.id !== fact.id));
-
-      const newLevel = Math.floor(Math.sqrt(newExp / 100)) + 1;
-      setStats({
-        factsLearned,
-        points: newPoints,
-        streak: newStreak,
-        level: newLevel
-      });
-
-      toast({
-        title: "Fait validé !",
-        description: `+${fact.points_reward} points${hasPremium ? '' : ` • ${5 - newFactsValidated} faits restants aujourd'hui`}`,
-      });
-
-      // If reached daily limit and not premium
-      if (newFactsValidated >= 5 && !hasPremium) {
+      );
+      queryClient.invalidateQueries({ queryKey: ["home-profile"] });
+      queryClient.invalidateQueries({ queryKey: ["home-daily-progress"] });
+      if (result.day_completed && !result.already_validated) {
+        setStreak(result.current_streak);
+      } else if (!result.already_validated) {
         toast({
-          title: "Limite atteinte !",
-          description: "Vous avez validé vos 5 faits du jour. À demain !",
+          title: "Fait validé !",
+          description: `+${reward ?? 10} points • ${result.facts_validated}/${result.goal}`,
         });
-        setTimeout(() => navigate('/facts-limit'), 2000);
       }
-    } catch (error) {
-      toast({
-        title: "Erreur",
-        description: error instanceof Error ? error.message : String(error),
-        variant: "destructive"
-      });
+    } catch (e) {
+      toast({ title: "Erreur", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+    } finally {
+      setValidating(null);
     }
   };
 
-  if (loading || loadingFacts) {
+  if (loading || !user || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="text-muted-foreground">Chargement...</p>
-        </div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  const facts = data?.facts ?? [];
+  const goal = facts.length;
+  const validated = data?.validated ?? 0;
+  const done = goal > 0 && validated >= goal;
+  const theme = [data?.region ? REGION_LABELS[data.region] ?? data.region : null, data?.era].filter(Boolean).join(" · ");
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="container mx-auto px-4 py-20 md:py-24">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate('/app')}
-            className="mb-4"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour
-          </Button>
-
-          <div className="text-center space-y-2">
-            <h1 className="text-2xl md:text-3xl font-bold">Explorer les faits</h1>
-            <p className="text-sm md:text-base text-muted-foreground">
-              {hasPremium ? (
-                "Accès illimité aux faits historiques ✨"
-              ) : (
-                dailyProgress && `${dailyProgress.facts_validated}/5 faits validés aujourd'hui`
-              )}
+    <div className="min-h-screen subtle-gradient">
+      <main className="mx-auto max-w-md space-y-5 px-4 pb-32 pt-[max(1.5rem,env(safe-area-inset-top))]">
+        <header className="space-y-3">
+          <h1 className="text-3xl font-bold">Vos faits du jour</h1>
+          {theme && (
+            <p className="inline-flex items-center gap-2 rounded-full bg-card px-3 py-1 text-sm font-semibold text-accent card-shadow">
+              <Sparkles className="h-4 w-4 text-gold" /> Thème : {theme}
             </p>
-          </div>
-
-          {/* Ad Space */}
-          <AdSense slot="3234567890" format="auto" />
-
-          {facts.length === 0 ? (
-            <Card className="p-6 md:p-8 text-center">
-              <p className="text-base md:text-lg text-muted-foreground">
-                Aucun fait disponible correspondant à vos préférences. Essayez d'ajuster vos préférences dans les paramètres.
-              </p>
-            </Card>
-          ) : (
-            <div className="space-y-4 md:space-y-6">
-              {facts.map((fact) => {
-                const imageUrl = getFactImage(fact.image_url) || fact.image_url;
-                return (
-                  <Card key={fact.id} className="p-4 md:p-6 space-y-4">
-                    {imageUrl && (
-                      <div className="w-full rounded-lg overflow-hidden">
-                        <OptimizedImage
-                          src={imageUrl} 
-                          alt={fact.title}
-                          className="w-full h-48 md:h-64 object-cover"
-                        />
-                      </div>
-                    )}
-                  
-                    <div className="space-y-2">
-                      <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
-                      <p className="text-sm md:text-base text-muted-foreground">{fact.description_fr || fact.description}</p>
-                      {(fact.date_text_fr || fact.date_text) && (
-                        <p className="text-sm font-medium text-accent">
-                          📅 {fact.date_text_fr || fact.date_text}
-                        </p>
-                      )}
-                    </div>
-
-                    <Button
-                      onClick={() => handleValidateFact(fact)}
-                      className="w-full"
-                    >
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Valider (+{fact.points_reward} pts)
-                    </Button>
-                  </Card>
-                );
-              })}
+          )}
+          {goal > 0 && (
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{done ? "Journée validée" : "Validez-les tous pour garder votre série"}</span>
+                <span className="font-semibold text-foreground">{validated}/{goal}</span>
+              </div>
+              <Progress value={(validated / goal) * 100} className="h-2 [&>div]:bg-gold" />
             </div>
           )}
-        </div>
+        </header>
+
+        {done && (
+          <Card className="border-0 accent-gradient p-5 text-center text-accent-foreground elegant-shadow animate-scale-in">
+            <Flame className="mx-auto h-10 w-10 text-gold" />
+            <p className="mt-2 text-xl font-bold">Journée validée !</p>
+            <p className="opacity-90">
+              {streak !== null ? `Série : ${streak} ${streak > 1 ? "jours" : "jour"}. ` : ""}
+              Revenez demain pour la prolonger.
+            </p>
+          </Card>
+        )}
+
+        {error ? (
+          <Card className="p-6 text-center text-muted-foreground">Impossible de charger vos faits du jour.</Card>
+        ) : goal === 0 ? (
+          <Card className="p-6 text-center text-muted-foreground">
+            Vous avez découvert tous les faits disponibles. De nouveaux arrivent bientôt !
+          </Card>
+        ) : (
+          facts.map((fact, i) => (
+            <Card key={fact.id} className={`space-y-4 p-4 card-shadow ${fact.validated ? "opacity-80" : ""}`}>
+              <FactImage
+                src={fact.image_url}
+                alt={fact.title_fr || fact.title}
+                credit={fact.image_credit}
+                sourceUrl={fact.image_source_url}
+                label={[fact.region_fr, fact.historical_periods?.name].filter(Boolean).join(" · ")}
+                className="h-44"
+              />
+              <div className="space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="text-lg font-bold">
+                    <span className="mr-1 text-muted-foreground">{i + 1}.</span>
+                    {fact.title_fr || fact.title}
+                  </h2>
+                  <DifficultyStars difficulty={fact.difficulty} className="shrink-0 pt-1" />
+                </div>
+                <p className="text-sm leading-relaxed text-muted-foreground">{fact.description_fr || fact.description}</p>
+                {(fact.date_text_fr || fact.date_text) && (
+                  <p className="text-sm font-medium text-accent">{fact.date_text_fr || fact.date_text}</p>
+                )}
+              </div>
+              {fact.validated ? (
+                <p className="flex items-center justify-center gap-2 py-2 font-semibold text-accent">
+                  <CheckCircle2 className="h-5 w-5 text-gold" /> Validé
+                </p>
+              ) : (
+                <Button
+                  className="w-full"
+                  disabled={validating !== null}
+                  onClick={() => handleValidate(fact.id, fact.points_reward)}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  {validating === fact.id ? "Validation..." : `Valider (+${fact.points_reward ?? 10} pts)`}
+                </Button>
+              )}
+            </Card>
+          ))
+        )}
+
+        <AdSense slot="3234567890" format="auto" />
       </main>
+      <BottomNav />
     </div>
   );
 };
 
-export default FactsList;
+export default DailyFactsPage;

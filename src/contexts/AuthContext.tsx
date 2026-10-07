@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { PREMIUM_ENABLED } from '@/lib/pricing';
 
 interface AuthContextType {
   user: User | null;
@@ -28,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Takes the session explicitly: callers inside the auth listener must not
   // rely on the `session` state, which is still stale at that point.
   const refreshSubscription = async (currentSession: Session | null) => {
-    if (!currentSession) return;
+    if (!currentSession || !PREMIUM_ENABLED) return;
 
     try {
       const { data, error } = await supabase.functions.invoke('check-subscription', {

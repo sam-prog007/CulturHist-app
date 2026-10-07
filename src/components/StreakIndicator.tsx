@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { StreakCalendar } from "./StreakCalendar";
 import { Progress } from "./ui/progress";
+import { effectiveStreak } from '@/lib/dates';
 
 interface StreakIndicatorProps {
   userId: string;
@@ -32,7 +33,7 @@ const StreakIndicator = ({ userId }: StreakIndicatorProps) => {
         const [profileResult, milestonesResult] = await Promise.all([
           supabase
             .from('profiles')
-            .select('current_streak')
+            .select('current_streak, last_activity_date')
             .eq('id', userId)
             .single(),
           supabase
@@ -42,7 +43,7 @@ const StreakIndicator = ({ userId }: StreakIndicatorProps) => {
         ]);
 
         if (profileResult.data) {
-          setStreak(profileResult.data.current_streak || 0);
+          setStreak(effectiveStreak(profileResult.data.current_streak, profileResult.data.last_activity_date));
         }
 
         if (milestonesResult.data) {

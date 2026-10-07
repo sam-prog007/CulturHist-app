@@ -7,85 +7,92 @@ All colors MUST be HSL.
 */
 
 @layer base {
+  /* Palette: gold, brown and white, taken from the logo.
+     primary = old gold (readable as text on white), gold = bright decorative gold
+     (stars, progress, highlights; not for small text), accent = copper brown. */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 345 45% 15%;
+    --background: 40 33% 98%;
+    --foreground: 24 40% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 345 45% 15%;
+    --card-foreground: 24 40% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 345 45% 15%;
+    --popover-foreground: 24 40% 13%;
 
-    --primary: 25 95% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 25 95% 63%;
+    --primary: 40 72% 35%;
+    --primary-foreground: 40 33% 98%;
+    --primary-light: 43 80% 48%;
 
-    --secondary: 200 18% 46%;
-    --secondary-foreground: 0 0% 100%;
+    --gold: 43 85% 52%;
 
-    --muted: 210 20% 96%;
-    --muted-foreground: 210 12% 45%;
+    --secondary: 36 30% 92%;
+    --secondary-foreground: 24 40% 13%;
 
-    --accent: 142 76% 36%;
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 142 76% 46%;
+    --muted: 36 25% 94%;
+    --muted-foreground: 25 15% 38%;
 
-    --destructive: 0 84% 60%;
+    --accent: 22 50% 32%;
+    --accent-foreground: 40 33% 98%;
+    --accent-light: 24 45% 42%;
+
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 90%;
-    --input: 30 20% 90%;
-    --ring: 38 75% 45%;
+    --border: 35 25% 87%;
+    --input: 35 25% 87%;
+    --ring: 40 72% 35%;
 
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-hero: linear-gradient(135deg, hsl(25 95% 53%), hsl(35 95% 58%));
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%), hsl(25 30% 98%));
-    --gradient-accent: linear-gradient(135deg, hsl(142 76% 36%), hsl(142 76% 46%));
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(25 15% 98%));
+    --gradient-hero: linear-gradient(135deg, hsl(40 72% 35%), hsl(43 80% 48%));
+    --gradient-subtle: linear-gradient(180deg, hsl(40 33% 99%), hsl(38 35% 95%));
+    --gradient-accent: linear-gradient(135deg, hsl(22 50% 32%), hsl(24 45% 42%));
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%), hsl(38 30% 98%));
 
     /* Shadows */
-    --shadow-elegant: 0 12px 48px -12px hsl(25 95% 53% / 0.25);
-    --shadow-card: 0 6px 24px -6px hsl(25 55% 35% / 0.15);
-    --shadow-glow: 0 0 40px hsl(25 95% 53% / 0.4);
-    --shadow-hover: 0 16px 56px -16px hsl(25 95% 53% / 0.35);
+    --shadow-elegant: 0 12px 48px -12px hsl(30 50% 25% / 0.2);
+    --shadow-card: 0 6px 24px -6px hsl(30 45% 25% / 0.14);
+    --shadow-glow: 0 0 40px hsl(43 85% 52% / 0.35);
+    --shadow-hover: 0 16px 56px -16px hsl(30 50% 25% / 0.3);
 
     /* Animations */
     --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    --background: 25 25% 8%;
-    --foreground: 25 10% 95%;
+    --background: 24 30% 7%;
+    --foreground: 40 30% 94%;
 
-    --card: 25 20% 12%;
-    --card-foreground: 25 10% 95%;
+    --card: 24 25% 11%;
+    --card-foreground: 40 30% 94%;
 
-    --popover: 25 20% 12%;
-    --popover-foreground: 25 10% 95%;
+    --popover: 24 25% 11%;
+    --popover-foreground: 40 30% 94%;
 
-    --primary: 25 95% 53%;
-    --primary-foreground: 0 0% 100%;
-    --primary-light: 25 95% 63%;
+    --primary: 43 75% 52%;
+    --primary-foreground: 24 40% 10%;
+    --primary-light: 45 85% 62%;
 
-    --secondary: 200 18% 26%;
-    --secondary-foreground: 0 0% 100%;
+    --gold: 43 85% 56%;
 
-    --muted: 25 18% 18%;
-    --muted-foreground: 25 10% 60%;
+    --secondary: 24 18% 18%;
+    --secondary-foreground: 40 30% 94%;
 
-    --accent: 142 76% 36%;
-    --accent-foreground: 0 0% 100%;
-    --accent-light: 142 76% 46%;
+    --muted: 24 18% 16%;
+    --muted-foreground: 35 15% 65%;
+
+    --accent: 24 50% 58%;
+    --accent-foreground: 24 40% 10%;
+    --accent-light: 26 55% 66%;
 
     --destructive: 0 62% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 25 18% 18%;
-    --input: 25 18% 18%;
-    --ring: 25 95% 53%;
+    --border: 24 18% 20%;
+    --input: 24 18% 20%;
+    --ring: 43 75% 52%;
   }
 }
 
@@ -139,6 +146,17 @@ All colors MUST be HSL.
 
   .glow-shadow {
     box-shadow: var(--shadow-glow);
+  }
+
+  /* Frosted "liquid glass" surface for floating bars */
+  .glass-bar {
+    background: hsl(var(--card) / 0.6);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.55);
+    box-shadow:
+      inset 0 1px 0 hsl(0 0% 100% / 0.7),
+      0 10px 30px -10px hsl(30 50% 20% / 0.35);
   }
 
   .smooth-transition {

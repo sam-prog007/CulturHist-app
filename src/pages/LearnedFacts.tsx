@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import Navbar from "@/components/Navbar";
+import BottomNav from "@/components/BottomNav";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen } from "lucide-react";
-import { getFactImage } from "@/assets/factsImages";
-import { OptimizedImage } from "@/components/OptimizedImage";
+import { FactImage } from "@/components/FactImage";
+import { DifficultyStars } from "@/components/DifficultyStars";
 import type { Tables } from "@/integrations/supabase/types";
 
 type LearnedFact = Partial<Tables<"historical_facts">> & { completed_at: string | null };
@@ -43,7 +43,10 @@ const LearnedFacts = () => {
               date_text_fr,
               region,
               region_fr,
+              difficulty,
               image_url,
+              image_credit,
+              image_source_url,
               points_reward,
               tags,
               tags_fr
@@ -88,8 +91,7 @@ const LearnedFacts = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="container mx-auto px-4 py-20 md:py-24">
+      <main className="container mx-auto px-4 pt-6 pb-32">
         <div className="max-w-4xl mx-auto space-y-6">
           <Button
             variant="ghost"
@@ -122,21 +124,22 @@ const LearnedFacts = () => {
           ) : (
             <div className="space-y-4 md:space-y-6">
               {learnedFacts.map((fact) => {
-              const imageUrl = getFactImage(fact.image_url) || fact.image_url;
                 return (
                   <Card key={fact.id} className="p-4 md:p-6 space-y-4">
-                    {imageUrl && (
-                      <div className="w-full rounded-lg overflow-hidden">
-                        <OptimizedImage
-                          src={imageUrl} 
-                          alt={fact.title_fr || fact.title}
-                          className="w-full h-48 md:h-64 object-cover"
-                        />
-                      </div>
-                    )}
+                    <FactImage
+                      src={fact.image_url}
+                      alt={fact.title_fr || fact.title || ""}
+                      credit={fact.image_credit}
+                      sourceUrl={fact.image_source_url}
+                      label={fact.region_fr || undefined}
+                      className="h-48 md:h-64"
+                    />
                     
                     <div className="space-y-2">
-                      <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
+                        <DifficultyStars difficulty={fact.difficulty} className="shrink-0 pt-1" />
+                      </div>
                       <p className="text-sm md:text-base text-muted-foreground">{fact.description_fr || fact.description}</p>
                       {(fact.date_text_fr || fact.date_text) && (
                         <p className="text-sm font-medium text-accent">
@@ -173,6 +176,7 @@ const LearnedFacts = () => {
           )}
         </div>
       </main>
+      <BottomNav />
     </div>
   );
 };

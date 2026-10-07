@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Award, BookOpen, Calendar, Sparkles, Target } from "lucide-react";
-import heroImage from "@/assets/hero-history.jpg";
 import logo from "@/assets/culturhist-logo.png";
 import { useNavigate } from "react-router-dom";
 
@@ -9,23 +8,13 @@ const Hero = () => {
   
   return (
     <section className="relative min-h-[90vh] flex items-center justify-center subtle-gradient overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img 
-          src={heroImage} 
-          alt="Manuscrits historiques et artefacts anciens" 
-          className="w-full h-full object-cover opacity-10"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background"></div>
-      </div>
-
       {/* Content */}
       <div className="container mx-auto px-4 py-16 z-10 relative">
         <div className="max-w-4xl mx-auto text-center space-y-8 animate-fade-in">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 animate-scale-in">
             <Sparkles className="w-4 h-4 text-accent" />
-            <span className="text-sm font-medium text-accent-foreground">
+            <span className="text-sm font-medium text-accent">
               Découvrez l'histoire au quotidien
             </span>
           </div>

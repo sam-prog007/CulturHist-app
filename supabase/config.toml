@@ -1,5 +1,10 @@
 project_id = "culturhist"
 
+# Content files (facts, quotes) are rerunnable upserts, loaded in file-name order.
+[db.seed]
+enabled = true
+sql_paths = ["./content/*.sql"]
+
 [functions.create-checkout]
 verify_jwt = true
 
@@ -12,5 +17,7 @@ verify_jwt = true
 [functions.translate-facts]
 verify_jwt = true
 
-[functions.generate-fact-images]
-verify_jwt = true
+
+# Called by the cron job with the x-cron-secret header, not with a user JWT.
+[functions.send-notifications]
+verify_jwt = false
