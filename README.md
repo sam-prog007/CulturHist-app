@@ -89,6 +89,10 @@ INSERT INTO public.user_roles (user_id, role)
 SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 ```
 
+## Deployment (Vercel)
+
+`vercel.json` sends every app route to `index.html` and keeps the service worker uncached. Import the GitHub repository in Vercel (framework: Vite); the build reads `.env`. Then, in Supabase → Authentication → URL Configuration, set the Site URL to the Vercel address and add it to the Redirect URLs, so confirmation and email-change links point to the live app.
+
 ## Push notifications
 
 The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages.
