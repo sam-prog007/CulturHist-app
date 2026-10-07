@@ -64,11 +64,16 @@ Deno.serve(async (req) => {
     return new Response("Forbidden", { status: 403 });
   }
 
-  webpush.setVapidDetails(
-    Deno.env.get("VAPID_SUBJECT") ?? "mailto:contact@culturhist.app",
-    Deno.env.get("VAPID_PUBLIC_KEY") ?? "",
-    Deno.env.get("VAPID_PRIVATE_KEY") ?? "",
-  );
+  try {
+    webpush.setVapidDetails(
+      Deno.env.get("VAPID_SUBJECT") ?? "mailto:contact@culturhist.app",
+      Deno.env.get("VAPID_PUBLIC_KEY") ?? "",
+      Deno.env.get("VAPID_PRIVATE_KEY") ?? "",
+    );
+  } catch (e) {
+    log("Invalid VAPID secrets", String(e));
+    return Response.json({ error: `Invalid VAPID secrets: ${e instanceof Error ? e.message : e}` }, { status: 500 });
+  }
   const supabase = createClient(Deno.env.get("SUPABASE_URL") ?? "", Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "", {
     auth: { persistSession: false },
   });
@@ -113,7 +118,10 @@ Deno.serve(async (req) => {
     .or("notify_on_this_day.eq.true,notify_daily_facts.eq.true");
   if (error) {
     log("Profiles query failed", error.message);
-    return new Response(error.message, { status: 500 });
+    return Response.json(
+      { error: `Profiles query failed (has the notifications migration been run?): ${error.message}` },
+      { status: 500 },
+    );
   }
 
   let sent = 0;
