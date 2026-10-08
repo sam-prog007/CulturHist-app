@@ -1,12 +1,12 @@
 import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import type { Difficulty } from "@/lib/difficulty";
-import { REGION_LABELS } from "@/lib/dailyFacts";
 import { todayKey } from "@/lib/dates";
+import { buildQuestions } from "@/lib/quizQuestions";
 
 export type QuizFact = Pick<
   Tables<"historical_facts">,
-  "id" | "title" | "title_fr" | "description" | "description_fr" | "date_text" | "date_text_fr" | "region" | "difficulty" | "period_id"
+  "id" | "title" | "title_fr" | "description" | "description_fr" | "date_text" | "date_text_fr" | "region" | "difficulty" | "period_id" | "year" | "countries"
 >;
 export type Period = Pick<Tables<"historical_periods">, "id" | "name" | "order_index">;
 
@@ -19,8 +19,12 @@ export interface QuizFilters {
 export interface Question {
   id: string;
   question: string;
+  /** What the question is about, shown under it: an event, a date, a description. */
+  context?: string;
   options: string[];
   correctAnswer: number;
+  /** Shown once the player has answered. */
+  explanation?: string;
 }
 
 export const MIN_QUESTIONS = 3;
@@ -30,7 +34,7 @@ export async function loadQuizData(): Promise<{ facts: QuizFact[]; periods: Peri
   const [facts, periods] = await Promise.all([
     supabase
       .from("historical_facts")
-      .select("id, title, title_fr, description, description_fr, date_text, date_text_fr, region, difficulty, period_id"),
+      .select("id, title, title_fr, description, description_fr, date_text, date_text_fr, region, difficulty, period_id, year, countries"),
     supabase.from("historical_periods").select("id, name, order_index").order("order_index"),
   ]);
   if (facts.error) throw facts.error;
@@ -47,59 +51,8 @@ export function matchingFacts(facts: QuizFact[], { region, periodId, difficulty 
   );
 }
 
-const shuffle = <T,>(items: T[]) => {
-  const a = [...items];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-};
-
-/** Up to three wrong answers drawn from `candidates`, never equal to the right one. */
-const distractors = (correct: string, candidates: (string | null | undefined)[]) =>
-  shuffle([...new Set(candidates.filter((c): c is string => !!c && c !== correct))]).slice(0, 3);
-
-function makeQuestion(id: string, question: string, correct: string, wrong: string[]): Question | null {
-  if (wrong.length < 2) return null;
-  const options = shuffle([correct, ...wrong]);
-  return { id, question, options, correctAnswer: options.indexOf(correct) };
-}
-
-/**
- * One question per fact of the pool (up to MAX_QUESTIONS). Wrong answers come
- * from every fact, so a small selection still gets plausible options.
- */
-export function buildQuiz(pool: QuizFact[], allFacts: QuizFact[], periods: Period[]): Question[] {
-  const periodName = new Map(periods.map((p) => [p.id, p.name]));
-  const questions: Question[] = [];
-
-  for (const fact of shuffle(pool)) {
-    if (questions.length >= MAX_QUESTIONS) break;
-    const title = fact.title_fr || fact.title;
-    const date = fact.date_text_fr || fact.date_text;
-    const description = fact.description_fr || fact.description;
-    const region = fact.region ? REGION_LABELS[fact.region] : null;
-    const era = fact.period_id ? periodName.get(fact.period_id) : null;
-
-    const candidates = shuffle([
-      date &&
-        makeQuestion(`${fact.id}-date`, `Quand cela s'est-il passé : « ${title} » ?`, date,
-          distractors(date, allFacts.map((f) => f.date_text_fr || f.date_text))),
-      makeQuestion(`${fact.id}-title`, `Quel événement correspond à : « ${description} »`, title,
-        distractors(title, allFacts.map((f) => f.title_fr || f.title))),
-      region &&
-        makeQuestion(`${fact.id}-region`, `Dans quelle région du monde : « ${title} » ?`, region,
-          distractors(region, Object.values(REGION_LABELS))),
-      era &&
-        makeQuestion(`${fact.id}-era`, `À quelle époque : « ${title} » ?`, era,
-          distractors(era, periods.map((p) => p.name))),
-    ]).filter((q): q is Question => !!q);
-
-    if (candidates.length) questions.push(candidates[0]);
-  }
-  return questions;
-}
+/** One question per fact of the pool (up to MAX_QUESTIONS), see quizQuestions.ts. */
+export const buildQuiz = (pool: QuizFact[], allFacts: QuizFact[]) => buildQuestions(pool, allFacts, MAX_QUESTIONS);
 
 export async function completeQuiz(score: number, total: number, difficulty: Difficulty | null) {
   const { data, error } = await supabase.rpc("complete_quiz", {
