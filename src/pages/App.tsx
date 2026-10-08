@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
 import { getOnThisDay } from "@/lib/onThisDay";
 import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
+import { applyPendingOnboarding } from "@/lib/pendingOnboarding";
 
 const DAILY_FACTS_GOAL = 5;
 
@@ -30,13 +31,21 @@ const HomePage = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("username, points, current_streak, last_activity_date")
+        .select("username, points, current_streak, last_activity_date, onboarding_completed")
         .eq("id", user!.id)
         .single();
       if (error) throw error;
+      // Answers given at sign-up, before the e-mail was confirmed.
+      if (!data.onboarding_completed && (await applyPendingOnboarding(user!.id))) {
+        return { ...data, onboarding_completed: true };
+      }
       return data;
     },
   });
+
+  useEffect(() => {
+    if (profile && !profile.onboarding_completed) navigate("/onboarding");
+  }, [profile, navigate]);
 
   const { data: factsValidated = 0 } = useQuery({
     queryKey: ["home-daily-progress", user?.id, todayKey()],

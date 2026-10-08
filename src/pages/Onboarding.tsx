@@ -6,11 +6,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowRight, ArrowLeft, Sparkles, Globe, Clock } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { DifficultyStars } from "@/components/DifficultyStars";
 import { DIFFICULTIES } from "@/lib/difficulty";
+import { clearPendingOnboarding, savePendingOnboarding } from "@/lib/pendingOnboarding";
 
 const Onboarding = () => {
   const [searchParams] = useSearchParams();
@@ -22,8 +24,10 @@ const Onboarding = () => {
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
   const [selectedEras, setSelectedEras] = useState<string[]>([]);
   const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
 
   const profileTypes = [
@@ -115,37 +119,45 @@ const Onboarding = () => {
   }, [user, isEditMode]);
 
   const handleComplete = async () => {
-    if (!user) return;
+    if (loading || saving) return;
 
-    const updateData = isEditMode
-      ? {
-          preferred_regions: selectedRegions,
-          preferred_eras: selectedEras,
-          preferred_difficulty: selectedDifficulties,
-        }
-      : {
-          profile_type: profileType,
-          learning_goal: learningGoal,
-          preferred_regions: selectedRegions,
-          preferred_eras: selectedEras,
-          preferred_difficulty: selectedDifficulties,
-          onboarding_completed: true,
-        };
+    const preferences = {
+      preferred_regions: selectedRegions,
+      preferred_eras: selectedEras,
+      preferred_difficulty: selectedDifficulties,
+    };
+    const answers = { profile_type: profileType, learning_goal: learningGoal, ...preferences };
 
+    // Just signed up: the account waits for e-mail confirmation, so there is
+    // no session yet. Keep the answers here; they are saved after sign-in.
+    if (!user) {
+      savePendingOnboarding(answers);
+      toast({
+        title: "Plus qu'une étape !",
+        description: "Confirmez votre e-mail avec le lien reçu, puis connectez-vous : vos choix seront enregistrés automatiquement.",
+      });
+      navigate("/auth");
+      return;
+    }
+
+    setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update(updateData)
+      .update(isEditMode ? preferences : { ...answers, onboarding_completed: true })
       .eq("id", user.id);
+    setSaving(false);
 
     if (error) {
       toast({
         title: "Erreur",
-        description: "Impossible de sauvegarder vos préférences",
+        description: `Impossible de sauvegarder vos préférences : ${error.message}`,
         variant: "destructive",
       });
       return;
     }
 
+    clearPendingOnboarding();
+    queryClient.invalidateQueries({ queryKey: ["home-profile"] });
     toast({
       title: isEditMode ? "Préférences mises à jour" : "Bienvenue !",
       description: isEditMode 
@@ -434,8 +446,8 @@ const Onboarding = () => {
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
-                <Button onClick={handleComplete}>
-                  Terminer
+                <Button onClick={handleComplete} disabled={loading || saving}>
+                  {saving ? "Enregistrement…" : "Terminer"}
                   <Sparkles className="w-4 h-4 ml-2" />
                 </Button>
               )}

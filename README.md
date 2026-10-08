@@ -41,7 +41,7 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `src/lib/difficulty.ts` | Difficulty levels (1 to 3 stars) |
 | `src/components/FactImage.tsx` | Fact image with its credit, or a placeholder |
 | `supabase/migrations/` | Database schema, RLS policies, triggers, reference data (grades, periods, achievements, streak milestones) |
-| `supabase/content/` | Content files (demo facts, quotes of the day), rerunnable upserts |
+| `supabase/content/` | Content files (facts, quotes of the day), rerunnable upserts |
 | `supabase/functions/` | Edge functions (see below) |
 
 ## Edge functions
