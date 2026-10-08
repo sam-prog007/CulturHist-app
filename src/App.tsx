@@ -37,7 +37,8 @@ const App = () => (
       <AuthProvider>
         <TooltipProvider>
           <Toaster />
-          <Sonner />
+          {/* At the top on phones, so a message never covers the bottom buttons. */}
+          <Sonner position="top-center" mobileOffset={{ top: "max(12px, env(safe-area-inset-top))" }} />
           <BrowserRouter>
             <Suspense fallback={null}>
               <Routes>

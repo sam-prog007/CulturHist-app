@@ -22,7 +22,7 @@ const ProfilePage = () => {
   const [gradesOpen, setGradesOpen] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/");
   }, [user, loading, navigate]);
 
   const { data } = useQuery({

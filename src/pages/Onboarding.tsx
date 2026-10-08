@@ -1,461 +1,352 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowRight, ArrowLeft, Sparkles, Globe, Clock } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Check, MailCheck } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import { cn } from "@/lib/utils";
 import { DIFFICULTIES } from "@/lib/difficulty";
-import { clearPendingOnboarding, savePendingOnboarding } from "@/lib/pendingOnboarding";
+import { emailSchema, passwordSchema, usernameSchema } from "@/lib/validation";
+import { saveOnboardingAnswers, savePendingOnboarding, type OnboardingAnswers } from "@/lib/pendingOnboarding";
 
+const PROFILE_TYPES = [
+  { value: "student", label: "Étudiant·e", description: "J'étudie l'histoire" },
+  { value: "teacher", label: "Enseignant·e", description: "J'enseigne l'histoire" },
+  { value: "curious", label: "Curieux·se", description: "Je veux apprendre" },
+  { value: "professional", label: "Professionnel·le", description: "Je travaille dans le domaine" },
+];
+
+const LEARNING_GOALS = [
+  { value: "culture", label: "Culture générale", description: "Enrichir mes connaissances et ma culture personnelle" },
+  { value: "exam", label: "Préparation d'examen", description: "Me préparer pour des examens ou concours" },
+  { value: "understanding", label: "Comprendre le monde actuel", description: "Mieux comprendre les enjeux contemporains" },
+  { value: "passion", label: "Passion personnelle", description: "L'histoire me passionne profondément" },
+  { value: "professional", label: "Raisons professionnelles", description: "Pour mon travail ou mes études" },
+];
+
+const REGIONS = [
+  { value: "worldwide", label: "Monde entier" },
+  { value: "europe", label: "Europe" },
+  { value: "asia", label: "Asie" },
+  { value: "africa", label: "Afrique" },
+  { value: "americas", label: "Amériques" },
+  { value: "oceania", label: "Océanie" },
+  { value: "middle-east", label: "Moyen-Orient" },
+];
+
+const ERAS_BY_REGION: Record<string, string[]> = {
+  worldwide: ["Préhistoire", "Antiquité", "Moyen Âge", "Renaissance", "Époque moderne", "Époque contemporaine"],
+  europe: ["Antiquité grecque et romaine", "Moyen Âge médiéval", "Renaissance", "Révolutions", "Guerres mondiales", "Union européenne"],
+  asia: ["Dynasties chinoises", "Empire mongol", "Période Edo", "Colonialisme", "Indépendances", "Asie moderne"],
+  africa: ["Égypte ancienne", "Royaumes africains", "Colonisation", "Indépendances", "Afrique contemporaine"],
+  americas: ["Civilisations précolombiennes", "Colonisation", "Indépendances", "Révolutions", "XXe siècle", "Amériques modernes"],
+  oceania: ["Peuples autochtones", "Exploration", "Colonisation", "Indépendances", "Océanie moderne"],
+  "middle-east": ["Mésopotamie ancienne", "Empires perses", "Califats islamiques", "Empire ottoman", "Décolonisation", "Moyen-Orient moderne"],
+};
+
+const DIFFICULTY_DESCRIPTIONS: Record<string, string> = {
+  easy: "Faits accessibles et simples",
+  medium: "Faits avec détails modérés",
+  hard: "Faits complexes et détaillés",
+};
+
+const STEPS = ["profile", "goal", "regions", "eras", "difficulty", "account"] as const;
+type Step = (typeof STEPS)[number];
+
+const TITLES: Record<Step, { title: string; hint: string }> = {
+  profile: { title: "Qui êtes-vous ?", hint: "Cela nous aide à personnaliser votre expérience." },
+  goal: { title: "Pourquoi apprendre l'histoire ?", hint: "Choisissez votre motivation principale." },
+  regions: { title: "Quelles régions vous intéressent ?", hint: "Une ou plusieurs : vos faits du jour en viendront." },
+  eras: { title: "Quelles époques vous passionnent ?", hint: "Facultatif : sans choix, toutes les époques." },
+  difficulty: { title: "Quel niveau préférez-vous ?", hint: "Facultatif : sans choix, tous les niveaux." },
+  account: { title: "Créez votre compte", hint: "Pour garder vos préférences et votre progression." },
+};
+
+const signUpErrorMessage = (message: string) => {
+  if (message.includes("already registered")) return "Cet e-mail a déjà un compte : connectez-vous.";
+  if (message.includes("Database error saving new user")) return "Ce pseudo est déjà pris : choisissez-en un autre.";
+  if (message.toLowerCase().includes("rate limit")) return "Trop de tentatives : réessayez dans quelques minutes.";
+  return message;
+};
+
+const Option = ({
+  selected,
+  onClick,
+  label,
+  description,
+  compact = false,
+  children,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  label: string;
+  description?: string;
+  /** Tighter, for the two-column grids. */
+  compact?: boolean;
+  children?: React.ReactNode;
+}) => (
+  <button
+    type="button"
+    aria-pressed={selected}
+    onClick={onClick}
+    className={cn(
+      "flex w-full items-center rounded-2xl border bg-card text-left smooth-transition",
+      compact ? "gap-2 p-3" : "gap-3 p-4",
+      selected ? "border-primary ring-2 ring-primary/25" : "border-border hover:border-primary/50"
+    )}
+  >
+    <div className="min-w-0 flex-1">
+      <p className={cn("flex items-center gap-2 break-words font-medium hyphens-auto", compact && "text-[0.9375rem]")}>
+        {label}
+        {children}
+      </p>
+      {description && <p className="text-sm text-muted-foreground">{description}</p>}
+    </div>
+    <span
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-full border smooth-transition",
+        compact ? "h-5 w-5" : "h-6 w-6",
+        selected ? "border-primary bg-primary text-primary-foreground" : "border-border"
+      )}
+    >
+      {selected && <Check className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />}
+    </span>
+  </button>
+);
+
+/** Sign-up: the preference questions, then the account. Shown once, never to signed-in users. */
 const Onboarding = () => {
-  const [searchParams] = useSearchParams();
-  const isEditMode = searchParams.get('edit') === 'true';
-  
-  const [step, setStep] = useState(isEditMode ? 3 : 1);
+  const navigate = useNavigate();
+  const { user, loading, signUp } = useAuth();
+  const [stepIndex, setStepIndex] = useState(0);
   const [profileType, setProfileType] = useState("");
   const [learningGoal, setLearningGoal] = useState("");
-  const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
-  const [selectedEras, setSelectedEras] = useState<string[]>([]);
-  const [selectedDifficulties, setSelectedDifficulties] = useState<string[]>([]);
+  const [regions, setRegions] = useState<string[]>([]);
+  const [eras, setEras] = useState<string[]>([]);
+  const [difficulties, setDifficulties] = useState<string[]>([]);
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [saving, setSaving] = useState(false);
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { user, loading } = useAuth();
-  const { toast } = useToast();
-
-  const profileTypes = [
-    { value: "student", label: "Étudiant·e", description: "J'étudie l'histoire" },
-    { value: "teacher", label: "Enseignant·e", description: "J'enseigne l'histoire" },
-    { value: "curious", label: "Curieux·se", description: "Je veux apprendre" },
-    { value: "professional", label: "Professionnel·le", description: "Je travaille dans le domaine" },
-  ];
-
-  const regions = [
-    { value: "worldwide", label: "Monde entier", icon: Globe },
-    { value: "europe", label: "Europe" },
-    { value: "asia", label: "Asie" },
-    { value: "africa", label: "Afrique" },
-    { value: "americas", label: "Amériques" },
-    { value: "oceania", label: "Océanie" },
-    { value: "middle-east", label: "Moyen-Orient" },
-  ];
-
-  const erasByRegion: Record<string, string[]> = {
-    worldwide: ["Préhistoire", "Antiquité", "Moyen Âge", "Renaissance", "Époque moderne", "Époque contemporaine"],
-    europe: ["Antiquité grecque et romaine", "Moyen Âge médiéval", "Renaissance", "Révolutions", "Guerres mondiales", "Union européenne"],
-    asia: ["Dynasties chinoises", "Empire mongol", "Période Edo", "Colonialisme", "Indépendances", "Asie moderne"],
-    africa: ["Égypte ancienne", "Royaumes africains", "Colonisation", "Indépendances", "Afrique contemporaine"],
-    americas: ["Civilisations précolombiennes", "Colonisation", "Indépendances", "Révolutions", "XXe siècle", "Amériques modernes"],
-    oceania: ["Peuples autochtones", "Exploration", "Colonisation", "Indépendances", "Océanie moderne"],
-    "middle-east": ["Mésopotamie ancienne", "Empires perses", "Califats islamiques", "Empire ottoman", "Décolonisation", "Moyen-Orient moderne"],
-  };
-
-  const getErasForSelectedRegions = () => {
-    if (selectedRegions.includes("worldwide")) {
-      return erasByRegion.worldwide;
-    }
-    const eras = new Set<string>();
-    selectedRegions.forEach(region => {
-      erasByRegion[region]?.forEach(era => eras.add(era));
-    });
-    return Array.from(eras);
-  };
-
-  const toggleRegion = (region: string) => {
-    if (region === "worldwide") {
-      setSelectedRegions(["worldwide"]);
-    } else {
-      const newRegions = selectedRegions.includes(region)
-        ? selectedRegions.filter(r => r !== region)
-        : [...selectedRegions.filter(r => r !== "worldwide"), region];
-      setSelectedRegions(newRegions);
-    }
-  };
-
-  const toggleEra = (era: string) => {
-    setSelectedEras(prev =>
-      prev.includes(era) ? prev.filter(e => e !== era) : [...prev, era]
-    );
-  };
-
-  const toggleDifficulty = (difficulty: string) => {
-    setSelectedDifficulties(prev =>
-      prev.includes(difficulty) ? prev.filter(d => d !== difficulty) : [...prev, difficulty]
-    );
-  };
-
-  const difficultyDescriptions: Record<string, string> = {
-    easy: "Faits accessibles et simples",
-    medium: "Faits avec détails modérés",
-    hard: "Faits complexes et détaillés",
-  };
-  const difficulties = DIFFICULTIES.map((d) => ({ ...d, description: difficultyDescriptions[d.value] }));
+  const [confirmationSentTo, setConfirmationSentTo] = useState<string | null>(null);
+  // Set while this page creates the account, so the redirect below waits for the answers to be saved.
+  const signingUp = useRef(false);
 
   useEffect(() => {
-    const fetchUserPreferences = async () => {
-      if (!user || !isEditMode) return;
+    if (!loading && user && !signingUp.current) navigate("/app", { replace: true });
+  }, [user, loading, navigate]);
 
-      const { data } = await supabase
-        .from('profiles')
-        .select('preferred_regions, preferred_eras, preferred_difficulty')
-        .eq('id', user.id)
-        .single();
+  const step = STEPS[stepIndex];
+  const availableEras = regions.includes("worldwide")
+    ? ERAS_BY_REGION.worldwide
+    : [...new Set(regions.flatMap((region) => ERAS_BY_REGION[region] ?? []))];
 
-      if (data) {
-        setSelectedRegions(data.preferred_regions || []);
-        setSelectedEras(data.preferred_eras || []);
-        setSelectedDifficulties(data.preferred_difficulty || []);
-      }
-    };
+  const toggleIn = (setter: React.Dispatch<React.SetStateAction<string[]>>, value: string) =>
+    setter((prev) => (prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]));
 
-    fetchUserPreferences();
-  }, [user, isEditMode]);
+  const toggleRegion = (region: string) =>
+    setRegions((prev) =>
+      region === "worldwide"
+        ? ["worldwide"]
+        : prev.includes(region)
+          ? prev.filter((r) => r !== region)
+          : [...prev.filter((r) => r !== "worldwide"), region]
+    );
 
-  const handleComplete = async () => {
-    if (loading || saving) return;
+  const missingChoice =
+    (step === "profile" && !profileType && "Choisissez votre profil") ||
+    (step === "goal" && !learningGoal && "Choisissez votre motivation") ||
+    (step === "regions" && regions.length === 0 && "Choisissez au moins une région") ||
+    null;
 
-    const preferences = {
-      preferred_regions: selectedRegions,
-      preferred_eras: selectedEras,
-      preferred_difficulty: selectedDifficulties,
-    };
-    const answers = { profile_type: profileType, learning_goal: learningGoal, ...preferences };
+  const next = () => {
+    if (missingChoice) return void toast.error(missingChoice);
+    setStepIndex((i) => i + 1);
+  };
 
-    // Just signed up: the account waits for e-mail confirmation, so there is
-    // no session yet. Keep the answers here; they are saved after sign-in.
-    if (!user) {
-      savePendingOnboarding(answers);
-      toast({
-        title: "Plus qu'une étape !",
-        description: "Confirmez votre e-mail avec le lien reçu, puis connectez-vous : vos choix seront enregistrés automatiquement.",
-      });
-      navigate("/auth");
-      return;
+  const back = () => (stepIndex === 0 ? navigate("/") : setStepIndex((i) => i - 1));
+
+  const answers = (): OnboardingAnswers => ({
+    profile_type: profileType,
+    learning_goal: learningGoal,
+    preferred_regions: regions,
+    // Eras picked for a region that was unselected afterwards no longer apply.
+    preferred_eras: eras.filter((era) => availableEras.includes(era)),
+    preferred_difficulty: difficulties,
+  });
+
+  const createAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (saving) return;
+    for (const check of [
+      usernameSchema.safeParse(username.trim()),
+      emailSchema.safeParse(email.trim()),
+      passwordSchema.safeParse(password),
+    ]) {
+      if (!check.success) return void toast.error(check.error.issues[0].message);
     }
 
     setSaving(true);
-    const { error } = await supabase
-      .from("profiles")
-      .update(isEditMode ? preferences : { ...answers, onboarding_completed: true })
-      .eq("id", user.id);
-    setSaving(false);
-
+    signingUp.current = true;
+    const address = email.trim();
+    const { error, session } = await signUp(address, password, username.trim());
     if (error) {
-      toast({
-        title: "Erreur",
-        description: `Impossible de sauvegarder vos préférences : ${error.message}`,
-        variant: "destructive",
-      });
+      signingUp.current = false;
+      setSaving(false);
+      return void toast.error(signUpErrorMessage(error.message));
+    }
+
+    if (!session) {
+      // The account must first be confirmed by e-mail: the answers wait for the first sign-in.
+      savePendingOnboarding(address, answers());
+      setSaving(false);
+      setConfirmationSentTo(address);
       return;
     }
 
-    clearPendingOnboarding();
-    queryClient.invalidateQueries({ queryKey: ["home-profile"] });
-    toast({
-      title: isEditMode ? "Préférences mises à jour" : "Bienvenue !",
-      description: isEditMode 
-        ? "Vos préférences ont été modifiées avec succès"
-        : "Votre profil a été configuré avec succès",
-    });
-
-    navigate("/app");
+    if (!(await saveOnboardingAnswers(session.user.id, answers()))) {
+      // Retried from the home screen.
+      savePendingOnboarding(address, answers());
+    }
+    navigate("/app", { replace: true });
   };
 
-  const nextStep = () => {
-    if (step === 1 && !profileType && !isEditMode) {
-      toast({
-        title: "Sélection requise",
-        description: "Veuillez sélectionner votre profil",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (step === 2 && !learningGoal && !isEditMode) {
-      toast({
-        title: "Sélection requise",
-        description: "Veuillez sélectionner vos motivations",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (step === 3 && selectedRegions.length === 0) {
-      toast({
-        title: "Sélection requise",
-        description: "Veuillez sélectionner au moins une région",
-        variant: "destructive",
-      });
-      return;
-    }
-    setStep(step + 1);
-  };
+  if (loading || (user && !signingUp.current)) return <div className="h-[100dvh] subtle-gradient" />;
 
-  const prevStep = () => setStep(step - 1);
+  if (confirmationSentTo) {
+    return (
+      <main className="flex h-[100dvh] flex-col items-center justify-center gap-6 subtle-gradient px-6 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+          <MailCheck className="h-10 w-10 text-primary" />
+        </div>
+        <div className="max-w-sm space-y-2">
+          <h1 className="text-3xl font-bold">Vérifiez votre boîte mail</h1>
+          <p className="text-muted-foreground">
+            Nous avons envoyé un lien à <span className="font-medium text-foreground">{confirmationSentTo}</span>. Ouvrez-le
+            pour activer votre compte : vos préférences seront enregistrées à votre première connexion.
+          </p>
+        </div>
+        <Button size="xl" className="w-full max-w-sm rounded-2xl" onClick={() => navigate("/auth")}>
+          Se connecter
+        </Button>
+      </main>
+    );
+  }
+
+  const { title, hint } = TITLES[step];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center subtle-gradient overflow-hidden">
-      {/* Content */}
-      <div className="container mx-auto px-4 py-16 z-10 relative">
-        <div className="max-w-2xl mx-auto animate-fade-in">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 border border-accent/20 mb-4">
-              <Sparkles className="w-4 h-4 text-accent" />
-              <span className="text-sm font-medium text-accent">
-                Configuration de votre profil
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-              {isEditMode ? "Modifiez vos préférences" : "Personnalisez votre expérience"}
-            </h1>
-            <p className="text-muted-foreground">
-              {isEditMode ? "Modifiez vos régions, périodes et niveau de difficulté" : `Étape ${step} sur 5`}
-            </p>
+    <div className="flex h-[100dvh] flex-col subtle-gradient">
+      <div className="mx-auto flex min-h-0 w-full max-w-md flex-1 flex-col px-4 pt-[max(1rem,env(safe-area-inset-top))]">
+        <header className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" aria-label="Retour" onClick={back} disabled={saving}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Progress
+            value={((stepIndex + 1) / STEPS.length) * 100}
+            aria-label={`Étape ${stepIndex + 1} sur ${STEPS.length}`}
+            className="h-2 flex-1"
+          />
+        </header>
+
+        <main key={step} className="min-h-0 flex-1 overflow-y-auto px-1 py-6 motion-safe:animate-fade-in-up">
+          <h1 className="text-[1.75rem] font-bold leading-tight">{title}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{hint}</p>
+
+          <div className="mt-6">
+            {step === "profile" && (
+              <div className="space-y-3">
+                {PROFILE_TYPES.map((t) => (
+                  <Option key={t.value} label={t.label} description={t.description} selected={profileType === t.value} onClick={() => setProfileType(t.value)} />
+                ))}
+              </div>
+            )}
+
+            {step === "goal" && (
+              <div className="space-y-3">
+                {LEARNING_GOALS.map((g) => (
+                  <Option key={g.value} label={g.label} description={g.description} selected={learningGoal === g.value} onClick={() => setLearningGoal(g.value)} />
+                ))}
+              </div>
+            )}
+
+            {step === "regions" && (
+              <div className="grid grid-cols-2 gap-3">
+                {REGIONS.map((r) => (
+                  <Option key={r.value} compact label={r.label} selected={regions.includes(r.value)} onClick={() => toggleRegion(r.value)} />
+                ))}
+              </div>
+            )}
+
+            {step === "eras" && (
+              <div className="grid grid-cols-2 gap-3">
+                {availableEras.map((era) => (
+                  <Option key={era} compact label={era} selected={eras.includes(era)} onClick={() => toggleIn(setEras, era)} />
+                ))}
+              </div>
+            )}
+
+            {step === "difficulty" && (
+              <div className="space-y-3">
+                {DIFFICULTIES.map((d) => (
+                  <Option
+                    key={d.value}
+                    label={d.label}
+                    description={DIFFICULTY_DESCRIPTIONS[d.value]}
+                    selected={difficulties.includes(d.value)}
+                    onClick={() => toggleIn(setDifficulties, d.value)}
+                  >
+                    <DifficultyStars difficulty={d.value} />
+                  </Option>
+                ))}
+              </div>
+            )}
+
+            {step === "account" && (
+              <form id="signup-form" onSubmit={createAccount} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-username">Pseudo</Label>
+                  <Input id="signup-username" autoComplete="nickname" maxLength={30} value={username} onChange={(e) => setUsername(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-email">E-mail</Label>
+                  <Input id="signup-email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="signup-password">Mot de passe</Label>
+                  <Input id="signup-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <p className="text-xs text-muted-foreground">Au moins 8 caractères, une majuscule et un chiffre.</p>
+                </div>
+                <p className="pt-2 text-center text-sm text-muted-foreground">
+                  Déjà un compte ?{" "}
+                  <Link to="/auth" className="font-semibold text-primary">
+                    Se connecter
+                  </Link>
+                </p>
+              </form>
+            )}
           </div>
+        </main>
 
-          {/* Form Card */}
-          <Card className="p-6 md:p-8 card-shadow">
-            {/* Step 1: Profile Type - Hidden in edit mode */}
-            {!isEditMode && step === 1 && (
-              <div className="space-y-6 animate-fade-in">
-                <div>
-                  <h2 className="text-xl font-semibold mb-2">Qui êtes-vous ?</h2>
-                  <p className="text-sm text-muted-foreground">
-                    Cela nous aide à personnaliser votre expérience
-                  </p>
-                </div>
-                <RadioGroup value={profileType} onValueChange={setProfileType}>
-                  <div className="space-y-3">
-                    {profileTypes.map((type) => (
-                      <Label
-                        key={type.value}
-                        htmlFor={type.value}
-                        className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
-                      >
-                        <RadioGroupItem value={type.value} id={type.value} />
-                        <div className="flex-1">
-                          <div className="font-medium">{type.label}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {type.description}
-                          </div>
-                        </div>
-                      </Label>
-                    ))}
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
-
-            {/* Step 2: Learning Goal - Hidden in edit mode */}
-            {!isEditMode && step === 2 && (
-              <div className="space-y-6 animate-fade-in">
-                <div>
-                  <h2 className="text-xl font-semibold mb-2">
-                    Pourquoi souhaitez-vous apprendre l'histoire ?
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Sélectionnez vos motivations principales
-                  </p>
-                </div>
-                <RadioGroup value={learningGoal} onValueChange={setLearningGoal}>
-                  <div className="space-y-3">
-                    <Label
-                      htmlFor="culture"
-                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
-                    >
-                      <RadioGroupItem value="culture" id="culture" />
-                      <div className="flex-1">
-                        <div className="font-medium">Culture générale</div>
-                        <div className="text-sm text-muted-foreground">
-                          Enrichir mes connaissances et ma culture personnelle
-                        </div>
-                      </div>
-                    </Label>
-                    <Label
-                      htmlFor="exam"
-                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
-                    >
-                      <RadioGroupItem value="exam" id="exam" />
-                      <div className="flex-1">
-                        <div className="font-medium">Préparation d'examen</div>
-                        <div className="text-sm text-muted-foreground">
-                          Me préparer pour des examens ou concours
-                        </div>
-                      </div>
-                    </Label>
-                    <Label
-                      htmlFor="understanding"
-                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
-                    >
-                      <RadioGroupItem value="understanding" id="understanding" />
-                      <div className="flex-1">
-                        <div className="font-medium">Comprendre le monde actuel</div>
-                        <div className="text-sm text-muted-foreground">
-                          Mieux comprendre les enjeux contemporains
-                        </div>
-                      </div>
-                    </Label>
-                    <Label
-                      htmlFor="passion"
-                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
-                    >
-                      <RadioGroupItem value="passion" id="passion" />
-                      <div className="flex-1">
-                        <div className="font-medium">Passion personnelle</div>
-                        <div className="text-sm text-muted-foreground">
-                          L'histoire me passionne profondément
-                        </div>
-                      </div>
-                    </Label>
-                    <Label
-                      htmlFor="professional"
-                      className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer hover:bg-secondary/50 smooth-transition"
-                    >
-                      <RadioGroupItem value="professional" id="professional" />
-                      <div className="flex-1">
-                        <div className="font-medium">Raisons professionnelles</div>
-                        <div className="text-sm text-muted-foreground">
-                          Pour mon travail ou mes études
-                        </div>
-                      </div>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            )}
-
-            {/* Step 3: Regions */}
-            {step === 3 && (
-              <div className="space-y-6 animate-fade-in">
-                <div>
-                  <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-                    <Globe className="w-5 h-5" />
-                    Quelles régions vous intéressent ?
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Sélectionnez une ou plusieurs régions
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {regions.map((region) => (
-                    <Button
-                      key={region.value}
-                      variant={selectedRegions.includes(region.value) ? "default" : "outline"}
-                      className="justify-start h-auto py-3"
-                      onClick={() => toggleRegion(region.value)}
-                    >
-                      {region.icon && <region.icon className="w-4 h-4 mr-2" />}
-                      {region.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Eras */}
-            {step === 4 && (
-              <div className="space-y-6 animate-fade-in">
-                <div>
-                  <h2 className="text-xl font-semibold mb-2 flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Quelles périodes vous passionnent ?
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Basé sur vos régions sélectionnées
-                  </p>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {getErasForSelectedRegions().map((era) => (
-                    <Button
-                      key={era}
-                      variant={selectedEras.includes(era) ? "default" : "outline"}
-                      className="justify-start h-auto py-3"
-                      onClick={() => toggleEra(era)}
-                    >
-                      {era}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Difficulty */}
-            {step === 5 && (
-              <div className="space-y-6 animate-fade-in">
-                <div>
-                  <h2 className="text-xl font-semibold mb-2">
-                    Quel niveau de difficulté préférez-vous ?
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Choisissez un ou plusieurs niveaux
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  {difficulties.map((difficulty) => {
-                    const selected = selectedDifficulties.includes(difficulty.value);
-                    return (
-                      <Button
-                        key={difficulty.value}
-                        variant={selected ? "default" : "outline"}
-                        className="w-full justify-start h-auto py-4"
-                        onClick={() => toggleDifficulty(difficulty.value)}
-                      >
-                        <div className="flex-1 text-left">
-                          <div className="flex items-center gap-2 font-medium">
-                            {difficulty.label}
-                            <DifficultyStars difficulty={difficulty.value} tone={selected ? "current" : "gold"} />
-                          </div>
-                          <div className={`text-sm ${selected ? "opacity-80" : "text-muted-foreground"}`}>
-                            {difficulty.description}
-                          </div>
-                        </div>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t">
-              {!isEditMode && (
-                <Button
-                  variant="outline"
-                  onClick={prevStep}
-                  disabled={step === 1}
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Précédent
-                </Button>
-              )}
-              {isEditMode && step === 3 && (
-                <Button variant="outline" onClick={() => navigate('/app')}>
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Annuler
-                </Button>
-              )}
-              {step < 5 ? (
-                <Button onClick={nextStep}>
-                  Suivant
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              ) : (
-                <Button onClick={handleComplete} disabled={loading || saving}>
-                  {saving ? "Enregistrement…" : "Terminer"}
-                  <Sparkles className="w-4 h-4 ml-2" />
-                </Button>
-              )}
-            </div>
-          </Card>
-        </div>
+        <footer className="pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          {/* Distinct keys: reusing the clicked "Continuer" element as the submit
+              button would submit the still-empty form on the same tap. */}
+          {step === "account" ? (
+            <Button key="submit" type="submit" form="signup-form" size="xl" className="w-full rounded-2xl" disabled={saving}>
+              {saving ? "Création du compte…" : "Créer mon compte"}
+            </Button>
+          ) : (
+            <Button key="next" type="button" size="xl" className="w-full rounded-2xl" onClick={next}>
+              Continuer
+            </Button>
+          )}
+        </footer>
       </div>
-    </section>
+    </div>
   );
 };
 

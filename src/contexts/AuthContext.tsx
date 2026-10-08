@@ -7,7 +7,8 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, username?: string) => Promise<{ error: AuthError | null }>;
+  /** session is null when the account must first be confirmed by e-mail. */
+  signUp: (email: string, password: string, username?: string) => Promise<{ error: AuthError | null; session: Session | null }>;
   signOut: () => Promise<void>;
   loading: boolean;
   isPremium: boolean;
@@ -123,7 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, username?: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -133,7 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     });
-    return { error };
+    return { error, session: data.session };
   };
 
   const signOut = async () => {

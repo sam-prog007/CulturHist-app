@@ -22,7 +22,7 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/");
   }, [user, loading, navigate]);
 
   const { data: profile } = useQuery({
@@ -36,16 +36,12 @@ const HomePage = () => {
         .single();
       if (error) throw error;
       // Answers given at sign-up, before the e-mail was confirmed.
-      if (!data.onboarding_completed && (await applyPendingOnboarding(user!.id))) {
+      if (!data.onboarding_completed && (await applyPendingOnboarding(user!.id, user!.email))) {
         return { ...data, onboarding_completed: true };
       }
       return data;
     },
   });
-
-  useEffect(() => {
-    if (profile && !profile.onboarding_completed) navigate("/onboarding");
-  }, [profile, navigate]);
 
   const { data: factsValidated = 0 } = useQuery({
     queryKey: ["home-daily-progress", user?.id, todayKey()],

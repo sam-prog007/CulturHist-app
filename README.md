@@ -26,7 +26,7 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 
 | Path | Content |
 | --- | --- |
-| `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
+| `src/pages/` | Routes: welcome screen, sign-in (`/auth`), sign-up questionnaire (`/onboarding`), `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
 | `src/components/WorldMap.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`); countries turn gold as their facts are learned, tap one to add its region to the preferences |

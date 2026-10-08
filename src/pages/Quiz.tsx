@@ -53,7 +53,7 @@ const QuizPage = () => {
   const [pointsEarned, setPointsEarned] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/");
   }, [user, loading, navigate]);
 
   const { data, isLoading } = useQuery({ queryKey: ["quiz-data"], enabled: !!user, queryFn: loadQuizData });

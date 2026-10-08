@@ -28,7 +28,7 @@ const MapsPage = () => {
   const queryKey = ["learning-progress", user?.id];
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/");
   }, [user, loading, navigate]);
 
   const { data } = useQuery({ queryKey, enabled: !!user, queryFn: () => getLearningProgress(user!.id) });
