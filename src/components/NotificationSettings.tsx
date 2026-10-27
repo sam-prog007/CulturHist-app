@@ -14,6 +14,8 @@ type Settings = {
   notify_on_this_day_time: string | null;
   notify_daily_facts: boolean | null;
   notify_daily_facts_time: string | null;
+  notify_streak: boolean | null;
+  notify_streak_time: string | null;
 };
 
 const hhmm = (time: string | null | undefined, fallback: string) => (time ?? fallback).slice(0, 5);
@@ -34,7 +36,7 @@ const NotificationSettings = ({ userId }: { userId: string }) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("notify_on_this_day, notify_on_this_day_time, notify_daily_facts, notify_daily_facts_time")
+        .select("notify_on_this_day, notify_on_this_day_time, notify_daily_facts, notify_daily_facts_time, notify_streak, notify_streak_time")
         .eq("id", userId)
         .single();
       if (error) throw error;
@@ -92,6 +94,13 @@ const NotificationSettings = ({ userId }: { userId: string }) => {
   const rows = [
     { key: "notify_on_this_day", timeKey: "notify_on_this_day_time", label: "Ce jour-là", hint: "Un événement historique survenu à cette date", fallback: "08:00" },
     { key: "notify_daily_facts", timeKey: "notify_daily_facts_time", label: "Vos 5 faits du jour", hint: "Un rappel si vous ne les avez pas encore validés", fallback: "18:00" },
+    {
+      key: "notify_streak",
+      timeKey: "notify_streak_time",
+      label: "Série en danger",
+      hint: "Quand votre série risque de s'arrêter, et un dernier rappel à 22 h. Aussi après quelques jours d'absence.",
+      fallback: "20:00",
+    },
   ] as const;
 
   return (

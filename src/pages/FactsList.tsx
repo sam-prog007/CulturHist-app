@@ -6,21 +6,24 @@ import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { FactImage } from "@/components/FactImage";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import AdSense from "@/components/AdSense";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { todayKey } from "@/lib/dates";
-import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts } from "@/lib/dailyFacts";
+import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts, type ValidationResult } from "@/lib/dailyFacts";
+import StreakCelebration from "@/components/StreakCelebration";
 
 const DailyFactsPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const queryClient = useQueryClient();
   const [validating, setValidating] = useState<string | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
+  const [celebration, setCelebration] = useState<ValidationResult | null>(null);
   const date = todayKey();
   const queryKey = ["daily-facts", user?.id, date];
 
@@ -49,6 +52,11 @@ const DailyFactsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["home-daily-progress"] });
       if (result.day_completed && !result.already_validated) {
         setStreak(result.current_streak);
+        // Older servers do not say whether the streak grew: completing the day did.
+        if (result.streak_increased ?? true) {
+          dismiss();
+          setCelebration(result);
+        }
       } else if (!result.already_validated) {
         toast({
           title: "Fait validé !",
@@ -131,7 +139,10 @@ const DailyFactsPage = () => {
                     <span className="mr-1 text-muted-foreground">{i + 1}.</span>
                     {fact.title_fr || fact.title}
                   </h2>
-                  <DifficultyStars difficulty={fact.difficulty} className="shrink-0 pt-1" />
+                  <div className="flex shrink-0 items-center gap-1">
+                    <DifficultyStars difficulty={fact.difficulty} />
+                    <FavoriteButton item={{ factId: fact.id }} className="-my-1.5 -mr-1.5" />
+                  </div>
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground">{fact.description_fr || fact.description}</p>
                 {(fact.date_text_fr || fact.date_text) && (
@@ -159,6 +170,14 @@ const DailyFactsPage = () => {
         <AdSense slot="3234567890" format="auto" />
       </main>
       <BottomNav />
+      {celebration && (
+        <StreakCelebration
+          streak={celebration.current_streak}
+          newRecord={celebration.new_record}
+          milestone={celebration.milestone}
+          onClose={() => setCelebration(null)}
+        />
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ChevronRight, Crown, Flame, Settings, Star, Trophy } from "lucide-react";
+import { BookOpen, ChevronRight, Crown, Flame, Heart, Settings, Star, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -32,7 +32,7 @@ const ProfilePage = () => {
       const [profile, learned, grades] = await Promise.all([
         supabase
           .from("profiles")
-          .select("username, points, current_streak, last_activity_date")
+          .select("username, points, current_streak, last_activity_date, longest_streak")
           .eq("id", user!.id)
           .single(),
         supabase
@@ -51,6 +51,7 @@ const ProfilePage = () => {
         username: profile.data.username,
         points,
         streak: effectiveStreak(profile.data.current_streak, profile.data.last_activity_date),
+        longestStreak: profile.data.longest_streak ?? 0,
         factsLearned: learned.count ?? 0,
         grade,
         next,
@@ -100,6 +101,9 @@ const ProfilePage = () => {
             <Flame className="mx-auto h-5 w-5 text-orange-500" />
             <p className="mt-1 text-xl font-bold">{data.streak}</p>
             <p className="text-xs text-muted-foreground">{data.streak > 1 ? "Jours de série" : "Jour de série"}</p>
+            {Math.max(data.longestStreak, data.streak) > 0 && (
+              <p className="mt-0.5 text-[11px] font-medium text-accent">Record : {Math.max(data.longestStreak, data.streak)}</p>
+            )}
           </Card>
           <button type="button" onClick={() => navigate("/learned-facts")} className="text-left">
             <Card className="h-full p-3 text-center card-shadow hover:border-primary/50 smooth-transition">
@@ -109,6 +113,19 @@ const ProfilePage = () => {
             </Card>
           </button>
         </div>
+
+        <button type="button" onClick={() => navigate("/favoris")} className="block w-full text-left">
+          <Card className="flex items-center gap-3 p-4 card-shadow hover:border-primary/50 smooth-transition">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/10">
+              <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold">Mes favoris</p>
+              <p className="text-sm text-muted-foreground">Vos faits et citations préférés</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Card>
+        </button>
 
         {grade && (
           <Card className="space-y-3 p-5 card-shadow">

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, BookOpen } from "lucide-react";
 import { FactImage } from "@/components/FactImage";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import type { Tables } from "@/integrations/supabase/types";
 
 type LearnedFact = Partial<Tables<"historical_facts">> & { completed_at: string | null };
@@ -138,7 +139,10 @@ const LearnedFacts = () => {
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <h3 className="text-lg md:text-xl font-bold">{fact.title_fr || fact.title}</h3>
-                        <DifficultyStars difficulty={fact.difficulty} className="shrink-0 pt-1" />
+                        <div className="flex shrink-0 items-center gap-1">
+                          <DifficultyStars difficulty={fact.difficulty} />
+                          {fact.id && <FavoriteButton item={{ factId: fact.id }} className="-my-1.5 -mr-1.5" />}
+                        </div>
                       </div>
                       <p className="text-sm md:text-base text-muted-foreground">{fact.description_fr || fact.description}</p>
                       {(fact.date_text_fr || fact.date_text) && (

@@ -9,10 +9,26 @@ export interface Era {
   total: number;
 }
 
+/** What the map and the timeline need to know about each fact. */
+export interface MapFact {
+  id: string;
+  title: string;
+  year: number | null;
+  dateText: string | null;
+  periodId: string | null;
+  countries: string[];
+  region: string | null;
+}
+
 export interface LearningProgress {
   /** Facts learned per country (ISO alpha-2). */
   byCountry: Record<string, number>;
   eras: Era[];
+  /** Every fact, learned or not, for the map's country panel and the timeline's dots. */
+  facts: MapFact[];
+  learnedIds: Set<string>;
+  /** The most recently learned fact: "vous êtes ici" on the timeline. */
+  lastLearnedId: string | null;
   preferredRegions: string[];
   preferredEras: string[];
 }
@@ -22,27 +38,36 @@ export async function getLearningProgress(userId: string): Promise<LearningProgr
   const [learned, facts, periods, profile] = await Promise.all([
     supabase
       .from("user_progress")
-      .select("historical_facts (countries, period_id)")
+      .select("fact_id, completed_at")
       .eq("user_id", userId)
-      .eq("completed", true),
-    supabase.from("historical_facts").select("period_id"),
+      .eq("completed", true)
+      .order("completed_at", { ascending: false }),
+    supabase.from("historical_facts").select("id, title, title_fr, year, date_text, date_text_fr, period_id, countries, region"),
     supabase.from("historical_periods").select("id, name, start_year, end_year, order_index").order("order_index"),
     supabase.from("profiles").select("preferred_regions, preferred_eras").eq("id", userId).single(),
   ]);
   if (learned.error) throw learned.error;
+  if (facts.error) throw facts.error;
+
+  const learnedIds = new Set((learned.data ?? []).map((p) => p.fact_id));
+  const allFacts: MapFact[] = (facts.data ?? []).map((f) => ({
+    id: f.id,
+    title: f.title_fr || f.title,
+    year: f.year,
+    dateText: f.date_text_fr || f.date_text,
+    periodId: f.period_id,
+    countries: f.countries ?? [],
+    region: f.region,
+  }));
 
   const byCountry: Record<string, number> = {};
   const learnedByEra: Record<string, number> = {};
-  for (const row of learned.data ?? []) {
-    const fact = row.historical_facts;
-    if (!fact) continue;
-    for (const code of fact.countries ?? []) byCountry[code] = (byCountry[code] ?? 0) + 1;
-    if (fact.period_id) learnedByEra[fact.period_id] = (learnedByEra[fact.period_id] ?? 0) + 1;
-  }
-
   const totalByEra: Record<string, number> = {};
-  for (const f of facts.data ?? []) {
-    if (f.period_id) totalByEra[f.period_id] = (totalByEra[f.period_id] ?? 0) + 1;
+  for (const fact of allFacts) {
+    if (fact.periodId) totalByEra[fact.periodId] = (totalByEra[fact.periodId] ?? 0) + 1;
+    if (!learnedIds.has(fact.id)) continue;
+    for (const code of fact.countries) byCountry[code] = (byCountry[code] ?? 0) + 1;
+    if (fact.periodId) learnedByEra[fact.periodId] = (learnedByEra[fact.periodId] ?? 0) + 1;
   }
 
   return {
@@ -55,6 +80,9 @@ export async function getLearningProgress(userId: string): Promise<LearningProgr
       learned: learnedByEra[p.id] ?? 0,
       total: totalByEra[p.id] ?? 0,
     })),
+    facts: allFacts,
+    learnedIds,
+    lastLearnedId: learned.data?.[0]?.fact_id ?? null,
     // "worldwide" (from onboarding) means no region filter.
     preferredRegions: (profile.data?.preferred_regions ?? []).filter((r) => r !== "worldwide"),
     preferredEras: profile.data?.preferred_eras ?? [],

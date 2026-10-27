@@ -136,6 +136,45 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          created_at: string
+          fact_id: string | null
+          id: string
+          quote_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact_id?: string | null
+          id?: string
+          quote_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          fact_id?: string | null
+          id?: string
+          quote_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "historical_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grades: {
         Row: {
           created_at: string | null
@@ -304,6 +343,13 @@ export type Database = {
           is_premium: boolean | null
           last_activity_date: string | null
           last_daily_facts_sent_on: string | null
+          last_comeback_sent_on: string | null
+          last_last_chance_sent_on: string | null
+          last_streak_lost_sent_on: string | null
+          last_streak_reminder_sent_on: string | null
+          longest_streak: number | null
+          notify_streak: boolean | null
+          notify_streak_time: string | null
           last_on_this_day_sent_on: string | null
           learning_goal: string | null
           level: number | null
@@ -333,6 +379,13 @@ export type Database = {
           is_premium?: boolean | null
           last_activity_date?: string | null
           last_daily_facts_sent_on?: string | null
+          last_comeback_sent_on?: string | null
+          last_last_chance_sent_on?: string | null
+          last_streak_lost_sent_on?: string | null
+          last_streak_reminder_sent_on?: string | null
+          longest_streak?: number | null
+          notify_streak?: boolean | null
+          notify_streak_time?: string | null
           last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null
@@ -362,6 +415,13 @@ export type Database = {
           is_premium?: boolean | null
           last_activity_date?: string | null
           last_daily_facts_sent_on?: string | null
+          last_comeback_sent_on?: string | null
+          last_last_chance_sent_on?: string | null
+          last_streak_lost_sent_on?: string | null
+          last_streak_reminder_sent_on?: string | null
+          longest_streak?: number | null
+          notify_streak?: boolean | null
+          notify_streak_time?: string | null
           last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null

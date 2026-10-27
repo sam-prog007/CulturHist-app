@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle, Play, RotateCcw, Sparkles, Trophy, XCircle, Zap } from "lucide-react";
+import { BookOpen, CheckCircle, Play, RotateCcw, Sparkles, Trophy, XCircle, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -62,7 +63,7 @@ const QuizPage = () => {
 
   const start = () => {
     if (!data) return;
-    const quiz = buildQuiz(pool, data.facts, data.periods);
+    const quiz = buildQuiz(pool, data.facts);
     if (quiz.length < MIN_QUESTIONS) {
       toast({ title: "Pas assez de questions", description: "Élargissez votre sélection.", variant: "destructive" });
       return;
@@ -177,7 +178,19 @@ const QuizPage = () => {
             </div>
 
             <Card className="space-y-5 p-5 card-shadow animate-fade-in">
-              <h2 className="text-xl font-bold leading-snug">{questions[index].question}</h2>
+              <div className="space-y-3">
+                <h2 className="text-xl font-bold leading-snug">{questions[index].question}</h2>
+                {questions[index].context && (
+                  <p
+                    className={cn(
+                      "rounded-xl bg-secondary px-4 py-3 leading-snug",
+                      questions[index].context.length > 80 ? "text-sm italic" : "font-serif text-lg font-semibold"
+                    )}
+                  >
+                    {questions[index].context}
+                  </p>
+                )}
+              </div>
               <div className="space-y-3">
                 {questions[index].options.map((option, i) => {
                   const answered = selected !== null;
@@ -204,6 +217,13 @@ const QuizPage = () => {
                   );
                 })}
               </div>
+              {selected !== null && questions[index].explanation && (
+                <div className="flex gap-2 rounded-xl border border-gold/40 bg-gold/10 p-3 text-sm leading-relaxed animate-fade-in">
+                  <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                  <p className="flex-1">{questions[index].explanation}</p>
+                  <FavoriteButton item={{ factId: questions[index].factId }} className="-my-1.5 -mr-1.5" />
+                </div>
+              )}
               {selected !== null && (
                 <Button className="w-full" onClick={next}>
                   {index + 1 < questions.length ? "Question suivante" : "Voir le résultat"}

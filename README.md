@@ -29,11 +29,12 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
-| `src/components/WorldMap.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`); countries turn gold as their facts are learned, tap one to add its region to the preferences |
-| `src/components/EraTimeline.tsx`, `src/lib/progress.ts` | Era timeline filling with learned facts; tap an era to add it to the preferences |
+| `src/components/WorldMap.tsx`, `src/components/CountrySheet.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`, pinch/drag/zoom with `d3-zoom`); countries turn gold as their facts are learned, picking a region flies to it, tapping a country opens its facts (learned ones to read, the others as locked teasers) |
+| `src/components/EraFresque.tsx`, `src/components/FactSheet.tsx`, `src/lib/progress.ts` | Timeline ("frise"): one swipeable panel per era with its facts as dots at their dates (golden once learned, "Vous" on the last one), a mini-map of eras, tap a dot to read the fact; eras can be added to the preferences |
 | `src/lib/quiz.ts` | Quiz questions for a chosen region, era and difficulty; points via `complete_quiz` |
 | `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
 | `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |
+| `src/lib/favorites.ts`, `src/pages/Favorites.tsx` | Favorite facts and quotes (heart button `src/components/FavoriteButton.tsx`), listed on `/favoris` |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |
 | `src/contexts/AuthContext.tsx` | Session, premium status (via `check-subscription`), admin role |
 | `src/lib/dailyFact.ts` | Fact-of-the-day selection |
@@ -95,7 +96,19 @@ SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 
 ## Push notifications
 
-The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages.
+The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages:
+
+- **Ce jour-là**: an event that happened on this date (default 08:00).
+- **Vos 5 faits du jour**: a reminder when today's facts are not all validated (default 18:00).
+- **Série en danger** (on by default, 20:00), in the spirit of Duolingo, logic in `supabase/functions/send-notifications/streak.ts`:
+  - a reminder when the streak is alive but today is not done;
+  - a last chance at 22:00 for streaks of 3 days or more;
+  - "série perdue" the day after a missed day;
+  - "vous nous manquez" after 3 and after 7 days of absence, then nothing more.
+
+  When it goes out, it replaces the daily facts reminder of that day.
+
+Completing a day shows a celebration screen (`src/components/StreakCelebration.tsx`) with the streak counting up, the week, and badges for a new record (`profiles.longest_streak`) or a streak milestone.
 
 Setup, once:
 
