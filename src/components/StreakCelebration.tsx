@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Flame, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useGradeLevel } from "@/lib/mascot";
+import Mascot from "@/components/mascot/Mascot";
 
 interface StreakCelebrationProps {
   streak: number;
@@ -20,6 +22,7 @@ const WEEK = ["L", "M", "M", "J", "V", "S", "D"];
  */
 const StreakCelebration = ({ streak, newRecord, milestone, onClose }: StreakCelebrationProps) => {
   const [shown, setShown] = useState(Math.max(streak - 1, 0));
+  const grade = useGradeLevel();
 
   useEffect(() => {
     const timer = setTimeout(() => setShown(streak), 650);
@@ -74,9 +77,12 @@ const StreakCelebration = ({ streak, newRecord, milestone, onClose }: StreakCele
       </div>
 
       <div className="relative mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-6 text-center">
-        <div className="relative animate-flame-burst">
-          <span className="absolute inset-0 rounded-full bg-yellow-300/40 blur-2xl" aria-hidden="true" />
-          <Flame className="relative h-28 w-28 fill-yellow-300 text-yellow-100 drop-shadow-lg" strokeWidth={1.5} />
+        <div className="flex items-end justify-center gap-1">
+          <Mascot mood="cheer" grade={grade} className="h-28 w-28 animate-flame-burst" />
+          <div className="relative animate-flame-burst" style={{ animationDelay: "0.15s" }}>
+            <span className="absolute inset-0 rounded-full bg-yellow-300/40 blur-2xl" aria-hidden="true" />
+            <Flame className="relative h-24 w-24 fill-yellow-300 text-yellow-100 drop-shadow-lg" strokeWidth={1.5} />
+          </div>
         </div>
 
         <div>

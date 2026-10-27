@@ -1,7 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, Heart, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Quote } from "lucide-react";
+import Mascot from "@/components/mascot/Mascot";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { FactImage } from "@/components/FactImage";
@@ -15,7 +16,7 @@ import { FAVORITES_LIST_KEY, getFavorites } from "@/lib/favorites";
 
 const EmptyState = ({ children }: { children: React.ReactNode }) => (
   <Card className="space-y-2 p-6 text-center card-shadow">
-    <Heart className="mx-auto h-8 w-8 text-muted-foreground/50" />
+    <Mascot mood="think" className="mx-auto h-20 w-20" />
     <p className="text-sm text-muted-foreground">{children}</p>
   </Card>
 );

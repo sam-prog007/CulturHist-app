@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { todayKey } from "@/lib/dates";
 import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts, type ValidationResult } from "@/lib/dailyFacts";
 import StreakCelebration from "@/components/StreakCelebration";
+import Mascot from "@/components/mascot/Mascot";
 
 const DailyFactsPage = () => {
   const { user, loading } = useAuth();
@@ -119,8 +120,9 @@ const DailyFactsPage = () => {
         {error ? (
           <Card className="p-6 text-center text-muted-foreground">Impossible de charger vos faits du jour.</Card>
         ) : goal === 0 ? (
-          <Card className="p-6 text-center text-muted-foreground">
-            Vous avez découvert tous les faits disponibles. De nouveaux arrivent bientôt !
+          <Card className="space-y-2 p-6 text-center text-muted-foreground">
+            <Mascot mood="cheer" className="mx-auto h-24 w-24" />
+            <p>Vous avez découvert tous les faits disponibles. De nouveaux arrivent bientôt !</p>
           </Card>
         ) : (
           facts.map((fact, i) => (

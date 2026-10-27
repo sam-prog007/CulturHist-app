@@ -26,6 +26,8 @@ interface Payload {
   body: string;
   url: string;
   tag: string;
+  /** Minerve in the matching mood (public/mascot/). */
+  icon?: string;
 }
 
 const log = (step: string, details?: unknown) =>
@@ -99,7 +101,7 @@ async function handle(req: Request): Promise<Response> {
       .not("year", "is", null)
       .limit(1);
     if (facts?.[0]) {
-      payload = { title: `Ce jour-là, en ${formatYear(facts[0].year)}`, body: facts[0].title_fr || facts[0].title, url: "/app", tag: "on-this-day" };
+      payload = { title: `Ce jour-là, en ${formatYear(facts[0].year)}`, body: facts[0].title_fr || facts[0].title, url: "/app", tag: "on-this-day", icon: "/mascot/think.png" };
     } else {
       const pad = (n: number) => String(n).padStart(2, "0");
       try {
@@ -108,7 +110,7 @@ async function handle(req: Request): Promise<Response> {
         });
         const event = res.ok ? (await res.json()).selected?.[0] : null;
         if (event) {
-          payload = { title: `Ce jour-là, en ${formatYear(event.year)}`, body: truncate(event.text), url: "/app", tag: "on-this-day" };
+          payload = { title: `Ce jour-là, en ${formatYear(event.year)}`, body: truncate(event.text), url: "/app", tag: "on-this-day", icon: "/mascot/think.png" };
         }
       } catch (e) {
         log("Wikipedia unavailable", String(e));
@@ -185,6 +187,7 @@ async function handle(req: Request): Promise<Response> {
           body: validatedNow === 0 ? "Découvrez-les pour garder votre série !" : `Encore ${DAILY_GOAL - validatedNow} à valider pour garder votre série.`,
           url: "/facts",
           tag: "daily-facts",
+          icon: "/mascot/wave.png",
         });
       }
       update.last_daily_facts_sent_on = now.date;

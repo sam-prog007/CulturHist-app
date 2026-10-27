@@ -188,3 +188,40 @@ All colors MUST be HSL.
     @apply translate-x-[200%];
   }
 }
+
+/* Minerve the mascot (src/components/mascot/Mascot.tsx). */
+.mascot-lid {
+  transform-box: fill-box;
+  transform-origin: 50% 0%;
+  transform: scaleY(0);
+}
+.mascot-lid {
+  animation: mascot-blink 5s infinite;
+}
+.mascot-bounce {
+  animation: mascot-bounce 1.1s ease-in-out infinite;
+}
+.mascot-z {
+  transform-box: fill-box;
+  animation: mascot-z 2.4s ease-in-out infinite;
+}
+@keyframes mascot-blink {
+  0%, 93%, 100% { transform: scaleY(0); }
+  96% { transform: scaleY(1); }
+}
+@keyframes mascot-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7%); }
+}
+@keyframes mascot-z {
+  0% { transform: translate(0, 0); opacity: 0; }
+  30% { opacity: 1; }
+  100% { transform: translate(6px, -14px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-lid,
+  .mascot-bounce,
+  .mascot-z {
+    animation: none;
+  }
+}

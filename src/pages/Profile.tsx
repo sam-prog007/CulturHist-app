@@ -10,6 +10,7 @@ import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
 import StreakIndicator from "@/components/StreakIndicator";
 import PremiumButton from "@/components/PremiumButton";
+import Mascot from "@/components/mascot/Mascot";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -129,9 +130,14 @@ const ProfilePage = () => {
 
         {grade && (
           <Card className="space-y-3 p-5 card-shadow">
-            <div className="flex items-center gap-2">
-              <Crown className="h-5 w-5 text-gold" />
-              <h2 className="text-lg font-bold">Grade : {grade.name}</h2>
+            <div className="flex items-center gap-3">
+              <Mascot mood="happy" grade={grade.level} className="h-16 w-16 shrink-0" />
+              <div className="min-w-0">
+                <h2 className="flex items-center gap-1.5 text-lg font-bold">
+                  <Crown className="h-5 w-5 shrink-0 text-gold" /> Grade : {grade.name}
+                </h2>
+                <p className="text-sm text-muted-foreground">Minerve s'habille en {grade.historical_figure}</p>
+              </div>
             </div>
             <Progress value={gradeProgress} className="h-2 [&>div]:bg-gold" />
             <p className="text-sm text-muted-foreground">

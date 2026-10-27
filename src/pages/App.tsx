@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, Flame, Quote, Star } from "lucide-react";
@@ -16,6 +16,8 @@ import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
 import { getOnThisDay } from "@/lib/onThisDay";
 import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
 import { applyPendingOnboarding } from "@/lib/pendingOnboarding";
+import { homeLine, useGradeLevel } from "@/lib/mascot";
+import MascotBubble from "@/components/mascot/MascotBubble";
 
 const DAILY_FACTS_GOAL = 5;
 
@@ -63,6 +65,12 @@ const HomePage = () => {
     },
   });
 
+  const grade = useGradeLevel();
+  const streakNow = effectiveStreak(profile?.current_streak, profile?.last_activity_date);
+  const doneToday = factsValidated >= DAILY_FACTS_GOAL;
+  // Picked once per state, so the line does not change on every render.
+  const line = useMemo(() => homeLine({ streak: streakNow, doneToday }), [streakNow, doneToday]);
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -93,6 +101,8 @@ const HomePage = () => {
             </span>
           </div>
         </header>
+
+        {profile && <MascotBubble mood={line.mood} text={line.text} grade={grade} />}
 
         <DailyFactsCard validated={factsValidated} streak={streak} onOpen={() => navigate("/facts")} />
         <OnThisDayCard />

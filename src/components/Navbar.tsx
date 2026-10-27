@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/culturhist-logo.png";
+import { LogoMark, Wordmark } from "@/components/brand/Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -57,8 +57,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <a href="/" className="flex items-center gap-2 group">
-            <img src={logo} alt="CulturHist Logo" className="w-8 h-8 group-hover:scale-110 smooth-transition" />
-            <span className="text-xl font-bold text-foreground">CulturHist</span>
+            <LogoMark className="h-9 w-9 group-hover:scale-110 smooth-transition" title="" />
+            <Wordmark className="text-xl" />
           </a>
 
           {/* Desktop Navigation */}

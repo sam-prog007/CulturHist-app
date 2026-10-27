@@ -33,6 +33,8 @@ export interface StreakPayload {
   body: string;
   url: string;
   tag: string;
+  /** Minerve in the matching mood (public/mascot/, rendered by scripts/render-brand.mjs). */
+  icon: string;
 }
 
 export type SentColumn =
@@ -80,7 +82,7 @@ const atRisk = (streak: number, remaining: number, date: string): StreakPayload 
           ],
           `${date}-${streak}`
         );
-  return { title, body: `${facts} Quelques minutes suffisent pour la garder.`, url: "/facts", tag: "streak" };
+  return { title, body: `${facts} Quelques minutes suffisent pour la garder.`, url: "/facts", tag: "streak", icon: "/mascot/think.png" };
 };
 
 const lastChance = (streak: number): StreakPayload => ({
@@ -88,6 +90,7 @@ const lastChance = (streak: number): StreakPayload => ({
   body: "Il reste moins de deux heures avant minuit. Validez vos faits du jour pour ne pas tout perdre !",
   url: "/facts",
   tag: "streak",
+  icon: "/mascot/sad.png",
 });
 
 const streakLost = (streak: number, longest: number): StreakPayload => ({
@@ -98,6 +101,7 @@ const streakLost = (streak: number, longest: number): StreakPayload => ({
       : "C'était votre record ! Une nouvelle série commence aujourd'hui, Minerve vous attend.",
   url: "/facts",
   tag: "streak",
+  icon: "/mascot/sad.png",
 });
 
 const comeback = (absentDays: number): StreakPayload =>
@@ -107,12 +111,14 @@ const comeback = (absentDays: number): StreakPayload =>
         body: "L'histoire continue sans vous depuis une semaine. 5 faits, et c'est reparti !",
         url: "/facts",
         tag: "comeback",
+        icon: "/mascot/wave.png",
       }
     : {
         title: "🦉 Vous nous manquez !",
         body: "De nouveaux faits historiques vous attendent. Quelques minutes pour relancer votre série ?",
         url: "/facts",
         tag: "comeback",
+        icon: "/mascot/wave.png",
       };
 
 /**

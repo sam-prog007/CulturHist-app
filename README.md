@@ -22,6 +22,8 @@ npm run dev   # http://localhost:8080
 
 Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`.
 
+After changing the logo or the mascot, regenerate the images in `public/` with `node scripts/render-brand.mjs` (needs Playwright: `npm i -D playwright`).
+
 ## Layout
 
 | Path | Content |
@@ -34,6 +36,8 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `src/lib/quiz.ts` | Quiz questions for a chosen region, era and difficulty; points via `complete_quiz` |
 | `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
 | `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |
+| `src/components/mascot/`, `src/lib/mascot.ts` | Minerve, the owl mascot (SVG): six moods, and the costume of the user's grade (scribe, Marco Polo, Léonard… see `costumes.ts`); her lines on the home page, in the quiz and the streak celebration |
+| `src/components/brand/Logo.tsx`, `scripts/render-brand.mjs` | Logo (Minerve in a laurel medallion) and wordmark; the script renders the favicon, app icons, Open Graph image and the mascot pictures used as notification icons into `public/` |
 | `src/lib/favorites.ts`, `src/pages/Favorites.tsx` | Favorite facts and quotes (heart button `src/components/FavoriteButton.tsx`), listed on `/favoris` |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |
 | `src/contexts/AuthContext.tsx` | Session, premium status (via `check-subscription`), admin role |
