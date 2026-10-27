@@ -343,6 +343,13 @@ export type Database = {
           is_premium: boolean | null
           last_activity_date: string | null
           last_daily_facts_sent_on: string | null
+          last_comeback_sent_on: string | null
+          last_last_chance_sent_on: string | null
+          last_streak_lost_sent_on: string | null
+          last_streak_reminder_sent_on: string | null
+          longest_streak: number | null
+          notify_streak: boolean | null
+          notify_streak_time: string | null
           last_on_this_day_sent_on: string | null
           learning_goal: string | null
           level: number | null
@@ -372,6 +379,13 @@ export type Database = {
           is_premium?: boolean | null
           last_activity_date?: string | null
           last_daily_facts_sent_on?: string | null
+          last_comeback_sent_on?: string | null
+          last_last_chance_sent_on?: string | null
+          last_streak_lost_sent_on?: string | null
+          last_streak_reminder_sent_on?: string | null
+          longest_streak?: number | null
+          notify_streak?: boolean | null
+          notify_streak_time?: string | null
           last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null
@@ -401,6 +415,13 @@ export type Database = {
           is_premium?: boolean | null
           last_activity_date?: string | null
           last_daily_facts_sent_on?: string | null
+          last_comeback_sent_on?: string | null
+          last_last_chance_sent_on?: string | null
+          last_streak_lost_sent_on?: string | null
+          last_streak_reminder_sent_on?: string | null
+          longest_streak?: number | null
+          notify_streak?: boolean | null
+          notify_streak_time?: string | null
           last_on_this_day_sent_on?: string | null
           learning_goal?: string | null
           level?: number | null

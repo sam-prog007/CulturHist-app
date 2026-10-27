@@ -1,15 +1,16 @@
-// Sends the push notifications that are due: "Ce jour-là" and the daily facts
-// reminder, each once a day at the user's chosen local time.
+// Sends the push notifications that are due: "Ce jour-là", the daily facts
+// reminder and the streak notifications (streak.ts), each at most once a day
+// at the user's chosen local time.
 //
 // Called every 15 minutes by a Supabase cron job with the x-cron-secret header.
 // Secrets: VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:...), CRON_SECRET.
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import webpush from "npm:web-push@3.6.7";
+import { minutesOf, streakNotification, WINDOW_MINUTES, type StreakProfile } from "./streak.ts";
 
-const WINDOW_MINUTES = 15;
 const DAILY_GOAL = 5;
 
-interface Profile {
+interface Profile extends StreakProfile {
   id: string;
   timezone: string | null;
   notify_on_this_day: boolean | null;
@@ -44,11 +45,6 @@ function localNow(timeZone: string) {
     minutes: Number(parts.hour) * 60 + Number(parts.minute),
   };
 }
-
-const minutesOf = (time: string) => {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
-};
 
 /** Due when the chosen time has passed today, within the cron window, and not sent yet today. */
 const isDue = (enabled: boolean | null, time: string | null, lastSent: string | null, now: ReturnType<typeof localNow>) =>
@@ -124,12 +120,17 @@ async function handle(req: Request): Promise<Response> {
 
   const { data: profiles, error } = await supabase
     .from("profiles")
-    .select("id, timezone, notify_on_this_day, notify_on_this_day_time, notify_daily_facts, notify_daily_facts_time, last_on_this_day_sent_on, last_daily_facts_sent_on")
-    .or("notify_on_this_day.eq.true,notify_daily_facts.eq.true");
+    .select(
+      "id, timezone, notify_on_this_day, notify_on_this_day_time, notify_daily_facts, notify_daily_facts_time, " +
+        "last_on_this_day_sent_on, last_daily_facts_sent_on, current_streak, last_activity_date, longest_streak, " +
+        "notify_streak, notify_streak_time, last_streak_reminder_sent_on, last_last_chance_sent_on, " +
+        "last_streak_lost_sent_on, last_comeback_sent_on",
+    )
+    .or("notify_on_this_day.eq.true,notify_daily_facts.eq.true,notify_streak.eq.true");
   if (error) {
     log("Profiles query failed", error.message);
     return Response.json(
-      { error: `Profiles query failed (has the notifications migration been run?): ${error.message}` },
+      { error: `Profiles query failed (have all the migrations been run?): ${error.message}` },
       { status: 500 },
     );
   }
@@ -152,18 +153,36 @@ async function handle(req: Request): Promise<Response> {
       update.last_on_this_day_sent_on = now.date;
     }
 
+    // Today's validated facts, read once and only when a reminder may need it.
+    let validatedToday: number | null = null;
+    const validated = async () => {
+      if (validatedToday === null) {
+        const { data: progress } = await supabase
+          .from("daily_facts_progress")
+          .select("facts_validated")
+          .eq("user_id", profile.id)
+          .eq("date", now.date)
+          .maybeSingle();
+        validatedToday = progress?.facts_validated ?? 0;
+      }
+      return validatedToday;
+    };
+
+    // The streak notification, when one is due, replaces the plain daily facts reminder.
+    // Checked first without the database; today's progress is only read when one is due.
+    const streak = streakNotification(profile, now, 0, DAILY_GOAL) &&
+      streakNotification(profile, now, await validated(), DAILY_GOAL);
+    if (streak) {
+      payloads.push(streak.payload);
+      update[streak.sent] = now.date;
+    }
+
     if (isDue(profile.notify_daily_facts, profile.notify_daily_facts_time, profile.last_daily_facts_sent_on, now)) {
-      const { data: progress } = await supabase
-        .from("daily_facts_progress")
-        .select("facts_validated")
-        .eq("user_id", profile.id)
-        .eq("date", now.date)
-        .maybeSingle();
-      const validated = progress?.facts_validated ?? 0;
-      if (validated < DAILY_GOAL) {
+      const validatedNow = await validated();
+      if (validatedNow < DAILY_GOAL && !streak) {
         payloads.push({
           title: "Vos 5 faits du jour sont là",
-          body: validated === 0 ? "Découvrez-les pour garder votre série !" : `Encore ${DAILY_GOAL - validated} à valider pour garder votre série.`,
+          body: validatedNow === 0 ? "Découvrez-les pour garder votre série !" : `Encore ${DAILY_GOAL - validatedNow} à valider pour garder votre série.`,
           url: "/facts",
           tag: "daily-facts",
         });

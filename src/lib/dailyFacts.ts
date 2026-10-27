@@ -22,6 +22,11 @@ export interface ValidationResult {
   points: number;
   current_streak: number;
   already_validated: boolean;
+  /** Since the streak engagement migration: best streak, and what today's completion earned. */
+  longest_streak?: number;
+  streak_increased?: boolean;
+  new_record?: boolean;
+  milestone?: { days: number; name: string; icon: string; points_reward: number } | null;
 }
 
 /** The user's facts for today, chosen by the server on the first call of the day. */

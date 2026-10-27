@@ -25,6 +25,7 @@ const days = (n: number) => `${n} jour${n > 1 ? "s" : ""}`;
 
 const StreakIndicator = ({ userId }: StreakIndicatorProps) => {
   const [streak, setStreak] = useState(0);
+  const [record, setRecord] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [milestones, setMilestones] = useState<StreakMilestone[]>([]);
   const [open, setOpen] = useState(false);
@@ -33,12 +34,14 @@ const StreakIndicator = ({ userId }: StreakIndicatorProps) => {
     const fetchStreakData = async () => {
       try {
         const [profileResult, milestonesResult] = await Promise.all([
-          supabase.from("profiles").select("current_streak, last_activity_date").eq("id", userId).single(),
+          supabase.from("profiles").select("current_streak, last_activity_date, longest_streak").eq("id", userId).single(),
           supabase.from("streak_milestones").select("*").order("days", { ascending: true }),
         ]);
 
         if (profileResult.data) {
-          setStreak(effectiveStreak(profileResult.data.current_streak, profileResult.data.last_activity_date));
+          const current = effectiveStreak(profileResult.data.current_streak, profileResult.data.last_activity_date);
+          setStreak(current);
+          setRecord(Math.max(profileResult.data.longest_streak ?? 0, current));
         }
 
         if (milestonesResult.data) {
@@ -105,6 +108,11 @@ const StreakIndicator = ({ userId }: StreakIndicatorProps) => {
             <div className="min-w-0">
               <p className="text-sm text-muted-foreground">Série actuelle</p>
               <p className="text-3xl font-bold text-orange-600">{days(streak)}</p>
+              {record > 0 && (
+                <p className="flex items-center gap-1 text-sm font-medium text-muted-foreground">
+                  <Trophy className="h-3.5 w-3.5 text-gold" /> Record : {days(record)}
+                </p>
+              )}
               {currentMilestone ? (
                 <p className="mt-1 text-sm text-muted-foreground">
                   {currentMilestone.icon} {currentMilestone.name} atteint !

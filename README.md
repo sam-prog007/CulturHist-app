@@ -96,7 +96,19 @@ SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 
 ## Push notifications
 
-The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages.
+The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages:
+
+- **Ce jour-là**: an event that happened on this date (default 08:00).
+- **Vos 5 faits du jour**: a reminder when today's facts are not all validated (default 18:00).
+- **Série en danger** (on by default, 20:00), in the spirit of Duolingo, logic in `supabase/functions/send-notifications/streak.ts`:
+  - a reminder when the streak is alive but today is not done;
+  - a last chance at 22:00 for streaks of 3 days or more;
+  - "série perdue" the day after a missed day;
+  - "vous nous manquez" after 3 and after 7 days of absence, then nothing more.
+
+  When it goes out, it replaces the daily facts reminder of that day.
+
+Completing a day shows a celebration screen (`src/components/StreakCelebration.tsx`) with the streak counting up, the week, and badges for a new record (`profiles.longest_streak`) or a streak milestone.
 
 Setup, once:
 

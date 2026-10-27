@@ -94,7 +94,7 @@ const HomePage = () => {
           </div>
         </header>
 
-        <DailyFactsCard validated={factsValidated} onOpen={() => navigate("/facts")} />
+        <DailyFactsCard validated={factsValidated} streak={streak} onOpen={() => navigate("/facts")} />
         <OnThisDayCard />
         <QuoteCard />
       </main>
@@ -103,9 +103,13 @@ const HomePage = () => {
   );
 };
 
-const DailyFactsCard = ({ validated, onOpen }: { validated: number; onOpen: () => void }) => {
+/** From this hour, an unfinished day puts the streak "en danger", as the evening push says. */
+const AT_RISK_HOUR = 18;
+
+const DailyFactsCard = ({ validated, streak, onOpen }: { validated: number; streak: number; onOpen: () => void }) => {
   const done = validated >= DAILY_FACTS_GOAL;
   const remaining = DAILY_FACTS_GOAL - validated;
+  const atRisk = !done && streak > 0 && new Date().getHours() >= AT_RISK_HOUR;
 
   return (
     <Card className="overflow-hidden border-0 accent-gradient p-5 text-accent-foreground elegant-shadow animate-fade-in-up">
@@ -122,6 +126,12 @@ const DailyFactsCard = ({ validated, onOpen }: { validated: number; onOpen: () =
         value={(Math.min(validated, DAILY_FACTS_GOAL) / DAILY_FACTS_GOAL) * 100}
         className="mt-3 h-2 bg-white/20 [&>div]:bg-gold"
       />
+      {atRisk && (
+        <p className="mt-3 flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2 text-sm font-semibold">
+          <Flame className="h-4 w-4 shrink-0 animate-pulse text-orange-300" />
+          Votre série de {streak} {streak > 1 ? "jours" : "jour"} est en danger : validez vos faits avant minuit.
+        </p>
+      )}
       <p className="mt-3 text-sm opacity-90">
         {done
           ? "Objectif atteint, votre série continue. Revenez demain !"

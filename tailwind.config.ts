@@ -104,6 +104,20 @@ export default {
           "0%": { transform: "scale(1)" },
           "40%": { transform: "scale(1.35)" },
           "100%": { transform: "scale(1)" }
+        },
+        "confetti-fall": {
+          "0%": { transform: "translateY(-10vh) rotate(0deg)", opacity: "1" },
+          "100%": { transform: "translateY(110vh) rotate(720deg)", opacity: "0.8" }
+        },
+        "count-up": {
+          "0%": { transform: "translateY(60%) scale(0.6)", opacity: "0" },
+          "60%": { transform: "translateY(-8%) scale(1.15)", opacity: "1" },
+          "100%": { transform: "translateY(0) scale(1)", opacity: "1" }
+        },
+        "flame-burst": {
+          "0%": { transform: "scale(0.4)", opacity: "0" },
+          "55%": { transform: "scale(1.2)", opacity: "1" },
+          "100%": { transform: "scale(1)", opacity: "1" }
         }
       },
       animation: {
@@ -114,7 +128,10 @@ export default {
         "scale-in": "scale-in 0.4s ease-out",
         "slide-in": "slide-in 0.5s ease-out",
         "glow": "glow 2s ease-in-out infinite",
-        "heart-pop": "heart-pop 0.35s ease-out"
+        "heart-pop": "heart-pop 0.35s ease-out",
+        "confetti-fall": "confetti-fall 3s linear forwards",
+        "count-up": "count-up 0.6s ease-out both",
+        "flame-burst": "flame-burst 0.7s ease-out both"
       },
     },
   },

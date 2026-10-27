@@ -13,15 +13,17 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { todayKey } from "@/lib/dates";
-import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts } from "@/lib/dailyFacts";
+import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts, type ValidationResult } from "@/lib/dailyFacts";
+import StreakCelebration from "@/components/StreakCelebration";
 
 const DailyFactsPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast, dismiss } = useToast();
   const queryClient = useQueryClient();
   const [validating, setValidating] = useState<string | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
+  const [celebration, setCelebration] = useState<ValidationResult | null>(null);
   const date = todayKey();
   const queryKey = ["daily-facts", user?.id, date];
 
@@ -50,6 +52,11 @@ const DailyFactsPage = () => {
       queryClient.invalidateQueries({ queryKey: ["home-daily-progress"] });
       if (result.day_completed && !result.already_validated) {
         setStreak(result.current_streak);
+        // Older servers do not say whether the streak grew: completing the day did.
+        if (result.streak_increased ?? true) {
+          dismiss();
+          setCelebration(result);
+        }
       } else if (!result.already_validated) {
         toast({
           title: "Fait validé !",
@@ -163,6 +170,14 @@ const DailyFactsPage = () => {
         <AdSense slot="3234567890" format="auto" />
       </main>
       <BottomNav />
+      {celebration && (
+        <StreakCelebration
+          streak={celebration.current_streak}
+          newRecord={celebration.new_record}
+          milestone={celebration.milestone}
+          onClose={() => setCelebration(null)}
+        />
+      )}
     </div>
   );
 };

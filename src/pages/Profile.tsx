@@ -32,7 +32,7 @@ const ProfilePage = () => {
       const [profile, learned, grades] = await Promise.all([
         supabase
           .from("profiles")
-          .select("username, points, current_streak, last_activity_date")
+          .select("username, points, current_streak, last_activity_date, longest_streak")
           .eq("id", user!.id)
           .single(),
         supabase
@@ -51,6 +51,7 @@ const ProfilePage = () => {
         username: profile.data.username,
         points,
         streak: effectiveStreak(profile.data.current_streak, profile.data.last_activity_date),
+        longestStreak: profile.data.longest_streak ?? 0,
         factsLearned: learned.count ?? 0,
         grade,
         next,
@@ -100,6 +101,9 @@ const ProfilePage = () => {
             <Flame className="mx-auto h-5 w-5 text-orange-500" />
             <p className="mt-1 text-xl font-bold">{data.streak}</p>
             <p className="text-xs text-muted-foreground">{data.streak > 1 ? "Jours de série" : "Jour de série"}</p>
+            {Math.max(data.longestStreak, data.streak) > 0 && (
+              <p className="mt-0.5 text-[11px] font-medium text-accent">Record : {Math.max(data.longestStreak, data.streak)}</p>
+            )}
           </Card>
           <button type="button" onClick={() => navigate("/learned-facts")} className="text-left">
             <Card className="h-full p-3 text-center card-shadow hover:border-primary/50 smooth-transition">
