@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { FactImage } from "@/components/FactImage";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import AdSense from "@/components/AdSense";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -131,7 +132,10 @@ const DailyFactsPage = () => {
                     <span className="mr-1 text-muted-foreground">{i + 1}.</span>
                     {fact.title_fr || fact.title}
                   </h2>
-                  <DifficultyStars difficulty={fact.difficulty} className="shrink-0 pt-1" />
+                  <div className="flex shrink-0 items-center gap-1">
+                    <DifficultyStars difficulty={fact.difficulty} />
+                    <FavoriteButton item={{ factId: fact.id }} className="-my-1.5 -mr-1.5" />
+                  </div>
                 </div>
                 <p className="text-sm leading-relaxed text-muted-foreground">{fact.description_fr || fact.description}</p>
                 {(fact.date_text_fr || fact.date_text) && (

@@ -25,6 +25,8 @@ export interface Question {
   correctAnswer: number;
   /** Shown once the player has answered. */
   explanation?: string;
+  /** The fact the question is about, which the player can add to the favorites. */
+  factId: string;
 }
 
 export const MIN_QUESTIONS = 3;

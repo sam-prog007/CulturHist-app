@@ -6,6 +6,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { FactImage } from "@/components/FactImage";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { QuoteView } from "@/components/QuoteView";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -155,6 +157,7 @@ const OnThisDayCard = () => {
         <CalendarDays className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-bold">Ce jour-là</h2>
         <span className="ml-auto text-sm text-muted-foreground">{date}</span>
+        {event?.factId && <FavoriteButton item={{ factId: event.factId }} className="-my-2 -mr-1" />}
       </div>
       {isLoading ? (
         <div className="space-y-3">
@@ -197,23 +200,12 @@ const QuoteCard = () => {
       <div className="flex items-center gap-2">
         <Quote className="h-5 w-5 text-primary" />
         <h2 className="text-lg font-bold">Citation du jour</h2>
+        {quote && <FavoriteButton item={{ quoteId: quote.id }} className="-my-2 ml-auto" />}
       </div>
       {isLoading || !quote ? (
         <Skeleton className="h-16 w-full" />
       ) : (
-        <figure className="space-y-3">
-          <blockquote className="font-serif text-xl leading-snug">« {quote.text_fr} »</blockquote>
-          {quote.original_text && <p className="text-sm italic text-muted-foreground">{quote.original_text}</p>}
-          <figcaption className="text-sm">
-            <span className="font-semibold text-accent">{quote.author}</span>
-            {(quote.context_fr || quote.year) && (
-              <span className="text-muted-foreground">
-                {" — "}
-                {[quote.context_fr, quote.year ? formatYear(quote.year) : null].filter(Boolean).join(", ")}
-              </span>
-            )}
-          </figcaption>
-        </figure>
+        <QuoteView quote={quote} />
       )}
     </Card>
   );

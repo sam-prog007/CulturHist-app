@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ChevronRight, Crown, Flame, Settings, Star, Trophy } from "lucide-react";
+import { BookOpen, ChevronRight, Crown, Flame, Heart, Settings, Star, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -109,6 +109,19 @@ const ProfilePage = () => {
             </Card>
           </button>
         </div>
+
+        <button type="button" onClick={() => navigate("/favoris")} className="block w-full text-left">
+          <Card className="flex items-center gap-3 p-4 card-shadow hover:border-primary/50 smooth-transition">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-500/10">
+              <Heart className="h-5 w-5 fill-red-500 text-red-500" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold">Mes favoris</p>
+              <p className="text-sm text-muted-foreground">Vos faits et citations préférés</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Card>
+        </button>
 
         {grade && (
           <Card className="space-y-3 p-5 card-shadow">

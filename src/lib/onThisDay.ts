@@ -8,6 +8,8 @@ export interface OnThisDayEvent {
   sourceUrl: string | null;
   /** Where the event comes from: one of our facts, or Wikipedia. */
   origin: "fact" | "wikipedia";
+  /** Our fact's id, so it can be added to the favorites. */
+  factId?: string;
 }
 
 interface WikiPage {
@@ -33,7 +35,7 @@ export async function getOnThisDay(date = new Date()): Promise<OnThisDayEvent | 
 
   const { data: facts } = await supabase
     .from("historical_facts")
-    .select("year, title, title_fr, description, description_fr, image_url, image_credit, image_source_url")
+    .select("id, year, title, title_fr, description, description_fr, image_url, image_credit, image_source_url")
     .eq("month", month)
     .eq("day", day)
     .not("year", "is", null)
@@ -48,6 +50,7 @@ export async function getOnThisDay(date = new Date()): Promise<OnThisDayEvent | 
       credit: fact.image_credit,
       sourceUrl: fact.image_source_url,
       origin: "fact",
+      factId: fact.id,
     };
   }
 

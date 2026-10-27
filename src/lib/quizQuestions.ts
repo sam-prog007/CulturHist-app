@@ -74,7 +74,8 @@ function pick<T>(items: T[], n: number, ...prefer: ((item: T) => boolean)[]): T[
 }
 
 function makeQuestion(
-  id: string,
+  fact: QuizFact,
+  kind: string,
   parts: Pick<Question, "question" | "context" | "explanation">,
   correct: string,
   wrong: string[]
@@ -82,7 +83,7 @@ function makeQuestion(
   const choices = [...new Set(wrong.filter((w) => w && w !== correct))].slice(0, 3);
   if (choices.length < 3) return null;
   const options = shuffle([correct, ...choices]);
-  return { id, ...parts, options, correctAnswer: options.indexOf(correct) };
+  return { id: `${fact.id}-${kind}`, factId: fact.id, ...parts, options, correctAnswer: options.indexOf(correct) };
 }
 
 /** The fact's description, which states its date and place: shown once the player has answered. */
@@ -296,6 +297,7 @@ const whenQuestion: Builder = (fact) => {
   if (!dates) return null;
   return {
     id: `${fact.id}-when`,
+    factId: fact.id,
     question: "Quand situer cet événement ?",
     context: titleOf(fact),
     explanation: explain(fact),
@@ -318,7 +320,8 @@ const dateQuestion: Builder = (fact, all) => {
     (f) => f.region === fact.region
   );
   return makeQuestion(
-    `${fact.id}-date`,
+    fact,
+    "date",
     { question: "Quel événement correspond à cette date ?", context: dateOf(fact), explanation: explain(fact) },
     titleOf(fact),
     chosen.map(titleOf)
@@ -349,7 +352,8 @@ const orderQuestion: Builder = (fact, all) => {
     .map((f) => `${titleOf(f)} (${dateOf(f)})`)
     .join(" → ");
   return makeQuestion(
-    `${fact.id}-order`,
+    fact,
+    "order",
     {
       question: first ? "Lequel de ces événements est le plus ancien ?" : "Lequel de ces événements est le plus récent ?",
       explanation: timeline,
@@ -372,7 +376,8 @@ const countryQuestion: Builder = (fact, all) => {
     .map(countryName)
     .filter((name): name is string => !!name && !mentionsCountry(title, name));
   return makeQuestion(
-    `${fact.id}-country`,
+    fact,
+    "country",
     { question: "À quel pays actuel cet événement est-il rattaché ?", context: title, explanation: explain(fact) },
     correct,
     pick(neighbours, 3)
@@ -408,7 +413,8 @@ const describeQuestion: Builder = (fact, all) => {
     (f) => f.region === fact.region
   );
   return makeQuestion(
-    `${fact.id}-describe`,
+    fact,
+    "describe",
     { question: "De quel événement s'agit-il ?", context: masked, explanation: explain(fact) },
     titleOf(fact),
     chosen.map(titleOf)

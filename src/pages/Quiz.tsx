@@ -5,6 +5,7 @@ import { BookOpen, CheckCircle, Play, RotateCcw, Sparkles, Trophy, XCircle, Zap 
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { DifficultyStars } from "@/components/DifficultyStars";
+import { FavoriteButton } from "@/components/FavoriteButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -217,10 +218,11 @@ const QuizPage = () => {
                 })}
               </div>
               {selected !== null && questions[index].explanation && (
-                <p className="flex gap-2 rounded-xl border border-gold/40 bg-gold/10 p-3 text-sm leading-relaxed animate-fade-in">
+                <div className="flex gap-2 rounded-xl border border-gold/40 bg-gold/10 p-3 text-sm leading-relaxed animate-fade-in">
                   <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                  <span>{questions[index].explanation}</span>
-                </p>
+                  <p className="flex-1">{questions[index].explanation}</p>
+                  <FavoriteButton item={{ factId: questions[index].factId }} className="-my-1.5 -mr-1.5" />
+                </div>
               )}
               {selected !== null && (
                 <Button className="w-full" onClick={next}>

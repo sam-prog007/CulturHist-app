@@ -34,6 +34,7 @@ Scripts: `npm run build`, `npm run lint`, `npm run typecheck`, `npm run preview`
 | `src/lib/quiz.ts` | Quiz questions for a chosen region, era and difficulty; points via `complete_quiz` |
 | `src/lib/onThisDay.ts` | "Ce jour-là": our facts dated today, else Wikipedia's selection |
 | `src/lib/quoteOfTheDay.ts` | Quote of the day, same for everyone, cycling through `quotes` |
+| `src/lib/favorites.ts`, `src/pages/Favorites.tsx` | Favorite facts and quotes (heart button `src/components/FavoriteButton.tsx`), listed on `/favoris` |
 | `src/components/` | App components; `ui/` is stock shadcn/ui |
 | `src/contexts/AuthContext.tsx` | Session, premium status (via `check-subscription`), admin role |
 | `src/lib/dailyFact.ts` | Fact-of-the-day selection |

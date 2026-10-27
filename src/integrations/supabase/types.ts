@@ -136,6 +136,45 @@ export type Database = {
         }
         Relationships: []
       }
+      favorites: {
+        Row: {
+          created_at: string
+          fact_id: string | null
+          id: string
+          quote_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fact_id?: string | null
+          id?: string
+          quote_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          fact_id?: string | null
+          id?: string
+          quote_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favorites_fact_id_fkey"
+            columns: ["fact_id"]
+            isOneToOne: false
+            referencedRelation: "historical_facts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favorites_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       grades: {
         Row: {
           created_at: string | null
