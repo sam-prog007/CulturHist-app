@@ -1,19 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Clock, Globe2, MapPin } from "lucide-react";
+import { Check, Clock, Globe2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import WorldMap, { type MapCountry } from "@/components/WorldMap";
-import EraTimeline from "@/components/EraTimeline";
+import EraFresque from "@/components/EraFresque";
+import CountrySheet from "@/components/CountrySheet";
+import { FactSheet } from "@/components/FactSheet";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { REGION_LABELS } from "@/lib/dailyFacts";
 import { COUNTRY_REGIONS } from "@/lib/countryRegions";
-import { getLearningProgress, savePreferences, type Era, type LearningProgress } from "@/lib/progress";
+import { getLearningProgress, savePreferences, type Era, type LearningProgress, type MapFact } from "@/lib/progress";
 
 /** Era preferences may hold onboarding labels ("Antiquité grecque et romaine"): match both ways, like the server. */
 const matchesEra = (pref: string, era: Era) =>
@@ -25,6 +26,8 @@ const MapsPage = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [country, setCountry] = useState<MapCountry | null>(null);
+  const [focusRegion, setFocusRegion] = useState<string | null>(null);
+  const [timelineFact, setTimelineFact] = useState<{ fact: MapFact; era: Era } | null>(null);
   const queryKey = ["learning-progress", user?.id];
 
   useEffect(() => {
@@ -59,11 +62,13 @@ const MapsPage = () => {
   }
 
   const toggleRegion = (region: string) => {
-    const regions = data.preferredRegions.includes(region)
-      ? data.preferredRegions.filter((r) => r !== region)
-      : [...data.preferredRegions, region];
+    const adding = !data.preferredRegions.includes(region);
+    const regions = adding ? [...data.preferredRegions, region] : data.preferredRegions.filter((r) => r !== region);
     save({ regions });
+    // Fly to a region when it is picked.
+    if (adding) setFocusRegion(region);
   };
+  const eraName = (periodId: string | null) => data.eras.find((e) => e.id === periodId)?.name ?? null;
 
   const eraSelected = (era: Era) => data.preferredEras.some((p) => matchesEra(p, era));
   const toggleEra = (era: Era) => {
@@ -99,6 +104,7 @@ const MapsPage = () => {
                 selectedRegions={data.preferredRegions}
                 selectedCountry={country?.code ?? null}
                 onSelectCountry={setCountry}
+                focusRegion={focusRegion}
               />
               <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-xs text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
@@ -108,30 +114,6 @@ const MapsPage = () => {
                 <span className="font-semibold text-foreground">{discovered}/{totalCountries} pays découverts</span>
               </div>
             </Card>
-
-            {country && (
-              <Card className="space-y-3 p-4 card-shadow animate-fade-in">
-                <div className="flex items-start gap-2">
-                  <MapPin className="mt-0.5 h-5 w-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-bold">{country.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {REGION_LABELS[country.region]} · {data.byCountry[country.code] ?? 0}{" "}
-                      {(data.byCountry[country.code] ?? 0) > 1 ? "faits découverts" : "fait découvert"}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant={data.preferredRegions.includes(country.region) ? "outline" : "default"}
-                  className="w-full"
-                  onClick={() => toggleRegion(country.region)}
-                >
-                  {data.preferredRegions.includes(country.region)
-                    ? `Retirer ${REGION_LABELS[country.region]} de mes régions`
-                    : `Ajouter ${REGION_LABELS[country.region]} à mes régions`}
-                </Button>
-              </Card>
-            )}
 
             <Card className="space-y-3 p-4 card-shadow">
               <h2 className="font-semibold">Mes régions</h2>
@@ -161,13 +143,36 @@ const MapsPage = () => {
 
           <TabsContent value="timeline" className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Touchez une époque pour la choisir.{noEra && " Aucune époque choisie : toutes sont possibles."}
+              Faites glisser la frise, touchez un point pour lire le fait.{noEra && " Aucune époque choisie : toutes sont possibles."}
             </p>
-            <EraTimeline eras={data.eras} isSelected={eraSelected} onToggle={toggleEra} />
+            <EraFresque
+              eras={data.eras}
+              facts={data.facts}
+              learnedIds={data.learnedIds}
+              lastLearnedId={data.lastLearnedId}
+              isSelected={eraSelected}
+              onToggle={toggleEra}
+              onOpenFact={(fact, era) => setTimelineFact({ fact, era })}
+            />
           </TabsContent>
         </Tabs>
       </main>
       <BottomNav />
+      <CountrySheet
+        country={country}
+        facts={data.facts}
+        learnedIds={data.learnedIds}
+        eraName={eraName}
+        regionSelected={!!country && data.preferredRegions.includes(country.region)}
+        onToggleRegion={toggleRegion}
+        onClose={() => setCountry(null)}
+      />
+      <FactSheet
+        fact={timelineFact?.fact ?? null}
+        learned={!!timelineFact && data.learnedIds.has(timelineFact.fact.id)}
+        eraName={timelineFact?.era.name}
+        onClose={() => setTimelineFact(null)}
+      />
     </div>
   );
 };
