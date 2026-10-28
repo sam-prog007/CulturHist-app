@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, CheckCircle, Play, RotateCcw, Sparkles, XCircle, Zap } from "lucide-react";
-import Mascot from "@/components/mascot/Mascot";
-import MascotBubble from "@/components/mascot/MascotBubble";
-import { answerLine, quizResultLine, useGradeLevel } from "@/lib/mascot";
+import Companion from "@/components/companions/Companion";
+import CompanionBubble from "@/components/companions/CompanionBubble";
+import { answerLine, COMPANION_QUERY_KEY, quizResultLine, useCompanion } from "@/lib/companions";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { DifficultyStars } from "@/components/DifficultyStars";
@@ -55,13 +55,13 @@ const QuizPage = () => {
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [pointsEarned, setPointsEarned] = useState<number | null>(null);
-  const grade = useGradeLevel();
-  // Minerve's reaction, picked once per answer.
+  const { companion } = useCompanion();
+  // The companion's reaction, picked once per answer.
   const reaction = useMemo(
-    () => (selected === null || !questions[index] ? null : answerLine(selected === questions[index].correctAnswer)),
-    [selected, index, questions]
+    () => (selected === null || !questions[index] ? null : answerLine(companion, selected === questions[index].correctAnswer)),
+    [companion, selected, index, questions]
   );
-  const result = useMemo(() => quizResultLine(score, questions.length), [score, questions.length]);
+  const result = useMemo(() => quizResultLine(companion, score, questions.length), [companion, score, questions.length]);
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -103,6 +103,8 @@ const QuizPage = () => {
       const result = await completeQuiz(score, questions.length, filters.difficulty);
       setPointsEarned(result.points_earned);
       queryClient.invalidateQueries({ queryKey: ["home-profile"] });
+      // New points may unlock a companion.
+      queryClient.invalidateQueries({ queryKey: [COMPANION_QUERY_KEY] });
     } catch (e) {
       toast({ title: "Erreur", description: "Les points n'ont pas pu être enregistrés.", variant: "destructive" });
       console.error(e);
@@ -227,7 +229,7 @@ const QuizPage = () => {
                   );
                 })}
               </div>
-              {reaction && <MascotBubble mood={reaction.mood} text={reaction.text} grade={grade} className="-mb-2" />}
+              {reaction && <CompanionBubble companion={companion} mood={reaction.mood} text={reaction.text} className="-mb-2" />}
               {selected !== null && questions[index].explanation && (
                 <div className="flex gap-2 rounded-xl border border-gold/40 bg-gold/10 p-3 text-sm leading-relaxed animate-fade-in">
                   <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
@@ -246,7 +248,7 @@ const QuizPage = () => {
 
         {phase === "done" && (
           <Card className="space-y-6 p-6 text-center card-shadow animate-scale-in">
-            <Mascot mood={result.mood} grade={grade} className="mx-auto h-28 w-28" />
+            <Companion id={companion.id} mood={result.mood} className="mx-auto h-36 w-32" />
             <div className="space-y-1">
               <h1 className="text-3xl font-bold">Quiz terminé !</h1>
               <p className="text-muted-foreground">{result.text}</p>

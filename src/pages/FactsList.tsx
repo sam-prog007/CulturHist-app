@@ -15,7 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { todayKey } from "@/lib/dates";
 import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts, type ValidationResult } from "@/lib/dailyFacts";
 import StreakCelebration from "@/components/StreakCelebration";
-import Mascot from "@/components/mascot/Mascot";
+import Companion from "@/components/companions/Companion";
+import { COMPANION_QUERY_KEY, useCompanion } from "@/lib/companions";
 
 const DailyFactsPage = () => {
   const { user, loading } = useAuth();
@@ -25,6 +26,7 @@ const DailyFactsPage = () => {
   const [validating, setValidating] = useState<string | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
   const [celebration, setCelebration] = useState<ValidationResult | null>(null);
+  const { companion } = useCompanion();
   const date = todayKey();
   const queryKey = ["daily-facts", user?.id, date];
 
@@ -51,6 +53,7 @@ const DailyFactsPage = () => {
       );
       queryClient.invalidateQueries({ queryKey: ["home-profile"] });
       queryClient.invalidateQueries({ queryKey: ["home-daily-progress"] });
+      queryClient.invalidateQueries({ queryKey: [COMPANION_QUERY_KEY] });
       if (result.day_completed && !result.already_validated) {
         setStreak(result.current_streak);
         // Older servers do not say whether the streak grew: completing the day did.
@@ -121,7 +124,7 @@ const DailyFactsPage = () => {
           <Card className="p-6 text-center text-muted-foreground">Impossible de charger vos faits du jour.</Card>
         ) : goal === 0 ? (
           <Card className="space-y-2 p-6 text-center text-muted-foreground">
-            <Mascot mood="cheer" className="mx-auto h-24 w-24" />
+            <Companion id={companion.id} mood="cheer" className="mx-auto h-28 w-24" />
             <p>Vous avez découvert tous les faits disponibles. De nouveaux arrivent bientôt !</p>
           </Card>
         ) : (

@@ -1,5 +1,6 @@
-// Renders the logo and Minerve to the image files the app ships: favicon,
-// app icons, Open Graph image, and one picture per mood for push notifications.
+// Renders the logo and the historical companions to the image files the app
+// ships: favicon, app icons, Open Graph image, and each companion in the moods
+// that push notifications use as icons.
 // The SVG components in src/ are the source; run this after changing them:
 //
 //   npm i -D playwright   (once; or with Playwright installed globally, NODE_PATH=$(npm root -g))
@@ -20,10 +21,13 @@ const entry = `
   import { createElement as h } from "react";
   import { renderToStaticMarkup } from "react-dom/server";
   import { LogoMark } from "@/components/brand/Logo";
-  import Mascot from "@/components/mascot/Mascot";
-  const moods = ["happy", "cheer", "sad", "sleepy", "think", "wave"];
+  import Companion from "@/components/companions/Companion";
+  import { COMPANION_IDS } from "@/components/companions/ids";
+  const moods = ["happy", "sad", "think", "wave"];
   export const mark = renderToStaticMarkup(h(LogoMark, { title: "CulturHist" }));
-  export const mascots = Object.fromEntries(moods.map((m) => [m, renderToStaticMarkup(h(Mascot, { mood: m, animated: false }))]));
+  export const companions = COMPANION_IDS.flatMap((id) =>
+    moods.map((mood) => [\`\${id}-\${mood}\`, renderToStaticMarkup(h(Companion, { id, mood, animated: false, framing: "head" }))])
+  );
 `;
 const out = await build({
   stdin: { contents: entry, resolveDir: root, loader: "tsx" },
@@ -38,7 +42,7 @@ const out = await build({
 });
 const tmp = join(root, "node_modules", ".render-brand.mjs");
 writeFileSync(tmp, out.outputFiles[0].text);
-const { mark, mascots } = await import(tmp);
+const { mark, companions } = await import(tmp);
 rmSync(tmp);
 const sized = (svg, size) => svg.replace("<svg ", `<svg width="${size}" height="${size}" `);
 
@@ -82,9 +86,12 @@ await shoot(
   1200, 630, pub("og-image.png")
 );
 
-// Minerve's moods, for notification icons.
-mkdirSync(pub("mascot"), { recursive: true });
-for (const [mood, svg] of Object.entries(mascots)) {
-  await shoot(sized(svg, 184), 192, 192, pub(`mascot/${mood}.png`), true);
+// The companions' faces, for notification icons: a round portrait on cream.
+mkdirSync(pub("companions"), { recursive: true });
+for (const [name, svg] of companions) {
+  await shoot(
+    `<div style="width:192px;height:192px;border-radius:50%;background:#f3e7d3;overflow:hidden">${sized(svg, 192)}</div>`,
+    192, 192, pub(`companions/${name}.png`), true
+  );
 }
 await browser.close();

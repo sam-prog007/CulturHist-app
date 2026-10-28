@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Flame, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useGradeLevel } from "@/lib/mascot";
-import Mascot from "@/components/mascot/Mascot";
+import { useCompanion } from "@/lib/companions";
+import Companion from "@/components/companions/Companion";
 
 interface StreakCelebrationProps {
   streak: number;
@@ -22,7 +22,7 @@ const WEEK = ["L", "M", "M", "J", "V", "S", "D"];
  */
 const StreakCelebration = ({ streak, newRecord, milestone, onClose }: StreakCelebrationProps) => {
   const [shown, setShown] = useState(Math.max(streak - 1, 0));
-  const grade = useGradeLevel();
+  const { companion } = useCompanion();
 
   useEffect(() => {
     const timer = setTimeout(() => setShown(streak), 650);
@@ -78,7 +78,7 @@ const StreakCelebration = ({ streak, newRecord, milestone, onClose }: StreakCele
 
       <div className="relative mx-auto flex w-full max-w-sm flex-1 flex-col items-center justify-center gap-6 text-center">
         <div className="flex items-end justify-center gap-1">
-          <Mascot mood="cheer" grade={grade} className="h-28 w-28 animate-flame-burst" />
+          <Companion id={companion.id} mood="cheer" className="h-32 w-28 animate-flame-burst" />
           <div className="relative animate-flame-burst" style={{ animationDelay: "0.15s" }}>
             <span className="absolute inset-0 rounded-full bg-yellow-300/40 blur-2xl" aria-hidden="true" />
             <Flame className="relative h-24 w-24 fill-yellow-300 text-yellow-100 drop-shadow-lg" strokeWidth={1.5} />
@@ -125,7 +125,11 @@ const StreakCelebration = ({ streak, newRecord, milestone, onClose }: StreakCele
           </div>
         )}
 
-        <p className="text-sm opacity-90">Revenez demain pour garder la flamme allumée.</p>
+        <p className="text-sm opacity-90">
+          « {companion.lines.celebrate} » <span className="font-semibold">{companion.name}</span>
+          <br />
+          Revenez demain pour garder la flamme allumée.
+        </p>
       </div>
 
       <Button size="lg" className="relative mx-auto w-full max-w-sm bg-white text-orange-600 hover:bg-white/90" onClick={onClose}>

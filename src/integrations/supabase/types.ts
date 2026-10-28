@@ -336,6 +336,8 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          companion: string | null
+          companions_seen: number | null
           created_at: string | null
           current_streak: number | null
           exp: number | null
@@ -372,6 +374,8 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          companion?: string | null
+          companions_seen?: number | null
           created_at?: string | null
           current_streak?: number | null
           exp?: number | null
@@ -408,6 +412,8 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          companion?: string | null
+          companions_seen?: number | null
           created_at?: string | null
           current_streak?: number | null
           exp?: number | null

@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import { Crown, Lock } from "lucide-react";
-import Mascot from "@/components/mascot/Mascot";
+import Companion from "@/components/companions/Companion";
+import { COMPANIONS } from "@/lib/companions";
 
 interface Grade {
   id: string;
@@ -58,6 +59,8 @@ const GradesDialog = ({ open, onOpenChange, currentPoints }: GradesDialogProps) 
         {grades.map((grade) => {
           const isUnlocked = currentPoints >= grade.min_points;
           const isCurrent = currentGrade?.level === grade.level;
+          // The companion that joins at this grade's points.
+          const companion = COMPANIONS.find((c) => c.unlockPoints === grade.min_points);
           const unbounded = grade.max_points >= UNBOUNDED_POINTS;
 
           return (
@@ -68,21 +71,13 @@ const GradesDialog = ({ open, onOpenChange, currentPoints }: GradesDialogProps) 
                 isCurrent ? "border-2 border-gold bg-gold/5" : isUnlocked ? "border-primary/30 bg-card" : "bg-muted/40 opacity-70"
               )}
             >
-              <div className="relative h-16 w-16 shrink-0">
-                <Mascot
-                  mood={isCurrent ? "wave" : "happy"}
-                  grade={grade.level}
-                  animated={isCurrent}
-                  className={cn("h-16 w-16", !isUnlocked && "opacity-40 grayscale")}
-                />
-                <span
-                  className={cn(
-                    "absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-card font-serif text-xs font-bold",
-                    isUnlocked ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  {isUnlocked ? grade.level : <Lock className="h-3 w-3" />}
-                </span>
+              <div
+                className={cn(
+                  "flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-serif text-lg font-bold",
+                  isUnlocked ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+                )}
+              >
+                {isUnlocked ? grade.level : <Lock className="h-4 w-4" />}
               </div>
 
               <div className="min-w-0 flex-1 space-y-1">
@@ -96,6 +91,21 @@ const GradesDialog = ({ open, onOpenChange, currentPoints }: GradesDialogProps) 
                 <p className="text-xs font-medium text-muted-foreground">
                   {grade.min_points === 0 ? "Dès le départ" : `Dès ${grade.min_points} points`}
                 </p>
+                {companion && (
+                  <div className="flex items-center gap-2 rounded-xl bg-secondary/60 px-2 py-1">
+                    <Companion
+                      id={companion.id}
+                      framing="head"
+                      silhouette={!isUnlocked}
+                      animated={false}
+                      className="h-9 w-9 shrink-0 rounded-full bg-card"
+                    />
+                    <p className="text-xs">
+                      {isUnlocked ? "Compagnon débloqué : " : "Débloque le compagnon "}
+                      <span className="font-semibold">{isUnlocked ? companion.name : "???"}</span>
+                    </p>
+                  </div>
+                )}
 
                 {isCurrent && !unbounded && (
                   <div className="space-y-1 pt-2">

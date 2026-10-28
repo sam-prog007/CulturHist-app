@@ -10,7 +10,9 @@ import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
 import StreakIndicator from "@/components/StreakIndicator";
 import PremiumButton from "@/components/PremiumButton";
-import Mascot from "@/components/mascot/Mascot";
+import Companion from "@/components/companions/Companion";
+import CompanionsSheet from "@/components/companions/CompanionsSheet";
+import { useCompanion } from "@/lib/companions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -21,6 +23,9 @@ const ProfilePage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const [gradesOpen, setGradesOpen] = useState(false);
+  const [companionsOpen, setCompanionsOpen] = useState(false);
+  const companions = useCompanion();
+  const { companion } = companions;
 
   useEffect(() => {
     if (!loading && !user) navigate("/auth");
@@ -128,16 +133,27 @@ const ProfilePage = () => {
           </Card>
         </button>
 
+        <button type="button" onClick={() => setCompanionsOpen(true)} className="block w-full text-left">
+          <Card className="flex items-center gap-3 p-4 card-shadow hover:border-primary/50 smooth-transition">
+            <Companion id={companion.id} mood="wave" className="h-20 w-[4.5rem] shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">Mon compagnon</p>
+              <p className="font-serif text-lg font-bold leading-tight">{companion.name}</p>
+              <p className="text-sm text-muted-foreground">
+                {companions.next
+                  ? `Prochain : ${companions.next.name} dans ${companions.missing} points`
+                  : "Vous avez débloqué tous les compagnons !"}
+              </p>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+          </Card>
+        </button>
+
         {grade && (
           <Card className="space-y-3 p-5 card-shadow">
-            <div className="flex items-center gap-3">
-              <Mascot mood="happy" grade={grade.level} className="h-16 w-16 shrink-0" />
-              <div className="min-w-0">
-                <h2 className="flex items-center gap-1.5 text-lg font-bold">
-                  <Crown className="h-5 w-5 shrink-0 text-gold" /> Grade : {grade.name}
-                </h2>
-                <p className="text-sm text-muted-foreground">Minerve s'habille en {grade.historical_figure}</p>
-              </div>
+            <div className="flex items-center gap-2">
+              <Crown className="h-5 w-5 text-gold" />
+              <h2 className="text-lg font-bold">Grade : {grade.name}</h2>
             </div>
             <Progress value={gradeProgress} className="h-2 [&>div]:bg-gold" />
             <p className="text-sm text-muted-foreground">
@@ -167,6 +183,13 @@ const ProfilePage = () => {
 
       <BottomNav />
       <GradesDialog open={gradesOpen} onOpenChange={setGradesOpen} currentPoints={data.points} />
+      <CompanionsSheet
+        open={companionsOpen}
+        onOpenChange={setCompanionsOpen}
+        points={companions.points}
+        active={companion}
+        onChoose={companions.choose}
+      />
     </div>
   );
 };

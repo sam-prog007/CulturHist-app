@@ -16,8 +16,9 @@ import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
 import { getOnThisDay } from "@/lib/onThisDay";
 import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
 import { applyPendingOnboarding } from "@/lib/pendingOnboarding";
-import { homeLine, useGradeLevel } from "@/lib/mascot";
-import MascotBubble from "@/components/mascot/MascotBubble";
+import { homeLine, useCompanion } from "@/lib/companions";
+import CompanionBubble from "@/components/companions/CompanionBubble";
+import CompanionUnlock from "@/components/companions/CompanionUnlock";
 
 const DAILY_FACTS_GOAL = 5;
 
@@ -65,11 +66,11 @@ const HomePage = () => {
     },
   });
 
-  const grade = useGradeLevel();
+  const { companion, newlyUnlocked, choose, markSeen } = useCompanion();
   const streakNow = effectiveStreak(profile?.current_streak, profile?.last_activity_date);
   const doneToday = factsValidated >= DAILY_FACTS_GOAL;
   // Picked once per state, so the line does not change on every render.
-  const line = useMemo(() => homeLine({ streak: streakNow, doneToday }), [streakNow, doneToday]);
+  const line = useMemo(() => homeLine(companion, { streak: streakNow, doneToday }), [companion, streakNow, doneToday]);
 
   if (loading || !user) {
     return (
@@ -102,13 +103,23 @@ const HomePage = () => {
           </div>
         </header>
 
-        {profile && <MascotBubble mood={line.mood} text={line.text} grade={grade} />}
+        {profile && <CompanionBubble companion={companion} mood={line.mood} text={line.text} />}
 
         <DailyFactsCard validated={factsValidated} streak={streak} onOpen={() => navigate("/facts")} />
         <OnThisDayCard />
         <QuoteCard />
       </main>
       <BottomNav />
+      {newlyUnlocked && (
+        <CompanionUnlock
+          companion={newlyUnlocked}
+          onChoose={() => {
+            choose(newlyUnlocked.id);
+            markSeen();
+          }}
+          onLater={markSeen}
+        />
+      )}
     </div>
   );
 };
