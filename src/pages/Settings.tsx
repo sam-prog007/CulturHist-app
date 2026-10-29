@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Bell, ChevronRight, KeyRound, LogOut, Mail, Map, Trash2, User } from "lucide-react";
+import { ArrowLeft, Bell, ChevronRight, KeyRound, LogOut, Mail, Map, Scale, Trash2, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,6 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { LEGAL, LEGAL_LINKS } from "@/lib/legal";
 import { DIFFICULTIES } from "@/lib/difficulty";
 import { emailSchema, passwordSchema, usernameSchema } from "@/lib/validation";
 
@@ -47,7 +48,7 @@ const SettingsPage = () => {
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
   const { data: profile } = useQuery({
@@ -238,6 +239,25 @@ const SettingsPage = () => {
 
         <Section icon={Bell} title="Notifications">
           <NotificationSettings userId={user.id} />
+        </Section>
+
+        <Section icon={Scale} title="Informations légales">
+          {LEGAL_LINKS.map((link) => (
+            <Link
+              key={link.to}
+              to={link.to}
+              className="flex items-center justify-between rounded-xl border bg-card p-3 text-sm font-medium hover:border-primary/50 smooth-transition"
+            >
+              {link.label}
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
+          <p className="text-xs text-muted-foreground">
+            Une question ou une erreur dans un fait ?{" "}
+            <a href={`mailto:${LEGAL.contact}`} className="font-medium text-primary">
+              {LEGAL.contact}
+            </a>
+          </p>
         </Section>
 
         <Button variant="outline" className="w-full" onClick={handleSignOut}>

@@ -21,7 +21,7 @@ const LearnedFacts = () => {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate("/auth");
+      navigate("/", { replace: true });
     }
   }, [user, loading, navigate]);
 

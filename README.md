@@ -28,7 +28,9 @@ After changing the logo or a companion, regenerate the images in `public/` with 
 
 | Path | Content |
 | --- | --- |
-| `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
+| `src/pages/` | Routes: welcome (`/`, sign-up with Apple, Google or e-mail), e-mail auth, onboarding questions, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
+| `src/pages/Discover.tsx`, `src/pages/FactPage.tsx`, `src/pages/legal/` | Public pages, readable without an account: `/decouvrir` (on this day, today's facts, quote, every fact by era), `/faits/<slug>`, `/confidentialite`, `/conditions`, `/mentions-legales`. They share `src/components/PublicPage.tsx` |
+| `src/lib/legal.ts` | Publisher, contact address and hosts shown by the legal pages |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
 | `src/components/WorldMap.tsx`, `src/components/CountrySheet.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`, pinch/drag/zoom with `d3-zoom`); countries turn gold as their facts are learned, picking a region flies to it, tapping a country opens its facts (learned ones to read, the others as locked teasers) |
@@ -96,7 +98,46 @@ SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 
 ## Deployment (Vercel)
 
-`vercel.json` sends every app route to `index.html` and keeps the service worker uncached. Import the GitHub repository in Vercel (framework: Vite); the build reads `.env`. Then, in Supabase → Authentication → URL Configuration, set the Site URL to the Vercel address and add it to the Redirect URLs, so confirmation and email-change links point to the live app.
+`vercel.json` sends every app route to `index.html` and keeps the service worker uncached. `public/ads.txt` declares the AdSense account to ad buyers; keep it in sync with the `ca-pub-…` ID in `index.html` and `src/components/AdSense.tsx`. Import the GitHub repository in Vercel (framework: Vite); the build reads `.env`. Then, in Supabase → Authentication → URL Configuration, set the Site URL to the Vercel address and add it to the Redirect URLs, so confirmation and email-change links point to the live app.
+
+## Sign in with Apple and Google
+
+The welcome screen (`/`) shows one button per provider that is turned on in Supabase → Authentication → Sign In / Providers. It reads the public `/auth/v1/settings`, so a button appears as soon as its provider is on, with no redeploy. Both providers come back to `/app`, which the `https://<domain>/**` Redirect URL already covers. In both consoles, the callback URL is `https://<project-ref>.supabase.co/auth/v1/callback`.
+
+- **Google.** In Google Cloud Console:
+  1. Set up the OAuth consent screen: app name, logo, and links to the home page and privacy policy.
+  2. Create an OAuth client of type "Web application". Add the site to the authorised JavaScript origins and the callback URL to the redirect URIs.
+  3. Paste the client ID and secret into Supabase's Google provider.
+- **Apple.** This needs a paid Apple Developer account.
+  1. Create a Services ID with Sign in with Apple. Give it the site's domain and the callback URL as return URL.
+  2. Create a Sign in with Apple key (.p8).
+  3. In Supabase's Apple provider, enter the Services ID and the secret generated from the Team ID, the Key ID and the key.
+  4. That secret expires after 6 months, so regenerate it before then.
+
+New profiles get a free username (`supabase/migrations/20261029120000_unique_usernames.sql`). Users can change it in Réglages.
+
+## Public pages and legal texts
+
+Without an account, visitors can read `/decouvrir` and every fact at `/faits/<slug>`. Facts and quotes are readable by the `anon` role, so no session is needed. These pages carry the AdSense slots and are what Google crawls (`public/sitemap.xml`, declared in `robots.txt`).
+
+The legal pages are drafts written from what the app actually does. Review them, ideally with a professional, and keep them in step with the code:
+
+- **Identity:** the publisher, contact e-mail and hosts live in `src/lib/legal.ts`. Change `updated` with each revision.
+- **Premium:** when `PREMIUM_ENABLED` is switched on, add Stripe (payment) to the processors in the privacy policy.
+- **New services:** list any new third-party service (analytics, another provider) there too.
+
+For Google Cloud's OAuth consent screen:
+- home page: https://www.culturhist.com
+- privacy policy: https://www.culturhist.com/confidentialite
+- terms: https://www.culturhist.com/conditions
+
+## Speed
+
+- **Saved data.** The app keeps the data of the last visit on the device, shows it immediately when opened, then refreshes it (`PersistQueryClientProvider` in `src/App.tsx`).
+  - The saved copy is dropped after each deploy (`__APP_VERSION__`) and on sign-out.
+  - A query whose data is not plain JSON is fine for `Set` and `Map`, which the persister encodes. Any other type needs the same treatment.
+- **Images.** Fact images are asked from Wikimedia at standard widths, 500 and 960 px (`src/lib/images.ts`), instead of 1280px or original files. If a thumbnail is refused, the original loads instead.
+- **Code.** The bottom bar's screens are fetched in the background after sign-in. The Profile chart library loads after the rest of the screen.
 
 ## Push notifications
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { BookOpen, ChevronRight, Crown, Flame, Heart, Settings, Star, Trophy } from "lucide-react";
@@ -6,7 +6,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import GradesDialog from "@/components/GradesDialog";
-import ProgressChart from "@/components/ProgressChart";
 import AchievementsList from "@/components/AchievementsList";
 import StreakIndicator from "@/components/StreakIndicator";
 import PremiumButton from "@/components/PremiumButton";
@@ -18,6 +17,10 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { PREMIUM_ENABLED } from "@/lib/pricing";
 import { effectiveStreak } from "@/lib/dates";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// The chart library is by far the heaviest part of this screen: it loads after the rest.
+const ProgressChart = lazy(() => import("@/components/ProgressChart"));
 
 const ProfilePage = () => {
   const { user, loading } = useAuth();
@@ -28,7 +31,7 @@ const ProfilePage = () => {
   const { companion } = companions;
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
   const { data } = useQuery({
@@ -176,7 +179,9 @@ const ProfilePage = () => {
           <AchievementsList userId={user.id} />
         </Card>
 
-        <ProgressChart userId={user.id} />
+        <Suspense fallback={<Skeleton className="h-72 w-full rounded-xl" />}>
+          <ProgressChart userId={user.id} />
+        </Suspense>
 
         {PREMIUM_ENABLED && <PremiumButton variant="card" />}
       </main>

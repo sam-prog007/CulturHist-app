@@ -14,6 +14,10 @@ export default {
       },
     },
     extend: {
+      screens: {
+        // Tall screens (a phone app in full screen, a big monitor), for screens that must fit without scrolling.
+        tall: { raw: "(min-height: 820px)" },
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
