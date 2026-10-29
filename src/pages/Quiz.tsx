@@ -12,7 +12,7 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DIFFICULTIES } from "@/lib/difficulty";
 import { REGION_LABELS } from "@/lib/dailyFacts";
@@ -46,7 +46,6 @@ const Chip = ({ active, onClick, children }: { active: boolean; onClick: () => v
 const QuizPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [phase, setPhase] = useState<Phase>("setup");
   const [filters, setFilters] = useState<QuizFilters>({ region: null, periodId: null, difficulty: null });
@@ -75,7 +74,7 @@ const QuizPage = () => {
     if (!data) return;
     const quiz = buildQuiz(pool, data.facts);
     if (quiz.length < MIN_QUESTIONS) {
-      toast({ title: "Pas assez de questions", description: "Élargissez votre sélection.", variant: "destructive" });
+      toast.error("Pas assez de questions", { description: "Élargissez votre sélection." });
       return;
     }
     setQuestions(quiz);
@@ -106,7 +105,7 @@ const QuizPage = () => {
       // New points may unlock a companion.
       queryClient.invalidateQueries({ queryKey: [COMPANION_QUERY_KEY] });
     } catch (e) {
-      toast({ title: "Erreur", description: "Les points n'ont pas pu être enregistrés.", variant: "destructive" });
+      toast.error("Les points n'ont pas pu être enregistrés.");
       console.error(e);
     }
   };

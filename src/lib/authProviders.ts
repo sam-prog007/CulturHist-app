@@ -12,7 +12,7 @@ const ALL: OAuthProvider[] = ["apple", "google"];
 export function useOAuthProviders(): OAuthProvider[] | undefined {
   const { data, isError } = useQuery({
     queryKey: ["auth-providers"],
-    staleTime: Infinity,
+    staleTime: 10 * 60 * 1000, // kept on the device: a provider turned on later shows up soon
     queryFn: async (): Promise<OAuthProvider[]> => {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/auth/v1/settings`, {
         headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY },

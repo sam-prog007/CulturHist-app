@@ -131,6 +131,14 @@ For Google Cloud's OAuth consent screen:
 - privacy policy: https://www.culturhist.com/confidentialite
 - terms: https://www.culturhist.com/conditions
 
+## Speed
+
+- **Saved data.** The app keeps the data of the last visit on the device, shows it immediately when opened, then refreshes it (`PersistQueryClientProvider` in `src/App.tsx`).
+  - The saved copy is dropped after each deploy (`__APP_VERSION__`) and on sign-out.
+  - A query whose data is not plain JSON is fine for `Set` and `Map`, which the persister encodes. Any other type needs the same treatment.
+- **Images.** Fact images are asked from Wikimedia at standard widths, 500 and 960 px (`src/lib/images.ts`), instead of 1280px or original files. If a thumbnail is refused, the original loads instead.
+- **Code.** The bottom bar's screens are fetched in the background after sign-in. The Profile chart library loads after the rest of the screen.
+
 ## Push notifications
 
 The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages:

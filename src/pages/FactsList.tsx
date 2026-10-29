@@ -11,7 +11,7 @@ import AdSense from "@/components/AdSense";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { todayKey } from "@/lib/dates";
 import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts, type ValidationResult } from "@/lib/dailyFacts";
 import StreakCelebration from "@/components/StreakCelebration";
@@ -21,7 +21,6 @@ import { COMPANION_QUERY_KEY, useCompanion } from "@/lib/companions";
 const DailyFactsPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast, dismiss } = useToast();
   const queryClient = useQueryClient();
   const [validating, setValidating] = useState<string | null>(null);
   const [streak, setStreak] = useState<number | null>(null);
@@ -58,17 +57,16 @@ const DailyFactsPage = () => {
         setStreak(result.current_streak);
         // Older servers do not say whether the streak grew: completing the day did.
         if (result.streak_increased ?? true) {
-          dismiss();
+          toast.dismiss();
           setCelebration(result);
         }
       } else if (!result.already_validated) {
-        toast({
-          title: "Fait validé !",
+        toast.success("Fait validé !", {
           description: `+${reward ?? 10} points • ${result.facts_validated}/${result.goal}`,
         });
       }
     } catch (e) {
-      toast({ title: "Erreur", description: e instanceof Error ? e.message : String(e), variant: "destructive" });
+      toast.error("Erreur", { description: e instanceof Error ? e.message : String(e) });
     } finally {
       setValidating(null);
     }

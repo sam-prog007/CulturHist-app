@@ -10,7 +10,7 @@ import CountrySheet from "@/components/CountrySheet";
 import { FactSheet } from "@/components/FactSheet";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGION_LABELS } from "@/lib/dailyFacts";
 import { COUNTRY_REGIONS } from "@/lib/countryRegions";
@@ -23,7 +23,6 @@ const matchesEra = (pref: string, era: Era) =>
 const MapsPage = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [country, setCountry] = useState<MapCountry | null>(null);
   const [focusRegion, setFocusRegion] = useState<string | null>(null);
@@ -49,7 +48,7 @@ const MapsPage = () => {
       await savePreferences(user!.id, prefs);
     } catch {
       queryClient.setQueryData(queryKey, previous);
-      toast({ title: "Erreur", description: "Vos préférences n'ont pas pu être enregistrées.", variant: "destructive" });
+      toast.error("Vos préférences n'ont pas pu être enregistrées.");
     }
   };
 

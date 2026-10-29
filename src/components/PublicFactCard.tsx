@@ -17,6 +17,7 @@ export const PublicFactCard = ({ fact }: { fact: PublicFact }) => (
         sourceUrl={fact.imageSourceUrl}
         label={fact.region ?? undefined}
         className="h-36"
+        sizes="(min-width: 640px) 320px, 100vw"
       />
     </div>
     <div className="px-1 pb-1">
