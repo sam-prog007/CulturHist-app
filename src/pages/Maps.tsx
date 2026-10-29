@@ -10,6 +10,7 @@ import CountrySheet from "@/components/CountrySheet";
 import { FactSheet } from "@/components/FactSheet";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PageLoader from "@/components/PageLoader";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { REGION_LABELS } from "@/lib/dailyFacts";
@@ -33,7 +34,7 @@ const MapsPage = () => {
     if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  const { data } = useQuery({ queryKey, enabled: !!user, queryFn: () => getLearningProgress(user!.id) });
+  const { data, error, refetch, isFetching } = useQuery({ queryKey, enabled: !!user, queryFn: () => getLearningProgress(user!.id) });
 
   const save = async (prefs: { regions?: string[]; eras?: string[] }) => {
     const previous = queryClient.getQueryData<LearningProgress>(queryKey);
@@ -53,11 +54,7 @@ const MapsPage = () => {
   };
 
   if (loading || !user || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
+    return <PageLoader error={isFetching ? null : error} onRetry={() => refetch()} />;
   }
 
   const toggleRegion = (region: string) => {

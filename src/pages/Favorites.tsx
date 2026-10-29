@@ -13,6 +13,7 @@ import { QuoteView } from "@/components/QuoteView";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import PageLoader from "@/components/PageLoader";
 import { FAVORITES_LIST_KEY, getFavorites } from "@/lib/favorites";
 
 const EmptyState = ({ children }: { children: React.ReactNode }) => {
@@ -33,18 +34,14 @@ const FavoritesPage = () => {
     if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  const { data: favorites, isLoading } = useQuery({
+  const { data: favorites, isLoading, error, refetch, isFetching } = useQuery({
     queryKey: [FAVORITES_LIST_KEY, user?.id],
     enabled: !!user,
     queryFn: getFavorites,
   });
 
   if (loading || !user || isLoading || !favorites) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
+    return <PageLoader error={isFetching ? null : error} onRetry={() => refetch()} />;
   }
 
   const facts = favorites.flatMap((f) => (f.historical_facts ? [f.historical_facts] : []));

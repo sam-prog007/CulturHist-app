@@ -18,6 +18,7 @@ import { Progress } from "@/components/ui/progress";
 import { PREMIUM_ENABLED } from "@/lib/pricing";
 import { effectiveStreak } from "@/lib/dates";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageLoader from "@/components/PageLoader";
 
 // The chart library is by far the heaviest part of this screen: it loads after the rest.
 const ProgressChart = lazy(() => import("@/components/ProgressChart"));
@@ -34,7 +35,7 @@ const ProfilePage = () => {
     if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  const { data } = useQuery({
+  const { data, error, refetch, isFetching } = useQuery({
     queryKey: ["profile-stats", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -69,11 +70,7 @@ const ProfilePage = () => {
   });
 
   if (loading || !user || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
+    return <PageLoader error={isFetching ? null : error} onRetry={() => refetch()} />;
   }
 
   const { grade, next } = data;

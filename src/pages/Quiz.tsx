@@ -12,6 +12,7 @@ import { FavoriteButton } from "@/components/FavoriteButton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import PageLoader from "@/components/PageLoader";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DIFFICULTIES } from "@/lib/difficulty";
@@ -66,7 +67,7 @@ const QuizPage = () => {
     if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  const { data, isLoading } = useQuery({ queryKey: ["quiz-data"], enabled: !!user, queryFn: loadQuizData });
+  const { data, isLoading, error, refetch, isFetching } = useQuery({ queryKey: ["quiz-data"], enabled: !!user, queryFn: loadQuizData });
   const pool = useMemo(() => (data ? matchingFacts(data.facts, filters) : []), [data, filters]);
   const questionCount = Math.min(pool.length, MAX_QUESTIONS);
 
@@ -111,11 +112,7 @@ const QuizPage = () => {
   };
 
   if (loading || !user || isLoading || !data) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-      </div>
-    );
+    return <PageLoader error={isFetching ? null : error} onRetry={() => refetch()} />;
   }
 
   return (
