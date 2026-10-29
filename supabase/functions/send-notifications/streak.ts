@@ -7,7 +7,10 @@
 // - "Série perdue": once, the day after a missed day, for streaks of 3 or more.
 // - "Vous nous manquez": after 3 and after 7 days without a completed day, then
 //   silence, so that nobody is spammed.
-// Texts use "vous", like the rest of the app.
+// Texts use "vous", like the rest of the app, in the voice of the user's
+// historical companion (companionLines.ts).
+
+import { companionIcon, pushLinesFor } from "./companionLines.ts";
 
 export interface StreakProfile {
   current_streak: number | null;
@@ -19,6 +22,8 @@ export interface StreakProfile {
   last_last_chance_sent_on: string | null;
   last_streak_lost_sent_on: string | null;
   last_comeback_sent_on: string | null;
+  /** The user's historical companion, whose voice the notifications take. */
+  companion: string | null;
 }
 
 export interface LocalNow {
@@ -33,6 +38,8 @@ export interface StreakPayload {
   body: string;
   url: string;
   tag: string;
+  /** The companion in the matching mood (public/companions/, rendered by scripts/render-brand.mjs). */
+  icon: string;
 }
 
 export type SentColumn =
@@ -67,53 +74,52 @@ const pick = <T,>(variants: T[], seed: string) => {
   return variants[h % variants.length];
 };
 
-const atRisk = (streak: number, remaining: number, date: string): StreakPayload => {
+const fill = (text: string, n: number) => text.replace(/\{n\}/g, String(n));
+
+const atRisk = (companion: string | null, streak: number, remaining: number, date: string): StreakPayload => {
+  const lines = pushLinesFor(companion);
   const facts = remaining > 0 && remaining < 5 ? `Plus que ${remaining} fait${remaining > 1 ? "s" : ""} à valider.` : "Vos 5 faits du jour vous attendent.";
-  const title =
-    streak >= 30
-      ? `🔥 ${days(streak)} de série, ne lâche rien !`
-      : pick(
-          [
-            `🔥 Votre série de ${days(streak)} est en danger !`,
-            `🦉 Minerve s'inquiète pour votre série de ${days(streak)}`,
-            `🔥 ${days(streak)} d'affilée… et aujourd'hui ?`,
-          ],
-          `${date}-${streak}`
-        );
-  return { title, body: `${facts} Quelques minutes suffisent pour la garder.`, url: "/facts", tag: "streak" };
+  return {
+    title: streak >= 30 ? `🔥 ${days(streak)} de série, ne lâchez rien !` : `🔥 Votre série de ${days(streak)} est en danger !`,
+    body: `${lines.name} : « ${fill(pick(lines.atRisk, `${date}-${streak}`), streak)} » ${facts}`,
+    url: "/facts",
+    tag: "streak",
+    icon: companionIcon(companion, "think"),
+  };
 };
 
-const lastChance = (streak: number): StreakPayload => ({
-  title: `⏳ Dernière chance pour votre série de ${days(streak)}`,
-  body: "Il reste moins de deux heures avant minuit. Validez vos faits du jour pour ne pas tout perdre !",
-  url: "/facts",
-  tag: "streak",
-});
+const lastChance = (companion: string | null, streak: number): StreakPayload => {
+  const lines = pushLinesFor(companion);
+  return {
+    title: `⏳ Dernière chance pour votre série de ${days(streak)}`,
+    body: `${lines.name} : « ${lines.lastChance} »`,
+    url: "/facts",
+    tag: "streak",
+    icon: companionIcon(companion, "sad"),
+  };
+};
 
-const streakLost = (streak: number, longest: number): StreakPayload => ({
-  title: `💔 Votre série s'est arrêtée à ${days(streak)}`,
-  body:
-    longest > streak
-      ? `Votre record reste ${days(longest)}. On repart aujourd'hui ?`
-      : "C'était votre record ! Une nouvelle série commence aujourd'hui, Minerve vous attend.",
-  url: "/facts",
-  tag: "streak",
-});
+const streakLost = (companion: string | null, streak: number, longest: number): StreakPayload => {
+  const lines = pushLinesFor(companion);
+  return {
+    title: `💔 Votre série s'est arrêtée à ${days(streak)}`,
+    body: `${longest > streak ? `Votre record reste ${days(longest)}. ` : "C'était votre record ! "}${lines.name} : « ${lines.lost} »`,
+    url: "/facts",
+    tag: "streak",
+    icon: companionIcon(companion, "sad"),
+  };
+};
 
-const comeback = (absentDays: number): StreakPayload =>
-  absentDays >= 7
-    ? {
-        title: "🦉 Minerve vous garde une place",
-        body: "L'histoire continue sans vous depuis une semaine. 5 faits, et c'est reparti !",
-        url: "/facts",
-        tag: "comeback",
-      }
-    : {
-        title: "🦉 Vous nous manquez !",
-        body: "De nouveaux faits historiques vous attendent. Quelques minutes pour relancer votre série ?",
-        url: "/facts",
-        tag: "comeback",
-      };
+const comeback = (companion: string | null, absentDays: number): StreakPayload => {
+  const lines = pushLinesFor(companion);
+  return {
+    title: absentDays >= 7 ? `${lines.name} vous garde une place` : "Vous nous manquez !",
+    body: `« ${absentDays >= 7 ? lines.comebackWeek : lines.comeback} »`,
+    url: "/facts",
+    tag: "comeback",
+    icon: companionIcon(companion, "wave"),
+  };
+};
 
 /**
  * The streak notification due now, if any, and the column that records its
@@ -135,7 +141,7 @@ export function streakNotification(
 
   if (absent === 1 && streak > 0) {
     if (inWindow(time, now) && profile.last_streak_reminder_sent_on !== now.date) {
-      return { payload: atRisk(streak, goal - validated, now.date), sent: "last_streak_reminder_sent_on" };
+      return { payload: atRisk(profile.companion, streak, goal - validated, now.date), sent: "last_streak_reminder_sent_on" };
     }
     // Only when the chosen time leaves room for a second, later push.
     const roomForLastChance = minutesOf(time) <= minutesOf(LAST_CHANCE_TIME) - 60;
@@ -145,7 +151,7 @@ export function streakNotification(
       inWindow(LAST_CHANCE_TIME, now) &&
       profile.last_last_chance_sent_on !== now.date
     ) {
-      return { payload: lastChance(streak), sent: "last_last_chance_sent_on" };
+      return { payload: lastChance(profile.companion, streak), sent: "last_last_chance_sent_on" };
     }
     return null;
   }
@@ -153,11 +159,11 @@ export function streakNotification(
   if (!inWindow(time, now)) return null;
 
   if (absent === 2 && streak >= 3 && profile.last_streak_lost_sent_on !== now.date) {
-    return { payload: streakLost(streak, profile.longest_streak ?? streak), sent: "last_streak_lost_sent_on" };
+    return { payload: streakLost(profile.companion, streak, profile.longest_streak ?? streak), sent: "last_streak_lost_sent_on" };
   }
 
   if (COMEBACK_DAYS.includes(absent) && profile.last_comeback_sent_on !== now.date) {
-    return { payload: comeback(absent), sent: "last_comeback_sent_on" };
+    return { payload: comeback(profile.companion, absent), sent: "last_comeback_sent_on" };
   }
 
   return null;

@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Award, BookOpen, Calendar, Sparkles, Target } from "lucide-react";
-import logo from "@/assets/culturhist-logo.png";
+import { LogoMark, Wordmark } from "@/components/brand/Logo";
 import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
@@ -21,11 +21,10 @@ const Hero = () => {
 
           {/* Main Heading with Logo */}
           <div className="flex flex-col items-center space-y-6">
-            <img 
-              src={logo} 
-              alt="CulturHist Logo" 
-              className="w-32 h-32 md:w-40 md:h-40 animate-scale-in"
-            />
+            <div className="flex flex-col items-center gap-3 animate-scale-in">
+              <LogoMark className="h-32 w-32 md:h-40 md:w-40 drop-shadow-lg" />
+              <Wordmark className="text-5xl md:text-6xl" />
+            </div>
             <h1 className="text-4xl md:text-5xl text-muted-foreground font-normal">
               Votre dose quotidienne d'histoire
             </h1>

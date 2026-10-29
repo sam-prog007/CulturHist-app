@@ -1,7 +1,9 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, Heart, Quote } from "lucide-react";
+import { ArrowLeft, BookOpen, Quote } from "lucide-react";
+import Companion from "@/components/companions/Companion";
+import { useCompanion } from "@/lib/companions";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import { FactImage } from "@/components/FactImage";
@@ -13,12 +15,15 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FAVORITES_LIST_KEY, getFavorites } from "@/lib/favorites";
 
-const EmptyState = ({ children }: { children: React.ReactNode }) => (
-  <Card className="space-y-2 p-6 text-center card-shadow">
-    <Heart className="mx-auto h-8 w-8 text-muted-foreground/50" />
-    <p className="text-sm text-muted-foreground">{children}</p>
-  </Card>
-);
+const EmptyState = ({ children }: { children: React.ReactNode }) => {
+  const { companion } = useCompanion();
+  return (
+    <Card className="space-y-2 p-6 text-center card-shadow">
+      <Companion id={companion.id} mood="think" className="mx-auto h-24 w-20" />
+      <p className="text-sm text-muted-foreground">{children}</p>
+    </Card>
+  );
+};
 
 const FavoritesPage = () => {
   const { user, loading } = useAuth();

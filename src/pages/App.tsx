@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, Flame, Quote, Star } from "lucide-react";
@@ -16,6 +16,9 @@ import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
 import { getOnThisDay } from "@/lib/onThisDay";
 import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
 import { applyPendingOnboarding } from "@/lib/pendingOnboarding";
+import { homeLine, useCompanion } from "@/lib/companions";
+import CompanionBubble from "@/components/companions/CompanionBubble";
+import CompanionUnlock from "@/components/companions/CompanionUnlock";
 
 const DAILY_FACTS_GOAL = 5;
 
@@ -63,6 +66,12 @@ const HomePage = () => {
     },
   });
 
+  const { companion, newlyUnlocked, choose, markSeen } = useCompanion();
+  const streakNow = effectiveStreak(profile?.current_streak, profile?.last_activity_date);
+  const doneToday = factsValidated >= DAILY_FACTS_GOAL;
+  // Picked once per state, so the line does not change on every render.
+  const line = useMemo(() => homeLine(companion, { streak: streakNow, doneToday }), [companion, streakNow, doneToday]);
+
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -94,11 +103,23 @@ const HomePage = () => {
           </div>
         </header>
 
+        {profile && <CompanionBubble companion={companion} mood={line.mood} text={line.text} />}
+
         <DailyFactsCard validated={factsValidated} streak={streak} onOpen={() => navigate("/facts")} />
         <OnThisDayCard />
         <QuoteCard />
       </main>
       <BottomNav />
+      {newlyUnlocked && (
+        <CompanionUnlock
+          companion={newlyUnlocked}
+          onChoose={() => {
+            choose(newlyUnlocked.id);
+            markSeen();
+          }}
+          onLater={markSeen}
+        />
+      )}
     </div>
   );
 };

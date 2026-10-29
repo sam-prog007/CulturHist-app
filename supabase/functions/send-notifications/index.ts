@@ -7,6 +7,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 import webpush from "npm:web-push@3.6.7";
 import { minutesOf, streakNotification, WINDOW_MINUTES, type StreakProfile } from "./streak.ts";
+import { companionIcon } from "./companionLines.ts";
 
 const DAILY_GOAL = 5;
 
@@ -26,6 +27,8 @@ interface Payload {
   body: string;
   url: string;
   tag: string;
+  /** The companion in the matching mood (public/companions/). */
+  icon?: string;
 }
 
 const log = (step: string, details?: unknown) =>
@@ -124,7 +127,7 @@ async function handle(req: Request): Promise<Response> {
       "id, timezone, notify_on_this_day, notify_on_this_day_time, notify_daily_facts, notify_daily_facts_time, " +
         "last_on_this_day_sent_on, last_daily_facts_sent_on, current_streak, last_activity_date, longest_streak, " +
         "notify_streak, notify_streak_time, last_streak_reminder_sent_on, last_last_chance_sent_on, " +
-        "last_streak_lost_sent_on, last_comeback_sent_on",
+        "last_streak_lost_sent_on, last_comeback_sent_on, companion",
     )
     .or("notify_on_this_day.eq.true,notify_daily_facts.eq.true,notify_streak.eq.true");
   if (error) {
@@ -149,7 +152,8 @@ async function handle(req: Request): Promise<Response> {
 
     if (isDue(profile.notify_on_this_day, profile.notify_on_this_day_time, profile.last_on_this_day_sent_on, now)) {
       const payload = await onThisDay(now.month, now.day);
-      if (payload) payloads.push(payload);
+      // Shared by everyone on this date; the icon is the user's own companion.
+      if (payload) payloads.push({ ...payload, icon: companionIcon(profile.companion, "happy") });
       update.last_on_this_day_sent_on = now.date;
     }
 
@@ -185,6 +189,7 @@ async function handle(req: Request): Promise<Response> {
           body: validatedNow === 0 ? "Découvrez-les pour garder votre série !" : `Encore ${DAILY_GOAL - validatedNow} à valider pour garder votre série.`,
           url: "/facts",
           tag: "daily-facts",
+          icon: companionIcon(profile.companion, "wave"),
         });
       }
       update.last_daily_facts_sent_on = now.date;
