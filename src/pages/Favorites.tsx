@@ -30,7 +30,7 @@ const FavoritesPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
   const { data: favorites, isLoading } = useQuery({

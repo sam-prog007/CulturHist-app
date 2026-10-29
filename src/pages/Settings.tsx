@@ -47,7 +47,7 @@ const SettingsPage = () => {
   const [busy, setBusy] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
   const { data: profile } = useQuery({

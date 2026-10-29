@@ -31,7 +31,7 @@ const DailyFactsPage = () => {
   const queryKey = ["daily-facts", user?.id, date];
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
   const { data, isLoading, error } = useQuery({

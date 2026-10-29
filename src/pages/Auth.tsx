@@ -1,281 +1,292 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
-import { Book, Mail, Lock, User, Crown } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { Checkbox } from '@/components/ui/checkbox';
-import { PREMIUM_ENABLED, PREMIUM_PRICES } from '@/lib/pricing';
-import { emailSchema, passwordSchema, usernameSchema } from '@/lib/validation';
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { ChevronLeft, Eye, EyeOff, Loader2, MailCheck } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { emailSchema, passwordSchema } from "@/lib/validation";
 
-const optionalUsernameSchema = usernameSchema.optional();
+/**
+ * The e-mail way in, one screen per step like in a native app:
+ * signup / signin, reset (ask for a link), update (new password, opened from
+ * that link) and sent (check your inbox).
+ */
+type Mode = "signup" | "signin" | "reset" | "update" | "sent";
 
-export default function Auth() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [wantsPremium, setWantsPremium] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+const TITLES: Record<Mode, string> = {
+  signup: "Créez votre compte",
+  signin: "Bon retour !",
+  reset: "Mot de passe oublié",
+  update: "Nouveau mot de passe",
+  sent: "Vérifiez vos e-mails",
+};
+
+/** Supabase's English errors, in the app's words. */
+function explain(message: string) {
+  if (/invalid login credentials/i.test(message)) return "E-mail ou mot de passe incorrect.";
+  if (/email not confirmed/i.test(message)) return "Confirmez d'abord votre adresse avec le lien reçu par e-mail.";
+  if (/already registered/i.test(message)) return "Un compte existe déjà avec cet e-mail. Connectez-vous.";
+  if (/rate limit|security purposes/i.test(message)) return "Trop de tentatives. Patientez une minute puis réessayez.";
+  if (/same.*password|different from the old/i.test(message)) return "Choisissez un mot de passe différent de l'ancien.";
+  return message;
+}
+
+const Auth = () => {
+  const [searchParams] = useSearchParams();
+  const initial = searchParams.get("mode");
+  const [mode, setMode] = useState<Mode>(
+    initial === "signin" || initial === "reset" || initial === "update" ? initial : "signup"
+  );
+  // What the "sent" screen is about: a new account or a reset link.
+  const [sentFor, setSentFor] = useState<"signup" | "reset">("signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const { user, loading, signIn, signUp, sendPasswordReset } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
+    // The reset link signs the user in: let them choose the new password first.
+    if (!loading && user && mode !== "update") navigate("/app", { replace: true });
+  }, [user, loading, mode, navigate]);
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!loading && !user && mode === "update") {
+      setMode("reset");
+      setError("Ce lien a expiré ou a déjà servi. Demandez-en un nouveau.");
+    }
+  }, [user, loading, mode]);
+
+  const go = (next: Mode) => {
+    setError(null);
+    setPassword("");
+    setMode(next);
+  };
+
+  const back = () => {
+    if (mode === "reset") go("signin");
+    else if (mode === "update") navigate("/app");
+    else navigate("/");
+  };
+
+  const checkEmail = () => {
+    const result = emailSchema.safeParse(email.trim());
+    if (!result.success) setError(result.error.issues[0].message);
+    return result.success;
+  };
+
+  const checkNewPassword = () => {
+    const result = passwordSchema.safeParse(password);
+    if (!result.success) setError(result.error.issues[0].message);
+    return result.success;
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate email
-    const emailValidation = emailSchema.safeParse(email);
-    if (!emailValidation.success) {
-      toast.error(emailValidation.error.issues[0].message);
+    setError(null);
+
+    if (mode === "signup") {
+      if (!checkEmail() || !checkNewPassword()) return;
+      setBusy(true);
+      const { error, session } = await signUp(email.trim(), password);
+      setBusy(false);
+      if (error) return setError(explain(error.message));
+      // With e-mail confirmation on, the account opens from the link.
+      if (!session) {
+        setSentFor("signup");
+        go("sent");
+      }
       return;
     }
 
-    // Validate password (basic check for sign-in)
-    if (!password) {
-      toast.error('Veuillez entrer votre mot de passe');
+    if (mode === "signin") {
+      if (!checkEmail()) return;
+      if (!password) return setError("Entrez votre mot de passe.");
+      setBusy(true);
+      const { error } = await signIn(email.trim(), password);
+      setBusy(false);
+      if (error) setError(explain(error.message));
       return;
     }
 
-    setLoading(true);
-    const { error } = await signIn(email, password);
-    setLoading(false);
+    if (mode === "reset") {
+      if (!checkEmail()) return;
+      setBusy(true);
+      const { error } = await sendPasswordReset(email.trim());
+      setBusy(false);
+      if (error) return setError(explain(error.message));
+      setSentFor("reset");
+      go("sent");
+      return;
+    }
 
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success('Connexion réussie !');
-      navigate('/');
+    if (mode === "update") {
+      if (!checkNewPassword()) return;
+      setBusy(true);
+      const { error } = await supabase.auth.updateUser({ password });
+      setBusy(false);
+      if (error) return setError(explain(error.message));
+      toast.success("Mot de passe modifié");
+      navigate("/app", { replace: true });
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate email
-    const emailValidation = emailSchema.safeParse(email);
-    if (!emailValidation.success) {
-      toast.error(emailValidation.error.issues[0].message);
-      return;
-    }
-
-    // Validate password
-    const passwordValidation = passwordSchema.safeParse(password);
-    if (!passwordValidation.success) {
-      toast.error(passwordValidation.error.issues[0].message);
-      return;
-    }
-
-    // Validate username if provided
-    if (username) {
-      const usernameValidation = optionalUsernameSchema.safeParse(username);
-      if (!usernameValidation.success) {
-        toast.error(usernameValidation.error.issues[0].message);
-        return;
-      }
-    }
-
-    setLoading(true);
-    const { error } = await signUp(email, password, username);
-    setLoading(false);
-
-    if (error) {
-      if (error.message.includes('already registered')) {
-        toast.error('Cet email est déjà utilisé');
-      } else {
-        toast.error(error.message);
-      }
-    } else {
-      const { data: { session: newSession } } = await supabase.auth.getSession();
-      toast.success(
-        newSession
-          ? 'Compte créé avec succès !'
-          : 'Compte créé ! Un e-mail de confirmation vous a été envoyé : répondez aux questions, puis confirmez votre adresse.'
-      );
-      
-      // If user wants premium, redirect to checkout
-      if (wantsPremium) {
-        // With email confirmation enabled there is no session yet, so checkout can't be created
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          toast.info('Confirmez votre email puis passez Premium depuis votre espace.');
-        } else {
-          try {
-            const { data, error: checkoutError } = await supabase.functions.invoke('create-checkout', {
-              body: { priceId: PREMIUM_PRICES.monthly }
-            });
-            if (checkoutError) throw checkoutError;
-
-            if (data?.url) {
-              window.open(data.url, '_blank');
-              toast.success('Redirection vers le paiement...');
-            }
-          } catch (error) {
-            console.error('Error creating checkout:', error);
-            toast.error('Erreur lors de la création du paiement');
-          }
-        }
-      }
-      
-      navigate('/onboarding');
-    }
+  const resend = async () => {
+    setBusy(true);
+    const { error } =
+      sentFor === "signup"
+        ? await supabase.auth.resend({
+            type: "signup",
+            email: email.trim(),
+            options: { emailRedirectTo: `${window.location.origin}/app` },
+          })
+        : await sendPasswordReset(email.trim());
+    setBusy(false);
+    if (error) toast.error(explain(error.message));
+    else toast.success("E-mail renvoyé");
   };
+
+  if (loading) return null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <Book className="w-8 h-8 text-primary" />
+    <div className="min-h-[100dvh] subtle-gradient">
+      <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(0.75rem,env(safe-area-inset-top))]">
+        <header className="-ml-2 flex h-12 items-center">
+          <Button variant="ghost" size="icon" className="rounded-full" onClick={back} aria-label="Retour">
+            <ChevronLeft className="!size-6" />
+          </Button>
+        </header>
+
+        {mode === "sent" ? (
+          <section className="flex flex-1 flex-col animate-fade-in">
+            <div className="flex flex-1 flex-col items-center justify-center text-center">
+              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
+                <MailCheck className="h-10 w-10 text-primary" />
+              </div>
+              <h1 className="text-3xl font-bold">{TITLES.sent}</h1>
+              <p className="mt-3 text-muted-foreground">
+                {sentFor === "signup"
+                  ? "Nous avons envoyé un lien de confirmation à "
+                  : "Nous avons envoyé un lien pour choisir un nouveau mot de passe à "}
+                <span className="font-semibold text-foreground">{email.trim()}</span>.
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {sentFor === "signup"
+                  ? "Ouvrez-le pour activer votre compte : vous arriverez directement dans l'app."
+                  : "Ouvrez-le sur cet appareil pour continuer."}
+              </p>
             </div>
-          </div>
-          <CardTitle className="text-2xl font-bold">Bienvenue sur CulturHist</CardTitle>
-          <CardDescription>
-            Connectez-vous ou créez un compte pour commencer votre aventure historique
-          </CardDescription>
-        </CardHeader>
+            <div className="space-y-3">
+              <Button variant="outline" size="lg" className="h-12 w-full rounded-xl bg-card" disabled={busy} onClick={resend}>
+                {busy && <Loader2 className="animate-spin" />}
+                Renvoyer l'e-mail
+              </Button>
+              <Button variant="ghost" size="lg" className="h-12 w-full rounded-xl" onClick={() => go("signin")}>
+                {sentFor === "signup" ? "J'ai confirmé, me connecter" : "Retour à la connexion"}
+              </Button>
+            </div>
+          </section>
+        ) : (
+          <form onSubmit={submit} noValidate className="flex flex-1 flex-col animate-fade-in">
+            <div className="space-y-6 pt-4">
+              <div>
+                <h1 className="text-3xl font-bold">{TITLES[mode]}</h1>
+                <p className="mt-2 text-muted-foreground">
+                  {mode === "signup" && "Quelques secondes et votre première leçon d'histoire commence."}
+                  {mode === "signin" && "Retrouvez votre série et vos compagnons."}
+                  {mode === "reset" && "Entrez votre e-mail : nous vous enverrons un lien pour en choisir un nouveau."}
+                  {mode === "update" && "Choisissez le mot de passe de votre compte."}
+                </p>
+              </div>
 
-        <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Connexion</TabsTrigger>
-              <TabsTrigger value="signup">Inscription</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin" className="space-y-4">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <div className="space-y-4">
+                {mode !== "update" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="email">E-mail</Label>
                     <Input
-                      id="signin-email"
+                      id="email"
                       type="email"
-                      placeholder="votre@email.com"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      placeholder="vous@exemple.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
+                      className="h-12 rounded-xl bg-card text-base"
+                      autoFocus
                     />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Mot de passe</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Connexion...' : 'Se connecter'}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="signup" className="space-y-4">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-username">Nom d'utilisateur (optionnel)</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-username"
-                      type="text"
-                      placeholder="Votre pseudo"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Mot de passe</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                      required
-                      minLength={8}
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Minimum 8 caractères, 1 majuscule et 1 chiffre
-                  </p>
-                </div>
-
-                {PREMIUM_ENABLED && (
-                  <div className="flex items-center space-x-2 p-4 rounded-lg bg-accent/5 border border-accent/20">
-                    <Checkbox 
-                      id="premium" 
-                      checked={wantsPremium}
-                      onCheckedChange={(checked) => setWantsPremium(checked as boolean)}
-                    />
-                    <label
-                      htmlFor="premium"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2 cursor-pointer"
-                    >
-                      <Crown className="w-4 h-4 text-accent" />
-                      <span>Je veux devenir Premium (CulturHist +) - 1,99€/mois</span>
-                    </label>
                   </div>
                 )}
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Création...' : 'Créer un compte'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
+                {mode !== "reset" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">{mode === "update" ? "Nouveau mot de passe" : "Mot de passe"}</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="h-12 rounded-xl bg-card pr-12 text-base"
+                        autoFocus={mode === "update"}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-muted-foreground"
+                        aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {mode !== "signin" && (
+                      <p className="text-xs text-muted-foreground">8 caractères minimum, dont une majuscule et un chiffre.</p>
+                    )}
+                    {mode === "signin" && (
+                      <button type="button" onClick={() => go("reset")} className="text-sm font-semibold text-primary">
+                        Mot de passe oublié ?
+                      </button>
+                    )}
+                  </div>
+                )}
 
-        <CardFooter className="flex justify-center">
-          <Button variant="link" onClick={() => navigate('/')}>
-            Retour à l'accueil
-          </Button>
-        </CardFooter>
-      </Card>
+                {error && (
+                  <p role="alert" className="rounded-xl bg-destructive/10 px-4 py-3 text-sm font-medium text-destructive">
+                    {error}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-auto space-y-3 pt-8">
+              <Button type="submit" variant="hero" size="lg" className="h-12 w-full rounded-xl" disabled={busy}>
+                {busy && <Loader2 className="animate-spin" />}
+                {mode === "signup" && "Créer mon compte"}
+                {mode === "signin" && "Se connecter"}
+                {mode === "reset" && "Envoyer le lien"}
+                {mode === "update" && "Enregistrer"}
+              </Button>
+              {(mode === "signup" || mode === "signin") && (
+                <p className="text-center text-sm text-muted-foreground">
+                  {mode === "signup" ? "Déjà un compte ? " : "Pas encore de compte ? "}
+                  <button type="button" onClick={() => go(mode === "signup" ? "signin" : "signup")} className="font-semibold text-primary">
+                    {mode === "signup" ? "Se connecter" : "En créer un"}
+                  </button>
+                </p>
+              )}
+            </div>
+          </form>
+        )}
+      </main>
     </div>
   );
-}
+};
+
+export default Auth;

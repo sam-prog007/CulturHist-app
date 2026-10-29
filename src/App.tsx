@@ -8,7 +8,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { lazy, Suspense } from "react";
 import Index from "./pages/Index";
 
-// Landing page stays in the main bundle; the rest is loaded on demand
+// The welcome screen stays in the main bundle; the rest is loaded on demand
 const Auth = lazy(() => import("./pages/Auth"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
 const AppPage = lazy(() => import("./pages/App"));

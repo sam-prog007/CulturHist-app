@@ -28,7 +28,7 @@ After changing the logo or a companion, regenerate the images in `public/` with 
 
 | Path | Content |
 | --- | --- |
-| `src/pages/` | Routes: landing, auth, onboarding, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
+| `src/pages/` | Routes: welcome (`/`, sign-up with Apple, Google or e-mail), e-mail auth, onboarding questions, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
 | `src/components/WorldMap.tsx`, `src/components/CountrySheet.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`, pinch/drag/zoom with `d3-zoom`); countries turn gold as their facts are learned, picking a region flies to it, tapping a country opens its facts (learned ones to read, the others as locked teasers) |
@@ -97,6 +97,22 @@ SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 ## Deployment (Vercel)
 
 `vercel.json` sends every app route to `index.html` and keeps the service worker uncached. `public/ads.txt` declares the AdSense account to ad buyers; keep it in sync with the `ca-pub-…` ID in `index.html` and `src/components/AdSense.tsx`. Import the GitHub repository in Vercel (framework: Vite); the build reads `.env`. Then, in Supabase → Authentication → URL Configuration, set the Site URL to the Vercel address and add it to the Redirect URLs, so confirmation and email-change links point to the live app.
+
+## Sign in with Apple and Google
+
+The welcome screen (`/`) shows one button per provider that is turned on in Supabase → Authentication → Sign In / Providers. It reads the public `/auth/v1/settings`, so a button appears as soon as its provider is on, with no redeploy. Both providers come back to `/app`, which the `https://<domain>/**` Redirect URL already covers. In both consoles, the callback URL is `https://<project-ref>.supabase.co/auth/v1/callback`.
+
+- **Google.** In Google Cloud Console:
+  1. Set up the OAuth consent screen: app name, logo, and links to the home page and privacy policy.
+  2. Create an OAuth client of type "Web application". Add the site to the authorised JavaScript origins and the callback URL to the redirect URIs.
+  3. Paste the client ID and secret into Supabase's Google provider.
+- **Apple.** This needs a paid Apple Developer account.
+  1. Create a Services ID with Sign in with Apple. Give it the site's domain and the callback URL as return URL.
+  2. Create a Sign in with Apple key (.p8).
+  3. In Supabase's Apple provider, enter the Services ID and the secret generated from the Team ID, the Key ID and the key.
+  4. That secret expires after 6 months, so regenerate it before then.
+
+New profiles get a free username (`supabase/migrations/20261029120000_unique_usernames.sql`). Users can change it in Réglages.
 
 ## Push notifications
 

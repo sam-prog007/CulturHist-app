@@ -14,6 +14,10 @@ export default {
       },
     },
     extend: {
+      screens: {
+        // Phones taller than an iPhone SE, for screens that must fit without scrolling.
+        tall: { raw: "(min-height: 740px)" },
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

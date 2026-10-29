@@ -15,7 +15,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
 import { getOnThisDay } from "@/lib/onThisDay";
 import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
-import { applyPendingOnboarding } from "@/lib/pendingOnboarding";
 import { homeLine, useCompanion } from "@/lib/companions";
 import CompanionBubble from "@/components/companions/CompanionBubble";
 import CompanionUnlock from "@/components/companions/CompanionUnlock";
@@ -27,10 +26,10 @@ const HomePage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
-  const { data: profile } = useQuery({
+  const { data: profile, isPending: profilePending } = useQuery({
     queryKey: ["home-profile", user?.id],
     enabled: !!user,
     queryFn: async () => {
@@ -40,16 +39,12 @@ const HomePage = () => {
         .eq("id", user!.id)
         .single();
       if (error) throw error;
-      // Answers given at sign-up, before the e-mail was confirmed.
-      if (!data.onboarding_completed && (await applyPendingOnboarding(user!.id))) {
-        return { ...data, onboarding_completed: true };
-      }
       return data;
     },
   });
 
   useEffect(() => {
-    if (profile && !profile.onboarding_completed) navigate("/onboarding");
+    if (profile && !profile.onboarding_completed) navigate("/onboarding", { replace: true });
   }, [profile, navigate]);
 
   const { data: factsValidated = 0 } = useQuery({
@@ -72,7 +67,8 @@ const HomePage = () => {
   // Picked once per state, so the line does not change on every render.
   const line = useMemo(() => homeLine(companion, { streak: streakNow, doneToday }), [companion, streakNow, doneToday]);
 
-  if (loading || !user) {
+  // A new account goes to the onboarding questions without a glimpse of the home screen.
+  if (loading || !user || profilePending || profile?.onboarding_completed === false) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />

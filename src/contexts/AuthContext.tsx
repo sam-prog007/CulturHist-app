@@ -2,12 +2,15 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { PREMIUM_ENABLED } from '@/lib/pricing';
+import type { OAuthProvider } from '@/lib/authProviders';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
-  signUp: (email: string, password: string, username?: string) => Promise<{ error: AuthError | null }>;
+  signUp: (email: string, password: string) => Promise<{ error: AuthError | null; session: Session | null }>;
+  signInWithProvider: (provider: OAuthProvider) => Promise<{ error: AuthError | null }>;
+  sendPasswordReset: (email: string) => Promise<{ error: AuthError | null }>;
   signOut: () => Promise<void>;
   loading: boolean;
   isPremium: boolean;
@@ -120,18 +123,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
-  const signUp = async (email: string, password: string, username?: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
+  // Links in e-mails and provider redirects come back to the app, which sends
+  // a new account on to the onboarding questions.
+  const appUrl = `${window.location.origin}/app`;
+
+  const signUp = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          username: username,
-        }
-      }
+      options: { emailRedirectTo: appUrl },
+    });
+    return { error, session: data.session };
+  };
+
+  /** Leaves for Apple's or Google's sign-in page, which comes back to the app. */
+  const signInWithProvider = async (provider: OAuthProvider) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: appUrl },
+    });
+    return { error };
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?mode=update`,
     });
     return { error };
   };
@@ -141,7 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading, isPremium, isAdmin, premiumUntil, checkSubscription }}>
+    <AuthContext.Provider value={{ user, session, signIn, signUp, signInWithProvider, sendPasswordReset, signOut, loading, isPremium, isAdmin, premiumUntil, checkSubscription }}>
       {children}
     </AuthContext.Provider>
   );

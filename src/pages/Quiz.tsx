@@ -64,7 +64,7 @@ const QuizPage = () => {
   const result = useMemo(() => quizResultLine(companion, score, questions.length), [companion, score, questions.length]);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth");
+    if (!loading && !user) navigate("/", { replace: true });
   }, [user, loading, navigate]);
 
   const { data, isLoading } = useQuery({ queryKey: ["quiz-data"], enabled: !!user, queryFn: loadQuizData });
