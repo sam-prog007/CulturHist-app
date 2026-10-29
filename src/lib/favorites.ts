@@ -77,7 +77,7 @@ export async function getFavorites() {
     .from("favorites")
     .select(
       `id, created_at,
-       historical_facts (id, title, title_fr, description, description_fr, date_text, date_text_fr, region_fr,
+       historical_facts (id, slug, title, title_fr, description, description_fr, date_text, date_text_fr, region_fr,
          difficulty, image_url, image_credit, image_source_url),
        quotes (*)`
     )

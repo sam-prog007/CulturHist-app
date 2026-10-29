@@ -17,6 +17,8 @@ import { REGION_LABELS, getDailyFacts, validateDailyFact, type DailyFacts, type 
 import StreakCelebration from "@/components/StreakCelebration";
 import Companion from "@/components/companions/Companion";
 import { COMPANION_QUERY_KEY, useCompanion } from "@/lib/companions";
+import { ShareButton } from "@/components/ShareButton";
+import { factShare } from "@/lib/share";
 
 const DailyFactsPage = () => {
   const { user, loading } = useAuth();
@@ -144,6 +146,12 @@ const DailyFactsPage = () => {
                   </h2>
                   <div className="flex shrink-0 items-center gap-1">
                     <DifficultyStars difficulty={fact.difficulty} />
+                    {fact.slug && (
+                      <ShareButton
+                        content={factShare({ slug: fact.slug, title: fact.title_fr || fact.title, dateText: fact.date_text_fr || fact.date_text })}
+                        className="-my-1.5"
+                      />
+                    )}
                     <FavoriteButton item={{ factId: fact.id }} className="-my-1.5 -mr-1.5" />
                   </div>
                 </div>

@@ -15,6 +15,8 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageLoader from "@/components/PageLoader";
 import { FAVORITES_LIST_KEY, getFavorites } from "@/lib/favorites";
+import { ShareButton } from "@/components/ShareButton";
+import { factShare, quoteShare } from "@/lib/share";
 
 const EmptyState = ({ children }: { children: React.ReactNode }) => {
   const { companion } = useCompanion();
@@ -86,6 +88,12 @@ const FavoritesPage = () => {
                       <h2 className="text-lg font-bold">{fact.title_fr || fact.title}</h2>
                       <div className="flex shrink-0 items-center gap-1">
                         <DifficultyStars difficulty={fact.difficulty} />
+                        {fact.slug && (
+                          <ShareButton
+                            content={factShare({ slug: fact.slug, title: fact.title_fr || fact.title, dateText: fact.date_text_fr || fact.date_text })}
+                            className="-my-1.5"
+                          />
+                        )}
                         <FavoriteButton item={{ factId: fact.id }} className="-my-1.5 -mr-1.5" />
                       </div>
                     </div>
@@ -108,7 +116,10 @@ const FavoritesPage = () => {
                   <div className="min-w-0 flex-1">
                     <QuoteView quote={quote} />
                   </div>
-                  <FavoriteButton item={{ quoteId: quote.id }} className="-mr-2 -mt-2" />
+                  <div className="-mr-2 -mt-2 flex flex-col">
+                    <FavoriteButton item={{ quoteId: quote.id }} />
+                    <ShareButton content={quoteShare(quote)} />
+                  </div>
                 </Card>
               ))
             )}

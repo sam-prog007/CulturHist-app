@@ -139,6 +139,11 @@ For Google Cloud's OAuth consent screen:
 - **Images.** Fact images are asked from Wikimedia at standard widths, 500 and 960 px (`src/lib/images.ts`), instead of 1280px or original files. If a thumbnail is refused, the original loads instead.
 - **Code.** The bottom bar's screens are fetched in the background after sign-in. The Profile chart library loads after the rest of the screen.
 
+## Feedback and sharing
+
+- **Donner mon avis** (Profil and Réglages) saves a mood and a message in the `feedback` table, with the page, app version and device. Users can only send. Read the messages in Supabase → Table Editor → `feedback`. If saving fails, the form offers to send the message by e-mail.
+- **Partager** (next to the heart on facts, Ce jour-là and the quote of the day) opens the phone's share sheet, or copies the link on a computer. A fact is shared as its public page `https://www.culturhist.com/faits/<slug>`. **Inviter des amis** in Profil shares the app.
+
 ## Push notifications
 
 The app is an installable PWA (`public/manifest.webmanifest`, `public/sw.js`). On iPhone, notifications only work once it is added to the home screen (iOS 16.4+). Users pick which notifications they want, and when, in Réglages:

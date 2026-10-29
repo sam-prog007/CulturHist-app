@@ -29,6 +29,10 @@ const Privacy = () => (
           votre appareil si vous activez les notifications.
         </li>
         <li>
+          <strong>Vos avis</strong> : les messages envoyés avec « Donner mon avis », avec la page d'où ils partent, la
+          version de l'application et le type d'appareil, pour comprendre et corriger les problèmes signalés.
+        </li>
+        <li>
           <strong>Données techniques</strong> : adresse IP et type de navigateur, enregistrés dans les journaux de
           l'hébergeur pour la sécurité du service.
         </li>

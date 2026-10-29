@@ -8,6 +8,8 @@ import { FactImage } from "@/components/FactImage";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { MapFact } from "@/lib/progress";
+import { ShareButton } from "@/components/ShareButton";
+import { factShare } from "@/lib/share";
 
 interface FactDetailsProps {
   fact: MapFact;
@@ -29,7 +31,7 @@ export const FactDetails = ({ fact, learned, eraName, showTitle = true }: FactDe
     queryFn: async () => {
       const { data, error } = await supabase
         .from("historical_facts")
-        .select("id, title, title_fr, description, description_fr, image_url, image_credit, image_source_url, difficulty, region_fr")
+        .select("id, slug, title, title_fr, description, description_fr, image_url, image_credit, image_source_url, difficulty, region_fr")
         .eq("id", fact.id)
         .single();
       if (error) throw error;
@@ -77,6 +79,7 @@ export const FactDetails = ({ fact, learned, eraName, showTitle = true }: FactDe
               {showTitle ? <h3 className="font-serif text-xl font-bold leading-tight">{fact.title}</h3> : <span />}
               <div className="flex shrink-0 items-center gap-1">
                 <DifficultyStars difficulty={full.difficulty} />
+                {full.slug && <ShareButton content={factShare({ slug: full.slug, title: fact.title, dateText: fact.dateText })} className="-my-1.5" />}
                 <FavoriteButton item={{ factId: fact.id }} className="-my-1.5 -mr-1.5" />
               </div>
             </div>

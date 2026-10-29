@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
 import { DifficultyStars } from "@/components/DifficultyStars";
 import NotificationSettings from "@/components/NotificationSettings";
+import FeedbackSheet from "@/components/FeedbackSheet";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +43,7 @@ const SettingsPage = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
@@ -252,6 +254,14 @@ const SettingsPage = () => {
               <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={() => setFeedbackOpen(true)}
+            className="flex w-full items-center justify-between rounded-xl border bg-card p-3 text-left text-sm font-medium hover:border-primary/50 smooth-transition"
+          >
+            Donner mon avis
+            <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+          </button>
           <p className="text-xs text-muted-foreground">
             Une question ou une erreur dans un fait ?{" "}
             <a href={`mailto:${LEGAL.contact}`} className="font-medium text-primary">
@@ -290,6 +300,7 @@ const SettingsPage = () => {
         </AlertDialog>
       </main>
       <BottomNav />
+      <FeedbackSheet open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 };

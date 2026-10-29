@@ -8,6 +8,8 @@ import PublicPage from "@/components/PublicPage";
 import { usePageMeta } from "@/hooks/use-page-meta";
 import { JoinBanner, PublicFactCard } from "@/components/PublicFactCard";
 import { relatedFacts, usePublicFacts } from "@/lib/publicFacts";
+import { factShare } from "@/lib/share";
+import { ShareButton } from "@/components/ShareButton";
 
 const shorten = (text: string, max = 155) => (text.length <= max ? text : `${text.slice(0, max - 1).trimEnd()}…`);
 
@@ -60,6 +62,7 @@ const FactPage = () => {
               <h1 className="text-3xl font-bold leading-tight">{fact.title}</h1>
             </header>
             <p className="text-lg leading-relaxed">{fact.text}</p>
+            <ShareButton content={factShare(fact)} label="Partager ce fait" />
             {fact.sourceUrl && (
               <a
                 href={fact.sourceUrl}

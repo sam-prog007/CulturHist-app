@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ChevronRight, Crown, Flame, Heart, Settings, Star, Trophy } from "lucide-react";
+import { BookOpen, ChevronRight, Crown, Flame, Heart, MessageSquare, Settings, Star, Trophy, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
@@ -11,6 +11,7 @@ import StreakIndicator from "@/components/StreakIndicator";
 import PremiumButton from "@/components/PremiumButton";
 import Companion from "@/components/companions/Companion";
 import CompanionsSheet from "@/components/companions/CompanionsSheet";
+import FeedbackSheet from "@/components/FeedbackSheet";
 import { useCompanion } from "@/lib/companions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,8 @@ import { PREMIUM_ENABLED } from "@/lib/pricing";
 import { effectiveStreak } from "@/lib/dates";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageLoader from "@/components/PageLoader";
+import { toast } from "sonner";
+import { appInvite, share } from "@/lib/share";
 
 // The chart library is by far the heaviest part of this screen: it loads after the rest.
 const ProgressChart = lazy(() => import("@/components/ProgressChart"));
@@ -28,6 +31,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [gradesOpen, setGradesOpen] = useState(false);
   const [companionsOpen, setCompanionsOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const companions = useCompanion();
   const { companion } = companions;
 
@@ -74,6 +78,13 @@ const ProfilePage = () => {
   }
 
   const { grade, next } = data;
+  const inviteFriends = async () => {
+    try {
+      if ((await share(appInvite)) === "copied") toast.success("Lien copié", { description: "Envoyez-le à vos amis." });
+    } catch {
+      toast.error("Impossible de partager le lien");
+    }
+  };
   const gradeProgress = grade && next ? ((data.points - grade.min_points) / (grade.max_points - grade.min_points)) * 100 : 100;
   const initial = (data.username || user.email || "?").charAt(0).toUpperCase();
 
@@ -128,6 +139,32 @@ const ProfilePage = () => {
             <div className="min-w-0 flex-1">
               <p className="font-bold">Mes favoris</p>
               <p className="text-sm text-muted-foreground">Vos faits et citations préférés</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Card>
+        </button>
+
+        <button type="button" onClick={inviteFriends} className="block w-full text-left">
+          <Card className="flex items-center gap-3 p-4 card-shadow hover:border-primary/50 smooth-transition">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <UserPlus className="h-5 w-5 text-primary" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold">Inviter des amis</p>
+              <p className="text-sm text-muted-foreground">Faites découvrir l'histoire à vos proches</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground" />
+          </Card>
+        </button>
+
+        <button type="button" onClick={() => setFeedbackOpen(true)} className="block w-full text-left">
+          <Card className="flex items-center gap-3 p-4 card-shadow hover:border-primary/50 smooth-transition">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent/10">
+              <MessageSquare className="h-5 w-5 text-accent" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold">Donner mon avis</p>
+              <p className="text-sm text-muted-foreground">Un bug, une idée ? Nous lisons tout</p>
             </div>
             <ChevronRight className="h-5 w-5 text-muted-foreground" />
           </Card>
@@ -192,6 +229,7 @@ const ProfilePage = () => {
         active={companion}
         onChoose={companions.choose}
       />
+      <FeedbackSheet open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </div>
   );
 };
