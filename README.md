@@ -96,7 +96,7 @@ SELECT id, 'admin' FROM auth.users WHERE email = 'you@example.com';
 
 ## Deployment (Vercel)
 
-`vercel.json` sends every app route to `index.html` and keeps the service worker uncached. Import the GitHub repository in Vercel (framework: Vite); the build reads `.env`. Then, in Supabase → Authentication → URL Configuration, set the Site URL to the Vercel address and add it to the Redirect URLs, so confirmation and email-change links point to the live app.
+`vercel.json` sends every app route to `index.html` and keeps the service worker uncached. `public/ads.txt` declares the AdSense account to ad buyers; keep it in sync with the `ca-pub-…` ID in `index.html` and `src/components/AdSense.tsx`. Import the GitHub repository in Vercel (framework: Vite); the build reads `.env`. Then, in Supabase → Authentication → URL Configuration, set the Site URL to the Vercel address and add it to the Redirect URLs, so confirmation and email-change links point to the live app.
 
 ## Push notifications
 
