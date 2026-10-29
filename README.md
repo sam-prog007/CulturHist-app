@@ -29,6 +29,8 @@ After changing the logo or a companion, regenerate the images in `public/` with 
 | Path | Content |
 | --- | --- |
 | `src/pages/` | Routes: welcome (`/`, sign-up with Apple, Google or e-mail), e-mail auth, onboarding questions, `/app` home, facts, learned facts, quiz, `/cartes` (world map and era timeline), profile, `/settings` (username, email, password, difficulty, sign out, account deletion) |
+| `src/pages/Discover.tsx`, `src/pages/FactPage.tsx`, `src/pages/legal/` | Public pages, readable without an account: `/decouvrir` (on this day, today's facts, quote, every fact by era), `/faits/<slug>`, `/confidentialite`, `/conditions`, `/mentions-legales`. They share `src/components/PublicPage.tsx` |
+| `src/lib/legal.ts` | Publisher, contact address and hosts shown by the legal pages |
 | `src/components/BottomNav.tsx` | Bottom tab bar of the signed-in app (Accueil, Quiz, Cartes, Profil) |
 | `src/lib/dailyFacts.ts` | The day's 5 facts and their validation (server functions `get_daily_facts`, `validate_daily_fact`) |
 | `src/components/WorldMap.tsx`, `src/components/CountrySheet.tsx`, `src/lib/countryRegions.ts` | World map (Natural Earth outlines from `world-atlas`, projected with `d3-geo`, pinch/drag/zoom with `d3-zoom`); countries turn gold as their facts are learned, picking a region flies to it, tapping a country opens its facts (learned ones to read, the others as locked teasers) |
@@ -113,6 +115,21 @@ The welcome screen (`/`) shows one button per provider that is turned on in Supa
   4. That secret expires after 6 months, so regenerate it before then.
 
 New profiles get a free username (`supabase/migrations/20261029120000_unique_usernames.sql`). Users can change it in Réglages.
+
+## Public pages and legal texts
+
+Without an account, visitors can read `/decouvrir` and every fact at `/faits/<slug>`. Facts and quotes are readable by the `anon` role, so no session is needed. These pages carry the AdSense slots and are what Google crawls (`public/sitemap.xml`, declared in `robots.txt`).
+
+The legal pages are drafts written from what the app actually does. Review them, ideally with a professional, and keep them in step with the code:
+
+- **Identity:** the publisher, contact e-mail and hosts live in `src/lib/legal.ts`. Change `updated` with each revision.
+- **Premium:** when `PREMIUM_ENABLED` is switched on, add Stripe (payment) to the processors in the privacy policy.
+- **New services:** list any new third-party service (analytics, another provider) there too.
+
+For Google Cloud's OAuth consent screen:
+- home page: https://www.culturhist.com
+- privacy policy: https://www.culturhist.com/confidentialite
+- terms: https://www.culturhist.com/conditions
 
 ## Push notifications
 

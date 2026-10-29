@@ -43,17 +43,20 @@ const Welcome = () => {
   return (
     <div className="min-h-[100dvh] subtle-gradient">
       <main className="mx-auto flex min-h-[100dvh] max-w-md flex-col px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))]">
-        <header className="flex items-center justify-center gap-2">
+        <header className="relative flex items-center justify-center gap-2">
           <LogoMark className="h-9 w-9" title="" />
           <Wordmark className="text-2xl" />
+          <Link to="/decouvrir" className="absolute right-0 text-sm font-semibold text-primary">
+            Découvrir
+          </Link>
         </header>
 
         <section className="flex flex-1 flex-col items-center justify-center py-4 text-center animate-fade-in">
-          <div className="relative mb-1 max-w-[17rem] rounded-2xl bg-card px-4 py-2.5 text-sm font-medium leading-snug card-shadow">
+          <div className="relative mb-1 hidden max-w-[17rem] rounded-2xl bg-card px-4 py-2.5 text-sm font-medium leading-snug card-shadow tall:block">
             Je suis Napoléon. Ensemble, conquérons l'histoire, une date à la fois !
             <span className="absolute -bottom-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 bg-card" aria-hidden="true" />
           </div>
-          <Companion id="napoleon" mood="wave" className="h-32 w-28 tall:h-48 tall:w-40" title="Napoléon" />
+          <Companion id="napoleon" mood="wave" className="h-36 w-32 tall:h-48 tall:w-40" title="Napoléon" />
           <h1 className="mt-2 text-3xl font-bold leading-tight">Votre dose quotidienne d'histoire</h1>
           <p className="mt-2 text-muted-foreground">
             5 faits par jour, des quiz et une série à tenir, avec les grandes figures de l'histoire.
@@ -104,11 +107,22 @@ const Welcome = () => {
             <Mail />
             Continuer avec un e-mail
           </Button>
-          <p className="pt-1 text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground">
             Déjà un compte ?{" "}
             <Link to="/auth?mode=signin" className="font-semibold text-primary">
               Se connecter
             </Link>
+          </p>
+          <p className="text-center text-xs leading-snug text-muted-foreground">
+            En continuant, vous acceptez les{" "}
+            <Link to="/conditions" className="underline underline-offset-2">
+              conditions d'utilisation
+            </Link>{" "}
+            et la{" "}
+            <Link to="/confidentialite" className="underline underline-offset-2">
+              politique de confidentialité
+            </Link>
+            .
           </p>
         </div>
       </main>

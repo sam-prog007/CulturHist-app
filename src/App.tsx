@@ -19,6 +19,11 @@ const LearnedFacts = lazy(() => import("./pages/LearnedFacts"));
 const Maps = lazy(() => import("./pages/Maps"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Favorites = lazy(() => import("./pages/Favorites"));
+const Discover = lazy(() => import("./pages/Discover"));
+const FactPage = lazy(() => import("./pages/FactPage"));
+const Privacy = lazy(() => import("./pages/legal/Privacy"));
+const Terms = lazy(() => import("./pages/legal/Terms"));
+const LegalNotice = lazy(() => import("./pages/legal/LegalNotice"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -53,6 +58,12 @@ const App = () => (
                 <Route path="/cartes" element={<Maps />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/favoris" element={<Favorites />} />
+                {/* Readable without an account */}
+                <Route path="/decouvrir" element={<Discover />} />
+                <Route path="/faits/:slug" element={<FactPage />} />
+                <Route path="/confidentialite" element={<Privacy />} />
+                <Route path="/conditions" element={<Terms />} />
+                <Route path="/mentions-legales" element={<LegalNotice />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

@@ -1,23 +1,18 @@
 import { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, BookOpen, CalendarDays, CheckCircle2, Flame, Quote, Star } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Flame, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import BottomNav from "@/components/BottomNav";
-import { FactImage } from "@/components/FactImage";
-import { FavoriteButton } from "@/components/FavoriteButton";
-import { QuoteView } from "@/components/QuoteView";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { effectiveStreak, formatYear, todayKey } from "@/lib/dates";
-import { getOnThisDay } from "@/lib/onThisDay";
-import { getQuoteOfTheDay } from "@/lib/quoteOfTheDay";
+import { effectiveStreak, todayKey } from "@/lib/dates";
 import { homeLine, useCompanion } from "@/lib/companions";
 import CompanionBubble from "@/components/companions/CompanionBubble";
 import CompanionUnlock from "@/components/companions/CompanionUnlock";
+import { OnThisDayCard, QuoteCard } from "@/components/DailyCards";
 
 const DAILY_FACTS_GOAL = 5;
 
@@ -165,74 +160,6 @@ const DailyFactsCard = ({ validated, streak, onOpen }: { validated: number; stre
           {validated === 0 ? "Commencer" : "Continuer"}
           <ArrowRight className="h-4 w-4" />
         </Button>
-      )}
-    </Card>
-  );
-};
-
-const OnThisDayCard = () => {
-  const { data: event, isLoading } = useQuery({
-    queryKey: ["on-this-day", new Date().toDateString()],
-    queryFn: () => getOnThisDay(),
-    staleTime: 6 * 60 * 60 * 1000,
-  });
-  const date = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-
-  return (
-    <Card className="space-y-4 p-5 card-shadow animate-fade-in-up">
-      <div className="flex items-center gap-2">
-        <CalendarDays className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-bold">Ce jour-là</h2>
-        <span className="ml-auto text-sm text-muted-foreground">{date}</span>
-        {event?.factId && <FavoriteButton item={{ factId: event.factId }} className="-my-2 -mr-1" />}
-      </div>
-      {isLoading ? (
-        <div className="space-y-3">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-        </div>
-      ) : event ? (
-        <>
-          {event.imageUrl && (
-            <FactImage src={event.imageUrl} alt="" credit={event.credit} sourceUrl={event.sourceUrl} className="h-44" />
-          )}
-          <div className="space-y-1">
-            <p className="font-serif text-2xl font-bold text-primary">{formatYear(event.year)}</p>
-            <p className="leading-relaxed">{event.text}</p>
-            {!event.imageUrl && event.sourceUrl && (
-              <a href={event.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground underline-offset-2 hover:underline">
-                {event.credit}
-              </a>
-            )}
-          </div>
-        </>
-      ) : (
-        <p className="text-sm text-muted-foreground">Aucun événement disponible pour aujourd'hui.</p>
-      )}
-    </Card>
-  );
-};
-
-const QuoteCard = () => {
-  const { data: quote, isLoading } = useQuery({
-    queryKey: ["quote-of-the-day", new Date().toDateString()],
-    queryFn: () => getQuoteOfTheDay(),
-    staleTime: 6 * 60 * 60 * 1000,
-  });
-
-  if (!isLoading && !quote) return null;
-
-  return (
-    <Card className="space-y-3 p-5 card-shadow animate-fade-in-up">
-      <div className="flex items-center gap-2">
-        <Quote className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-bold">Citation du jour</h2>
-        {quote && <FavoriteButton item={{ quoteId: quote.id }} className="-my-2 ml-auto" />}
-      </div>
-      {isLoading || !quote ? (
-        <Skeleton className="h-16 w-full" />
-      ) : (
-        <QuoteView quote={quote} />
       )}
     </Card>
   );
